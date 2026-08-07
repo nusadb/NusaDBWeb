@@ -9,8 +9,8 @@
   --white: #ffffff;
   --radius: 12px;
   --shadow: 0 10px 30px rgba(41, 56, 128, 0.12);
-  --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica,
-    Arial, sans-serif;
+  --font: "IBM Plex Sans", "Inter", system-ui, -apple-system, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
   --font-display: "Space Grotesk", "Inter", system-ui, -apple-system, sans-serif;
   --mono: ui-monospace, "Cascadia Code", "Consolas", Menlo, monospace;
 }
@@ -136,7 +136,7 @@ a:hover {
   align-items: center;
   gap: 8px;
   padding: 10px 20px;
-  border-radius: 999px;
+  border-radius: 10px;
   font-weight: 600;
   font-size: 0.95rem;
   cursor: pointer;
@@ -149,15 +149,15 @@ a:hover {
 }
 
 .btn-primary {
-  background: linear-gradient(120deg, var(--brand-dark), var(--brand));
+  background: var(--brand-dark);
   color: var(--white);
-  box-shadow: 0 6px 18px rgba(41, 56, 128, 0.28);
+  box-shadow: 0 4px 12px rgba(41, 56, 128, 0.25);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(120deg, var(--brand-darker), var(--brand-dark));
+  background: var(--brand-darker);
   color: var(--white);
-  box-shadow: 0 8px 22px rgba(41, 56, 128, 0.34);
+  box-shadow: 0 8px 20px rgba(41, 56, 128, 0.32);
 }
 
 .btn-ghost {
@@ -174,12 +174,12 @@ a:hover {
 .btn-light {
   background: var(--white);
   color: var(--brand-dark);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
 }
 
 .btn-light:hover {
   color: var(--brand-dark);
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.24);
 }
 
 .nav-cta {
@@ -225,7 +225,7 @@ a:hover {
 .hero {
   position: relative;
   padding: 150px 0 90px;
-  background: linear-gradient(135deg, var(--brand-dark) 0%, #3553a0 45%, var(--brand) 100%);
+  background: linear-gradient(160deg, var(--brand-darker) 0%, var(--brand-dark) 38%, #3553a0 70%, var(--brand) 112%);
   color: var(--white);
   overflow: hidden;
 }
@@ -234,8 +234,19 @@ a:hover {
   content: "";
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.14) 1px, transparent 1px);
-  background-size: 26px 26px;
+  background: radial-gradient(620px 460px at 82% 12%, rgba(255, 255, 255, 0.1), transparent 62%);
+  pointer-events: none;
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  right: -160px;
+  bottom: -200px;
+  width: 460px;
+  height: 460px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(111, 179, 217, 0.3), transparent 66%);
   pointer-events: none;
 }
 
@@ -327,6 +338,16 @@ a:hover {
   letter-spacing: -0.02em;
 }
 
+.stat-value::before {
+  content: "";
+  display: block;
+  width: 30px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--brand-light);
+  margin: 0 auto 12px;
+}
+
 .stat-label {
   display: block;
   margin-top: 4px;
@@ -355,13 +376,23 @@ a:hover {
 }
 
 .kicker {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--brand);
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+}
+
+.kicker::before {
+  content: "";
+  display: inline-block;
+  width: 18px;
+  height: 2px;
+  background: var(--brand);
 }
 
 .section-head h2 {
@@ -386,16 +417,17 @@ a:hover {
 .card {
   background: var(--white);
   border: 1px solid rgba(41, 56, 128, 0.1);
+  border-top: 3px solid rgba(66, 151, 200, 0.55);
   border-radius: var(--radius);
   padding: 28px;
-  box-shadow: var(--shadow);
+  box-shadow: 0 6px 18px rgba(41, 56, 128, 0.08);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 16px 34px rgba(41, 56, 128, 0.16);
-  border-color: rgba(66, 151, 200, 0.4);
+  transform: translateY(-3px);
+  box-shadow: 0 14px 28px rgba(41, 56, 128, 0.12);
+  border-color: rgba(66, 151, 200, 0.5);
 }
 
 .card-icon {
@@ -405,7 +437,7 @@ a:hover {
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: linear-gradient(135deg, var(--brand-light), var(--brand));
+  background: var(--brand);
   color: var(--white);
   margin-bottom: 16px;
 }
@@ -559,7 +591,7 @@ code .cmd {
   border-radius: var(--radius);
   padding: 18px 20px;
   color: var(--text);
-  box-shadow: var(--shadow);
+  box-shadow: 0 6px 18px rgba(41, 56, 128, 0.08);
   transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
