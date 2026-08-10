@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SQL reference — NusaDB</title>
+<meta name="description" content="The SQL surface NusaDB accepts: data types, statements, query features, and the behaviours where NusaDB makes a deliberate choice of its own." />
+<meta name="theme-color" content="#293880" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;450;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="masthead">
+  <div class="wrap masthead-in">
+    <a class="brand" href="../"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6.5c0-1.4 3.6-2.5 8-2.5s8 1.1 8 2.5-3.6 2.5-8 2.5-8-1.1-8-2.5Z"/><path d="M4 6.5v11c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5v-11"/><path d="M4 12c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5"/></svg><span>Nusa<b>DB</b></span></a>
+    <nav class="mast-nav" id="mastNav" aria-label="Main"><ul><li><a href="./">Documentation</a></li><li><a href="getting-started.html">Install</a></li><li><a href="sql.html" aria-current="page">SQL</a></li><li><a href="limits.html">Limits</a></li><li><a href="https://github.com/nusadb/nusadb" target="_blank" rel="noopener">Source</a></li></ul></nav>
+    <div class="mast-tools">
+      <button class="icon-btn" id="themeBtn" type="button" aria-label="Switch theme"></button>
+      <button class="icon-btn burger" id="burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mastNav">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <div class="docs">
+    <aside class="sidebar">
+<button class="sidebar-toggle" type="button" aria-expanded="false">
+<span>Documentation menu</span>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
+</button>
+<div class="sidebar-body">
+<h4>Start here</h4>
+<ul>
+<li><a href="./">Overview</a></li>
+<li><a href="getting-started.html">Getting started</a></li>
+</ul>
+<h4>Using NusaDB</h4>
+<ul>
+<li><a href="sql.html" aria-current="page">SQL reference</a></li>
+<li><a href="transactions.html">Transactions</a></li>
+<li><a href="clients.html">Clients and protocol</a></li>
+</ul>
+<h4>Operating</h4>
+<ul>
+<li><a href="configuration.html">Configuration</a></li>
+<li><a href="limits.html">Limits and capacity</a></li>
+</ul>
+<h4>Elsewhere</h4><ul><li><a href="https://github.com/nusadb/nusadb" target="_blank" rel="noopener">Source repository</a></li><li><a href="https://hub.docker.com/r/nusadb/nusadb" target="_blank" rel="noopener">Container image</a></li></ul>
+</div>
+    </aside>
+    <main class="prose" id="main">
+      <p class="crumb"><a href="./">Documentation</a> / SQL reference</p>
+      <h1>SQL reference</h1>
+      <p class="summary">What the engine accepts today, followed by the places where NusaDB deliberately behaves differently from what you may expect.</p>
+
+<h2 id="types">Data types</h2>
+<div class="table-scroll"><table><thead><tr><th>Group</th><th>Types</th></tr></thead><tbody><tr><td>Numeric</td><td><code>SMALLINT</code>, <code>INT</code>, <code>BIGINT</code>, <code>REAL</code>, <code>DOUBLE PRECISION</code>, <code>NUMERIC(p,s)</code></td></tr><tr><td>Character</td><td><code>TEXT</code>, <code>VARCHAR(n)</code>, <code>CHAR(n)</code></td></tr><tr><td>Binary</td><td><code>BYTEA</code></td></tr><tr><td>Boolean</td><td><code>BOOLEAN</code></td></tr><tr><td>Date and time</td><td><code>DATE</code>, <code>TIME</code>, <code>TIMESTAMP</code>, <code>TIMESTAMPTZ</code>, <code>INTERVAL</code></td></tr><tr><td>Identifier</td><td><code>UUID</code></td></tr><tr><td>Structured</td><td><code>JSON</code>, <code>JSONB</code>, arrays, composite values</td></tr><tr><td>Network</td><td><code>INET</code>, <code>CIDR</code>, <code>MACADDR</code></td></tr><tr><td>Bit string</td><td><code>BIT(n)</code>, <code>BIT VARYING</code></td></tr><tr><td>Ranges</td><td><code>INT4RANGE</code>, <code>INT8RANGE</code>, <code>NUMRANGE</code>, <code>DATERANGE</code>, <code>TSRANGE</code></td></tr><tr><td>Enumerated</td><td><code>CREATE TYPE … AS ENUM</code>, with labels enforced</td></tr><tr><td>Vector</td><td><code>VECTOR(n)</code>, with distance operators and an HNSW index</td></tr></tbody></table></div>
+<p>The network, bit-string and range types are real types rather than aliases over text: they
+compare, sort and expose their own operators and functions.</p>
+
+<h2 id="ddl">Defining objects</h2>
+<p><code>CREATE</code>, <code>ALTER</code> and <code>DROP</code> are supported for tables, indexes,
+views, materialized views, schemas, databases, sequences, domains, types, triggers, functions and
+procedures. Table constraints cover primary keys, uniqueness, foreign keys with referential
+actions, checks, not-null and defaults, including generated columns.</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">CREATE TABLE</span> orders (
+  id        <span class="k">BIGSERIAL</span> <span class="k">PRIMARY KEY</span>,
+  customer  <span class="k">BIGINT</span> <span class="k">REFERENCES</span> customers (id) <span class="k">ON DELETE CASCADE</span>,
+  total     <span class="k">NUMERIC</span>(12,2) <span class="k">CHECK</span> (total &gt;= <span class="s">0</span>),
+  tax       <span class="k">NUMERIC</span>(12,2) <span class="k">GENERATED ALWAYS AS</span> (total * <span class="s">0.11</span>) <span class="k">STORED</span>,
+  tags      <span class="k">TEXT</span>[],
+  doc       <span class="k">JSONB</span>
+);
+
+<span class="k">CREATE INDEX</span> orders_recent <span class="k">ON</span> orders (customer)
+  <span class="k">WHERE</span> total &gt; <span class="s">100</span>;                <span class="c">-- partial index</span>
+
+<span class="k">CREATE INDEX</span> orders_lower <span class="k">ON</span> orders ((lower(doc-&gt;&gt;<span class="s">'ref'</span>)));  <span class="c">-- expression index</span></pre></div>
+<div class="note caution">
+  <b><code>ALTER TABLE … RENAME COLUMN</code> is refused when something refers to the column</b>
+  <p>Constraint bodies, index expressions, defaults, views, policies, triggers and routine bodies
+  keep the column name as text. Rather than rename the column and leave those references pointing
+  at a name that no longer exists, the engine refuses the rename and names what is in the way.
+  Drop the dependent object, rename, then recreate it. A column nothing refers to renames
+  normally.</p>
+</div>
+
+<h2 id="queries">Queries</h2>
+<p>Inner, left, right and full joins; lateral joins; scalar, <code>EXISTS</code> and quantified
+subqueries; <code>UNION</code>, <code>INTERSECT</code> and <code>EXCEPT</code>; <code>DISTINCT</code>
+and <code>DISTINCT ON</code>; <code>GROUP BY</code> with <code>GROUPING SETS</code>,
+<code>ROLLUP</code> and <code>CUBE</code>; <code>HAVING</code>; <code>FILTER</code> on aggregates;
+window functions with named windows and <code>ROWS</code>/<code>RANGE</code>/<code>GROUPS</code>
+frames; common table expressions including <code>WITH RECURSIVE</code>;
+<code>TABLESAMPLE</code>; <code>WITH ORDINALITY</code>; and <code>FETCH FIRST … WITH TIES</code>.</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">WITH RECURSIVE</span> chain <span class="k">AS</span> (
+  <span class="k">SELECT</span> id, manager, <span class="s">1</span> <span class="k">AS</span> depth <span class="k">FROM</span> staff <span class="k">WHERE</span> manager <span class="k">IS NULL</span>
+  <span class="k">UNION ALL</span>
+  <span class="k">SELECT</span> s.id, s.manager, c.depth + <span class="s">1</span>
+  <span class="k">FROM</span> staff s <span class="k">JOIN</span> chain c <span class="k">ON</span> s.manager = c.id
+)
+<span class="k">SELECT</span> depth, count(*) <span class="k">FROM</span> chain <span class="k">GROUP BY</span> depth <span class="k">ORDER BY</span> depth;</pre></div>
+
+<h2 id="dml">Changing data</h2>
+<p><code>INSERT</code> with <code>ON CONFLICT DO NOTHING</code> or <code>DO UPDATE</code>,
+<code>UPDATE … FROM</code>, <code>DELETE … USING</code>, <code>MERGE</code> with matched, not-matched
+and not-matched-by-source clauses, <code>TRUNCATE</code> with <code>CASCADE</code> and
+<code>RESTART IDENTITY</code>, and <code>RETURNING</code> on all of them.</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">MERGE INTO</span> stock t
+<span class="k">USING</span> shipment s <span class="k">ON</span> t.sku = s.sku
+<span class="k">WHEN MATCHED</span> <span class="k">THEN UPDATE SET</span> qty = t.qty + s.qty
+<span class="k">WHEN NOT MATCHED</span> <span class="k">THEN INSERT</span> (sku, qty) <span class="k">VALUES</span> (s.sku, s.qty)
+<span class="k">WHEN NOT MATCHED BY SOURCE</span> <span class="k">THEN UPDATE SET</span> qty = <span class="s">0</span>;</pre></div>
+
+<h2 id="behaviours">Where NusaDB chooses differently</h2>
+<p>These are decisions, not gaps. Each one is deliberate and each has a reason.</p>
+
+<h3 id="collation">Text sorts by byte value</h3>
+<p>Comparison and ordering are bytewise, equivalent to a <code>C</code> collation, and
+<code>COLLATE "C"</code> or <code>"POSIX"</code> is accepted while locale collations are refused.
+Byte order is deterministic and does not change when a system library is upgraded — locale
+collations can silently invalidate an index when the library's ordering rules change. The
+practical effect is that uppercase letters sort before lowercase.</p>
+
+<h3 id="numeric-division">NUMERIC division has a fixed scale</h3>
+<p>Division produces a fixed scale rather than deriving one from the operands. The value is the
+same; only how many digits are kept differs. Round explicitly when a specific scale matters.</p>
+
+<h3 id="matview">Materialized views are snapshots</h3>
+<p>A materialized view holds the result from the last <code>REFRESH</code>. Incremental
+maintenance is opt-in with <code>WITH (incremental = true)</code>, and asking for it on a body
+that cannot be maintained incrementally is an error rather than a silent downgrade to a frozen
+snapshot.</p>
+
+<h3 id="json">JSON is normalised</h3>
+<p><code>JSON</code> and <code>JSONB</code> both store a parsed value, so key order and
+insignificant whitespace from the input text are not preserved. Keep the original text in a
+<code>TEXT</code> column when byte fidelity matters, such as a signed payload.</p>
+
+<h3 id="timestamps">TIMESTAMP and TIMESTAMPTZ assign both ways</h3>
+<p>A value of either type can be assigned to a column of the other, and the instant passes through
+unchanged. Equality between the two types is still refused: this widened assignment, not
+comparison.</p>
+
+<h3 id="workmem">A query over its memory budget fails rather than spilling</h3>
+<p>With <code>--work-mem</code> set, a stage that materialises more than the budget is failed with
+an error naming the limit, the bytes involved and how to raise it. The server stays up. This keeps
+one large query from making every other query slow, at the cost of not finishing it.</p>
+
+<h2 id="session">Session variables</h2>
+<p><code>SET</code> accepts the engine's own parameters and application-defined variables that
+carry a class prefix, such as <code>SET myapp.tenant = '7'</code>. An unrecognised parameter name
+is an error rather than a silent no-op, and a read-only parameter reports that it cannot be
+changed. <code>SHOW</code> reads them back and <code>RESET ALL</code> clears what the session set.</p>
+<div class="table-scroll"><table><thead><tr><th>Variable</th><th>Effect</th></tr></thead><tbody><tr><td><code>search_path</code></td><td>Ordered schemas an unqualified name resolves through, ending at <code>public</code>.</td></tr><tr><td><code>work_mem</code></td><td>Per-query materialisation budget for this session.</td></tr><tr><td><code>statement_timeout</code></td><td>Cancel statements past this duration.</td></tr><tr><td><code>max_autocommit_retries</code></td><td>How many times the server retries a conflicting single auto-commit statement.</td></tr><tr><td><code>hnsw_ef_search</code></td><td>Search breadth for vector index lookups; higher trades latency for recall.</td></tr></tbody></table></div>
+
+<h2 id="notsupported">Not accepted in this release</h2>
+<p>These are recognised and refused with a clear message rather than half-implemented:
+temporary tables, cursors, <code>PREPARE</code>/<code>EXECUTE</code> as statements,
+<code>FOR UPDATE NOWAIT</code>, advisory locks, <code>OVERLAPS</code>, index methods other than
+B-tree and HNSW, and locale collations. Setting a session time zone is not available either — the
+session time zone is UTC.</p>
+
+<div class="nextprev">
+<a href="getting-started.html"><small>Previous</small>Getting started</a>
+<a class="to-next" href="transactions.html"><small>Next</small>Transactions</a>
+</div>
+    </main>
+    <nav class="toc" id="toc" aria-label="On this page"><strong>On this page</strong></nav>
+  </div>
+</div>
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-note" style="margin-top:0;border-top:0;padding-top:0">
+      <p>&copy; <span id="year">2026</span> The NusaDB authors. Licensed under Apache-2.0.</p>
+      <p><a href="../">Home</a> · <a href="https://github.com/nusadb/nusadb" target="_blank" rel="noopener">Source</a> · <a href="https://github.com/nusadb/nusadb/issues" target="_blank" rel="noopener">Issues</a></p>
+    </div>
+  </div>
+</footer>
+<script src="../js/main.js"></script>
+</body>
+</html>

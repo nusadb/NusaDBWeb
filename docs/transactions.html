@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Transactions — NusaDB</title>
+<meta name="description" content="Isolation levels, snapshot behaviour, serialization conflicts and the auto-commit retry, savepoints, and locking in NusaDB." />
+<meta name="theme-color" content="#293880" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;450;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="masthead">
+  <div class="wrap masthead-in">
+    <a class="brand" href="../"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6.5c0-1.4 3.6-2.5 8-2.5s8 1.1 8 2.5-3.6 2.5-8 2.5-8-1.1-8-2.5Z"/><path d="M4 6.5v11c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5v-11"/><path d="M4 12c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5"/></svg><span>Nusa<b>DB</b></span></a>
+    <nav class="mast-nav" id="mastNav" aria-label="Main"><ul><li><a href="./">Documentation</a></li><li><a href="getting-started.html">Install</a></li><li><a href="sql.html">SQL</a></li><li><a href="limits.html">Limits</a></li><li><a href="https://github.com/nusadb/nusadb" target="_blank" rel="noopener">Source</a></li></ul></nav>
+    <div class="mast-tools">
+      <button class="icon-btn" id="themeBtn" type="button" aria-label="Switch theme"></button>
+      <button class="icon-btn burger" id="burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mastNav">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <div class="docs">
+    <aside class="sidebar">
+<button class="sidebar-toggle" type="button" aria-expanded="false">
+<span>Documentation menu</span>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
+</button>
+<div class="sidebar-body">
+<h4>Start here</h4>
+<ul>
+<li><a href="./">Overview</a></li>
+<li><a href="getting-started.html">Getting started</a></li>
+</ul>
+<h4>Using NusaDB</h4>
+<ul>
+<li><a href="sql.html">SQL reference</a></li>
+<li><a href="transactions.html" aria-current="page">Transactions</a></li>
+<li><a href="clients.html">Clients and protocol</a></li>
+</ul>
+<h4>Operating</h4>
+<ul>
+<li><a href="configuration.html">Configuration</a></li>
+<li><a href="limits.html">Limits and capacity</a></li>
+</ul>
+<h4>Elsewhere</h4><ul><li><a href="https://github.com/nusadb/nusadb" target="_blank" rel="noopener">Source repository</a></li><li><a href="https://hub.docker.com/r/nusadb/nusadb" target="_blank" rel="noopener">Container image</a></li></ul>
+</div>
+    </aside>
+    <main class="prose" id="main">
+      <p class="crumb"><a href="./">Documentation</a> / Transactions</p>
+      <h1>Transactions</h1>
+      <p class="summary">NusaDB uses multi-version rows and optimistic concurrency control. Readers work from a snapshot and never block writers; conflicting writers are told to retry rather than made to wait.</p>
+
+<h2 id="levels">Isolation levels</h2>
+<div class="table-scroll"><table><thead><tr><th>Level</th><th>Behaviour</th></tr></thead><tbody><tr><td><code>READ UNCOMMITTED</code></td><td>Accepted; behaves as read committed. The engine never exposes uncommitted rows.</td></tr><tr><td><code>READ COMMITTED</code></td><td>The default. Each statement sees rows committed before it started.</td></tr><tr><td><code>REPEATABLE READ</code></td><td>The transaction reads from one snapshot taken at its start.</td></tr><tr><td><code>SERIALIZABLE</code></td><td>Snapshot reads plus conflict detection, so the outcome matches some serial order.</td></tr></tbody></table></div><div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">BEGIN</span>;
+<span class="k">SET TRANSACTION ISOLATION LEVEL</span> <span class="k">SERIALIZABLE</span>;
+<span class="k">SELECT</span> balance <span class="k">FROM</span> accounts <span class="k">WHERE</span> id = <span class="s">1</span>;
+<span class="k">UPDATE</span> accounts <span class="k">SET</span> balance = balance - <span class="s">50</span> <span class="k">WHERE</span> id = <span class="s">1</span>;
+<span class="k">COMMIT</span>;</pre></div>
+
+<h2 id="occ">Conflicts instead of waiting</h2>
+<p>Locks do not wait. When two transactions write the same row, one of them fails with SQLSTATE
+<code>40001</code> and the message says it must be retried. Nothing is lost and nothing hangs, but
+the losing transaction has to run again.</p>
+<p>The trade is visible in both directions. Without contention this is faster than queuing, because
+no writer waits behind another. Under contention on one hot row it means retries, so an application
+that updates a shared counter needs to handle <code>40001</code>.</p>
+
+<h3 id="autoretry">The server retries a single auto-commit statement</h3>
+<p>A statement outside an explicit transaction has committed nothing and has shown the application
+no intermediate result, so the server re-runs it after a short randomised back-off instead of
+returning the conflict. This is what a correct client retry loop would do, done in the server.</p>
+<p>Inside <code>BEGIN … COMMIT</code> the same retry would be wrong: a statement there may follow
+others whose results the application already acted on, and only the application knows whether the
+whole transaction can be replayed. So it is not retried, and the conflict is returned.</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">SET</span> max_autocommit_retries = <span class="s">50</span>;  <span class="c">-- default; 0 turns the retry off</span></pre></div>
+<p>The budget is a bound, not a promise. A conflict that outlives it is reported unchanged, so an
+application's own retry loop still sees its <code>40001</code>. Two things follow from a retry
+being a re-run: volatile expressions are evaluated again, so <code>now()</code> and
+<code>random()</code> produce fresh values and a sequence consumed by a failed attempt leaves a
+gap. Pair the retry budget with <code>statement_timeout</code> if you want an upper bound on how
+long one statement may occupy a connection.</p>
+
+<h2 id="savepoints">Savepoints</h2>
+<p>A savepoint marks a point a transaction can roll back to without abandoning the whole
+transaction.</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">BEGIN</span>;
+<span class="k">INSERT INTO</span> audit (event) <span class="k">VALUES</span> (<span class="s">'import started'</span>);
+<span class="k">SAVEPOINT</span> before_rows;
+
+<span class="k">INSERT INTO</span> rows_in (payload) <span class="k">VALUES</span> (<span class="s">'…'</span>);
+<span class="k">ROLLBACK TO SAVEPOINT</span> before_rows;   <span class="c">-- audit row survives</span>
+
+<span class="k">COMMIT</span>;</pre></div>
+
+<h2 id="errors">An error aborts the whole transaction</h2>
+<p>After a failed statement the transaction is in an aborted state and further statements are
+refused until it ends. Rows written earlier in the transaction do not leak: either everything
+commits or nothing does. Use a savepoint when you want to recover from an expected failure
+without discarding earlier work.</p>
+
+<h2 id="visibility">How versions are kept</h2>
+<p>Each row version records the transaction that created it and, once removed, the transaction that
+removed it. A reader compares those against its own snapshot, which is why it never has to wait for
+a writer. Versions no live snapshot can still reach are removed by a background worker, so the
+version store does not grow without bound under sustained updates.</p>
+<p>One consequence is worth knowing when sizing a deployment: deleting rows frees pages for reuse
+but does not reduce the resident memory the engine reports, because page memory is recycled rather
+than returned. See <a href="limits.html">limits and capacity</a>.</p>
+
+<h2 id="locking">Explicit locking</h2>
+<p><code>SELECT … FOR UPDATE</code> and <code>FOR SHARE</code> are available, including
+<code>SKIP LOCKED</code>, and so is <code>LOCK TABLE</code>. <code>NOWAIT</code> is not accepted:
+because locks already do not wait, a conflicting request fails immediately, which is what
+<code>NOWAIT</code> asks for.</p>
+
+<div class="nextprev">
+<a href="sql.html"><small>Previous</small>SQL reference</a>
+<a class="to-next" href="clients.html"><small>Next</small>Clients and protocol</a>
+</div>
+    </main>
+    <nav class="toc" id="toc" aria-label="On this page"><strong>On this page</strong></nav>
+  </div>
+</div>
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-note" style="margin-top:0;border-top:0;padding-top:0">
+      <p>&copy; <span id="year">2026</span> The NusaDB authors. Licensed under Apache-2.0.</p>
+      <p><a href="../">Home</a> · <a href="https://github.com/nusadb/nusadb" target="_blank" rel="noopener">Source</a> · <a href="https://github.com/nusadb/nusadb/issues" target="_blank" rel="noopener">Issues</a></p>
+    </div>
+  </div>
+</footer>
+<script src="../js/main.js"></script>
+</body>
+</html>

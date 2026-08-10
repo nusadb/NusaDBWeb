@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Limits and capacity — NusaDB</title>
+<meta name="description" content="What bounds a NusaDB deployment today: data size is bounded by memory, the write-ahead log is not yet truncated, restart replays it, and there is no built-in backup tooling." />
+<meta name="theme-color" content="#293880" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;450;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="masthead">
+  <div class="wrap masthead-in">
+    <a class="brand" href="../"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6.5c0-1.4 3.6-2.5 8-2.5s8 1.1 8 2.5-3.6 2.5-8 2.5-8-1.1-8-2.5Z"/><path d="M4 6.5v11c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5v-11"/><path d="M4 12c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5"/></svg><span>Nusa<b>DB</b></span></a>
+    <nav class="mast-nav" id="mastNav" aria-label="Main"><ul><li><a href="./">Documentation</a></li><li><a href="getting-started.html">Install</a></li><li><a href="sql.html">SQL</a></li><li><a href="limits.html" aria-current="page">Limits</a></li><li><a href="https://github.com/nusadb/nusadb" target="_blank" rel="noopener">Source</a></li></ul></nav>
+    <div class="mast-tools">
+      <button class="icon-btn" id="themeBtn" type="button" aria-label="Switch theme"></button>
+      <button class="icon-btn burger" id="burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mastNav">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <div class="docs">
+    <aside class="sidebar">
+<button class="sidebar-toggle" type="button" aria-expanded="false">
+<span>Documentation menu</span>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
+</button>
+<div class="sidebar-body">
+<h4>Start here</h4>
+<ul>
+<li><a href="./">Overview</a></li>
+<li><a href="getting-started.html">Getting started</a></li>
+</ul>
+<h4>Using NusaDB</h4>
+<ul>
+<li><a href="sql.html">SQL reference</a></li>
+<li><a href="transactions.html">Transactions</a></li>
+<li><a href="clients.html">Clients and protocol</a></li>
+</ul>
+<h4>Operating</h4>
+<ul>
+<li><a href="configuration.html">Configuration</a></li>
+<li><a href="limits.html" aria-current="page">Limits and capacity</a></li>
+</ul>
+<h4>Elsewhere</h4><ul><li><a href="https://github.com/nusadb/nusadb" target="_blank" rel="noopener">Source repository</a></li><li><a href="https://hub.docker.com/r/nusadb/nusadb" target="_blank" rel="noopener">Container image</a></li></ul>
+</div>
+    </aside>
+    <main class="prose" id="main">
+      <p class="crumb"><a href="./">Documentation</a> / Limits and capacity</p>
+      <h1>Limits and capacity</h1>
+      <p class="summary">The constraints on this page change how you size and operate a deployment. They are stated plainly because finding them during a data load is far more expensive than reading them first.</p>
+
+<div class="note caution">
+  <b>Read this before loading a large dataset</b>
+  <p>A dataset larger than the resident ceiling does not load slowly — it does not load. The
+  section below explains the ceiling and how to raise it.</p>
+</div>
+
+<h2 id="memory">Working data is bounded by memory</h2>
+<p>Table data lives in memory. Rows are held in an in-memory page store and made durable through
+the write-ahead log, and pages are <strong>not evicted to disk</strong>. Once the resident store
+reaches its ceiling — <code>--max-resident-bytes</code>, derived from the detected memory budget
+when unset — further row inserts are refused with an error naming the limit and the bytes
+resident.</p>
+<div class="code"><div class="code-bar"><span>output</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre>ERROR XX000: out of memory: the in-memory store reached its resident-memory
+limit of 858993440 bytes (859001088 bytes resident); free rows
+(DELETE/TRUNCATE), raise the limit, or use a larger host</pre></div>
+<p>The refusal is loud and explicit, so this is a capacity limit rather than a correctness
+problem. What matters when planning is that <strong>a database's working data must fit inside the
+resident ceiling</strong>, and on a memory-constrained host that ceiling is a fraction of RAM.</p>
+<p>Two details commonly surprise people:</p>
+<ul>
+  <li>Updates and index builds are not gated by this ceiling, so an update-heavy workload already
+  at the limit can still grow past it.</li>
+  <li>Deleting rows frees pages for reuse but does not lower the resident meter — page memory is
+  recycled rather than returned — and restarting does not lower it either, because recovery replays
+  the log in order and rebuilds the same high-water mark.</li>
+</ul>
+<p>Once the ceiling has been reached the remedies are raising it, moving to a larger host, or
+reloading the live rows into a fresh data directory, which lands residency at the level of live
+data.</p>
+
+<h2 id="log-growth">The log grows with write history</h2>
+<p>The write-ahead log is the durable copy of the data, and no checkpoint truncates it yet. The
+data directory therefore grows with everything that has ever been written, not with how much data
+is currently live. A steady write workload adds to it indefinitely, and deleting rows does not
+shrink it.</p>
+<p>Budget disk against write volume over time rather than against table size, and watch the data
+directory as an operational signal.</p>
+
+<h2 id="restart">Restart time grows with the log</h2>
+<p>Recovery replays that history, so start-up time grows with the size of the log rather than the
+size of the data. On a database that has been written to for a long time without being reloaded,
+this is the number that decides how long a restart takes. If a short restart window matters,
+reloading into a fresh data directory resets both the log and the resident high-water mark.</p>
+
+<div class="note">
+  <b>These three are one design, not three bugs</b>
+  <p>Pages live in memory, the log is the durable copy, and nothing truncates the log. Checkpointing
+  is what connects them: it is what would let the log be truncated, bound restart time, and give
+  page eviction somewhere to write to. It is the most significant piece of work outstanding before
+  1.0.</p>
+</div>
+
+<h2 id="backup">There is no built-in backup or replication</h2>
+<p>NusaDB ships no backup, restore, or replication tooling. What you can do today is stop the
+server and copy the data directory, or export the data over a connection with <code>COPY</code> and
+reload it elsewhere. There is no point-in-time recovery, no streaming replica, and no built-in
+scheduled backup.</p>
+<p>This is the largest gap between NusaDB and a database you would run a business on unattended,
+and it is worth weighing before choosing it for data you cannot reproduce.</p>
+
+<h2 id="single-node">Single node</h2>
+<p>The engine runs on one machine. There is no clustering, no replication, and therefore no
+automatic failover: the availability of the deployment is the availability of that host and its
+disk.</p>
+
+<h2 id="query-limits">Query and memory behaviour</h2>
+<p>The executor materialises each stage rather than streaming it. With <code>--work-mem</code>
+set, a stage that exceeds the budget fails with an error naming the limit and the server stays
+responsive; without it, a large enough query can exhaust host memory. Setting a work-memory budget
+is the safer configuration, at the cost of failing queries that would otherwise have finished
+slowly.</p>
+<p>A spill directory flag exists and covers some operators; sorting, <code>DISTINCT</code>,
+grouping and window functions do not yet stream their output to it, so those still fail at the
+budget rather than spilling.</p>
+
+<h2 id="vectors">Vector index build cost</h2>
+<p>Vector search is available with a <code>VECTOR(n)</code> type, the four distance operators, and
+an HNSW index whose recall reaches exact-search results at a high enough
+<code>hnsw_ef_search</code>. Building the index is expensive — substantially more so than
+specialised vector extensions — and the graph is rebuilt rather than checkpointed, so plan index
+builds as scheduled work rather than something to do during a load.</p>
+
+<h2 id="not-built">Not in this release</h2>
+<div class="table-scroll"><table><thead><tr><th>Area</th><th>Status</th></tr></thead><tbody><tr><td>Backup, restore, point-in-time recovery</td><td>Not built. Stop-and-copy or export with <code>COPY</code>.</td></tr><tr><td>Replication and clustering</td><td>Not built. Single node only.</td></tr><tr><td>Checkpointing and log truncation</td><td>Not built. See above.</td></tr><tr><td>Page eviction to disk</td><td>Not built. Data is bounded by memory.</td></tr><tr><td>Temporary tables</td><td>Refused with a clear error.</td></tr><tr><td>Cursors, <code>PREPARE</code>/<code>EXECUTE</code> statements</td><td>Refused.</td></tr><tr><td>Session time zone</td><td>Fixed at UTC.</td></tr><tr><td>Locale collations</td><td>Refused; byte ordering only.</td></tr><tr><td>Index methods beyond B-tree and HNSW</td><td>Refused.</td></tr><tr><td>Latency and storage metrics</td><td>Four counters only.</td></tr></tbody></table></div>
+
+<h2 id="fit">Where NusaDB fits today</h2>
+<p>It is a reasonable choice when the working set fits comfortably in the memory you are willing to
+give it, when a single node is acceptable, and when you can reproduce the data or arrange your own
+export schedule. It is not the right choice yet for data that must survive unattended, for datasets
+that outgrow memory, or where a restart must be quick regardless of write history.</p>
+<p>Everything on this page is a property of the current release rather than a permanent limitation.
+Check the release notes when a new version appears.</p>
+
+<div class="nextprev">
+<a href="configuration.html"><small>Previous</small>Configuration</a>
+</div>
+    </main>
+    <nav class="toc" id="toc" aria-label="On this page"><strong>On this page</strong></nav>
+  </div>
+</div>
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-note" style="margin-top:0;border-top:0;padding-top:0">
+      <p>&copy; <span id="year">2026</span> The NusaDB authors. Licensed under Apache-2.0.</p>
+      <p><a href="../">Home</a> · <a href="https://github.com/nusadb/nusadb" target="_blank" rel="noopener">Source</a> · <a href="https://github.com/nusadb/nusadb/issues" target="_blank" rel="noopener">Issues</a></p>
+    </div>
+  </div>
+</footer>
+<script src="../js/main.js"></script>
+</body>
+</html>

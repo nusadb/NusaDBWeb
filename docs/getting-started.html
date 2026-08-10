@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Getting started — NusaDB</title>
+<meta name="description" content="Install NusaDB from the container image or from source, connect with nusa-cli, create databases and schemas, and move data in bulk with COPY." />
+<meta name="theme-color" content="#293880" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;450;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="masthead">
+  <div class="wrap masthead-in">
+    <a class="brand" href="../"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6.5c0-1.4 3.6-2.5 8-2.5s8 1.1 8 2.5-3.6 2.5-8 2.5-8-1.1-8-2.5Z"/><path d="M4 6.5v11c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5v-11"/><path d="M4 12c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5"/></svg><span>Nusa<b>DB</b></span></a>
+    <nav class="mast-nav" id="mastNav" aria-label="Main"><ul><li><a href="./">Documentation</a></li><li><a href="getting-started.html" aria-current="page">Install</a></li><li><a href="sql.html">SQL</a></li><li><a href="limits.html">Limits</a></li><li><a href="https://github.com/nusadb/nusadb" target="_blank" rel="noopener">Source</a></li></ul></nav>
+    <div class="mast-tools">
+      <button class="icon-btn" id="themeBtn" type="button" aria-label="Switch theme"></button>
+      <button class="icon-btn burger" id="burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mastNav">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <div class="docs">
+    <aside class="sidebar">
+<button class="sidebar-toggle" type="button" aria-expanded="false">
+<span>Documentation menu</span>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
+</button>
+<div class="sidebar-body">
+<h4>Start here</h4>
+<ul>
+<li><a href="./">Overview</a></li>
+<li><a href="getting-started.html" aria-current="page">Getting started</a></li>
+</ul>
+<h4>Using NusaDB</h4>
+<ul>
+<li><a href="sql.html">SQL reference</a></li>
+<li><a href="transactions.html">Transactions</a></li>
+<li><a href="clients.html">Clients and protocol</a></li>
+</ul>
+<h4>Operating</h4>
+<ul>
+<li><a href="configuration.html">Configuration</a></li>
+<li><a href="limits.html">Limits and capacity</a></li>
+</ul>
+<h4>Elsewhere</h4><ul><li><a href="https://github.com/nusadb/nusadb" target="_blank" rel="noopener">Source repository</a></li><li><a href="https://hub.docker.com/r/nusadb/nusadb" target="_blank" rel="noopener">Container image</a></li></ul>
+</div>
+    </aside>
+    <main class="prose" id="main">
+      <p class="crumb"><a href="./">Documentation</a> / Getting started</p>
+      <h1>Getting started</h1>
+      <p class="summary">Run a server, connect to it, and load some data. Two installation routes are covered: the published container image, and a build from source.</p>
+
+<h2 id="container">Run the container image</h2>
+<p>The image carries both the server and the shell, so nothing needs building. Give it a volume:
+the data directory holds the write-ahead log, which is the durable copy of your data.</p>
+<div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre>docker run -d --name nusadb \
+  -p 5678:5678 \
+  -v nusadb-data:/var/lib/nusadb \
+  -e NUSADB_USER=app \
+  -e NUSADB_PASSWORD=change-me \
+  nusadb/nusadb:0.1.0-beta.8</pre></div>
+<p>Setting <code>NUSADB_USER</code> together with <code>NUSADB_PASSWORD</code> turns on
+SCRAM-SHA-256 for that user. Setting only one of the pair is an error, so a half-configured
+container fails at start-up instead of quietly accepting everyone.</p>
+<div class="note caution">
+  <b>Without credentials the server trusts every client</b>
+  <p>A server started with no <code>--auth-user</code> and no environment pair runs
+  trust-on-startup: any client is accepted without a password, and the startup log says so.
+  That is fine for a laptop and wrong for anything reachable by others.</p>
+</div>
+
+<h2 id="source">Build from source</h2>
+<p>A Rust toolchain is the only prerequisite; the pinned version lives in
+<code>rust-toolchain.toml</code> and is installed automatically by <code>rustup</code>.</p>
+<div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre>git clone https://github.com/nusadb/nusadb.git
+cd nusadb
+cargo build --release
+
+./target/release/nusadb-server \
+  --listen 127.0.0.1:5678 \
+  --data-dir ./data</pre></div>
+<p>The data directory is created if it does not exist. <code>RUST_LOG</code> controls log
+verbosity, for example <code>RUST_LOG=info</code>.</p>
+
+<h2 id="connect">Connect</h2>
+<p>The defaults are host <code>127.0.0.1:5678</code>, database <code>nusadb</code>, and the
+bootstrap superuser <code>nusa-root</code>. A trust-on-startup server ignores the password; a
+server configured with credentials requires it.</p>
+<div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre>nusa-cli --host 127.0.0.1:5678 --user nusa-root --database nusadb
+
+# inside the container
+docker exec -it nusadb nusa-cli --user app --database nusadb</pre></div>
+<div class="note">
+  <b>Clients for other databases will not connect</b>
+  <p>NusaDB speaks its own protocol. A tool built for a different engine gets no answer to its
+  handshake, which looks like a dead socket from its side. Use <code>nusa-cli</code>, one of the
+  official drivers, or write a client against the specification — see
+  <a href="clients.html">clients and protocol</a>.</p>
+</div>
+
+<h2 id="first-table">Create something</h2>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">CREATE TABLE</span> customers (
+  id      <span class="k">BIGINT</span> <span class="k">PRIMARY KEY</span>,
+  email   <span class="k">TEXT</span> <span class="k">NOT NULL</span> <span class="k">UNIQUE</span>,
+  country <span class="k">TEXT</span>,
+  joined  <span class="k">TIMESTAMPTZ</span> <span class="k">DEFAULT</span> now()
+);
+
+<span class="k">CREATE INDEX</span> customers_country <span class="k">ON</span> customers (country);
+
+<span class="k">INSERT INTO</span> customers (id, email, country)
+<span class="k">VALUES</span> (<span class="s">1</span>, <span class="s">'ana@example.com'</span>, <span class="s">'ID'</span>),
+       (<span class="s">2</span>, <span class="s">'budi@example.com'</span>, <span class="s">'ID'</span>)
+<span class="k">RETURNING</span> id, joined;</pre></div>
+
+<h2 id="databases">Databases and schemas</h2>
+<p>NusaDB holds several databases, each with its own directory under
+<code>&lt;data-dir&gt;/base/</code>, and several schemas within a database. Each connection
+targets one database.</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">CREATE DATABASE</span> app;              <span class="c">-- a separate physical database</span>
+<span class="k">CREATE SCHEMA</span> tenant;               <span class="c">-- a namespace inside this database</span>
+<span class="k">CREATE TABLE</span> tenant.t (id <span class="k">INT</span>);
+<span class="k">SELECT</span> * <span class="k">FROM</span> tenant.t;           <span class="c">-- resolved through search_path, then public</span></pre></div>
+<p>Connect to another database by name; a session cannot query across databases.</p>
+<div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre>nusa-cli --host 127.0.0.1:5678 --user nusa-root --database app</pre></div>
+
+<h2 id="bulk">Load and export in bulk</h2>
+<p><code>COPY</code> streams rows in one exchange instead of a round trip per row. In the shell
+forms the data travels on the command's own standard input and output.</p>
+<div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre># tab-delimited, \N for NULL (the server's text format)
+nusa-cli -c "COPY customers FROM STDIN" < rows.tsv
+
+# CSV with a header line
+nusa-cli -c "COPY customers FROM STDIN WITH (FORMAT csv, HEADER)" < rows.csv
+
+# export the same way
+nusa-cli -c "COPY customers TO STDOUT" > rows.tsv</pre></div>
+<p>During an export the row count goes to standard error, so it never lands in the exported file.
+One redirect feeds one load: a batch containing two <code>COPY … FROM STDIN</code> statements
+refuses the second rather than reporting that it loaded nothing. Typing
+<code>COPY … FROM STDIN</code> at the interactive prompt is refused too, because there the
+keyboard is already the session's input.</p>
+
+<h2 id="batch">Running statements from scripts</h2>
+<p>In both batch forms — <code>-c</code> for a statement and <code>-f</code> for a file — a server
+error is printed to standard error and the remaining statements still run. The process then exits
+non-zero, so a shell script that loads data in stages stops at the failed stage instead of
+continuing as though it had worked.</p>
+<div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre>set -eu
+nusa-cli -f schema.sql
+nusa-cli -c "COPY customers FROM STDIN" < customers.tsv
+nusa-cli -c "ANALYZE customers"    # refresh planner statistics after a load</pre></div>
+
+<h2 id="next">Next</h2>
+<ul>
+  <li><a href="sql.html">SQL reference</a> — the types and statements the engine accepts.</li>
+  <li><a href="configuration.html">Configuration</a> — flags for authentication, TLS, limits and metrics.</li>
+  <li><a href="limits.html">Limits and capacity</a> — read this before loading a large dataset.</li>
+</ul>
+
+<div class="nextprev">
+<a href="./"><small>Previous</small>Overview</a>
+<a class="to-next" href="sql.html"><small>Next</small>SQL reference</a>
+</div>
+    </main>
+    <nav class="toc" id="toc" aria-label="On this page"><strong>On this page</strong></nav>
+  </div>
+</div>
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-note" style="margin-top:0;border-top:0;padding-top:0">
+      <p>&copy; <span id="year">2026</span> The NusaDB authors. Licensed under Apache-2.0.</p>
+      <p><a href="../">Home</a> · <a href="https://github.com/nusadb/nusadb" target="_blank" rel="noopener">Source</a> · <a href="https://github.com/nusadb/nusadb/issues" target="_blank" rel="noopener">Issues</a></p>
+    </div>
+  </div>
+</footer>
+<script src="../js/main.js"></script>
+</body>
+</html>

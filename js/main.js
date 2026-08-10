@@ -1,96 +1,161 @@
+/* Shared behaviour for the NusaDB site.
+   No framework, no build step: every page loads this one file and only the
+   pieces whose markup is present do anything. */
+
 (function () {
   "use strict";
 
-  var nav = document.getElementById("navbar");
-  var toggle = document.getElementById("navToggle");
-  var links = document.getElementById("navLinks");
-  var yearEl = document.getElementById("year");
+  /* ---- colour scheme -------------------------------------------------- */
 
-  function onScroll() {
-    if (window.scrollY > 10) {
-      nav.classList.add("scrolled");
-    } else {
-      nav.classList.remove("scrolled");
-    }
+  var KEY = "nusadb-theme";
+  var root = document.documentElement;
+
+  try {
+    var saved = localStorage.getItem(KEY);
+    if (saved === "light" || saved === "dark") root.setAttribute("data-theme", saved);
+  } catch (e) { /* storage blocked: fall back to the media query */ }
+
+  function currentTheme() {
+    var set = root.getAttribute("data-theme");
+    if (set) return set;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   }
 
-  function closeMenu() {
-    toggle.classList.remove("open");
-    links.classList.remove("open");
-    toggle.setAttribute("aria-expanded", "false");
+  var themeBtn = document.getElementById("themeBtn");
+  if (themeBtn) {
+    var paint = function () {
+      var dark = currentTheme() === "dark";
+      themeBtn.setAttribute("aria-label", dark ? "Switch to light theme" : "Switch to dark theme");
+      themeBtn.innerHTML = dark
+        ? '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>'
+        : '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.6 6.6 0 0 0 9.8 9.8Z"/></svg>';
+    };
+    paint();
+    themeBtn.addEventListener("click", function () {
+      var next = currentTheme() === "dark" ? "light" : "dark";
+      root.setAttribute("data-theme", next);
+      try { localStorage.setItem(KEY, next); } catch (e) { /* ignore */ }
+      paint();
+    });
   }
 
-  toggle.addEventListener("click", function () {
-    var open = links.classList.toggle("open");
-    toggle.classList.toggle("open", open);
-    toggle.setAttribute("aria-expanded", String(open));
-  });
+  /* ---- masthead + sidebar toggles ------------------------------------ */
 
-  links.addEventListener("click", function (e) {
-    if (e.target.closest("a")) {
-      closeMenu();
-    }
-  });
-
-  window.addEventListener("resize", function () {
-    if (window.innerWidth > 768) {
-      closeMenu();
-    }
-  });
-
-  if (yearEl) {
-    yearEl.textContent = new Date().getFullYear();
+  var burger = document.getElementById("burger");
+  var mastNav = document.getElementById("mastNav");
+  if (burger && mastNav) {
+    burger.addEventListener("click", function () {
+      var open = mastNav.classList.toggle("open");
+      burger.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+    mastNav.addEventListener("click", function (ev) {
+      if (ev.target.tagName === "A") {
+        mastNav.classList.remove("open");
+        burger.setAttribute("aria-expanded", "false");
+      }
+    });
   }
 
-  onScroll();
-  window.addEventListener("scroll", onScroll, { passive: true });
+  var sideBtn = document.querySelector(".sidebar-toggle");
+  var side = document.querySelector(".sidebar");
+  if (sideBtn && side) {
+    sideBtn.addEventListener("click", function () {
+      var open = side.classList.toggle("open");
+      sideBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+  }
 
-  document.querySelectorAll(".copy-btn").forEach(function (btn) {
+  /* ---- copy buttons --------------------------------------------------- */
+
+  document.querySelectorAll(".code").forEach(function (block) {
+    var btn = block.querySelector(".copy");
+    var pre = block.querySelector("pre");
+    if (!btn || !pre) return;
+
     btn.addEventListener("click", function () {
-      var code = btn.closest(".code-wrap").querySelector("code");
-      var text = code.innerText;
-
-      function fallbackCopy() {
+      // textContent drops the syntax spans, so what lands on the clipboard is
+      // what a shell or a session would accept.
+      var text = pre.textContent.replace(/\s+$/, "");
+      var done = function () {
+        var label = btn.querySelector("em");
+        btn.dataset.done = "1";
+        if (label) label.textContent = "Copied";
+        setTimeout(function () {
+          btn.dataset.done = "";
+          if (label) label.textContent = "Copy";
+        }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, fallback);
+      } else {
+        fallback();
+      }
+      function fallback() {
         var ta = document.createElement("textarea");
         ta.value = text;
+        ta.setAttribute("readonly", "");
         ta.style.position = "fixed";
         ta.style.opacity = "0";
         document.body.appendChild(ta);
         ta.select();
-        var ok = false;
-        try {
-          ok = document.execCommand("copy");
-        } catch (err) {
-          ok = false;
-        }
+        try { document.execCommand("copy"); done(); } catch (e) { /* give up quietly */ }
         document.body.removeChild(ta);
-        return ok;
-      }
-
-      var done = false;
-      if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(text).then(
-          function () {
-            done = true;
-            showCopied(btn);
-          },
-          function () {
-            if (fallbackCopy()) showCopied(btn);
-          }
-        );
-      } else if (fallbackCopy()) {
-        showCopied(btn);
-      }
-
-      function showCopied(el) {
-        el.classList.add("copied");
-        var old = el.textContent;
-        el.textContent = "Copied!";
-        setTimeout(function () {
-          el.classList.remove("copied");
-          el.textContent = old;
-        }, 1800);
       }
     });
   });
+
+  /* ---- heading anchors + table of contents ---------------------------- */
+
+  var prose = document.querySelector(".prose");
+  var tocBox = document.getElementById("toc");
+
+  if (prose) {
+    var heads = prose.querySelectorAll("h2[id], h3[id]");
+    heads.forEach(function (h) {
+      var a = document.createElement("a");
+      a.className = "anchor";
+      a.href = "#" + h.id;
+      a.setAttribute("aria-label", "Link to this section");
+      a.textContent = "#";
+      h.appendChild(a);
+    });
+
+    if (tocBox && heads.length > 2) {
+      var ul = document.createElement("ul");
+      heads.forEach(function (h) {
+        var li = document.createElement("li");
+        var a = document.createElement("a");
+        a.href = "#" + h.id;
+        a.textContent = (h.textContent || "").replace(/#$/, "").trim();
+        if (h.tagName === "H3") a.className = "lv3";
+        li.appendChild(a);
+        ul.appendChild(li);
+      });
+      tocBox.appendChild(ul);
+
+      // Highlight the heading nearest the top of the viewport rather than
+      // whichever one an observer fired for last, so fast scrolling settles on
+      // the section actually being read.
+      var links = tocBox.querySelectorAll("a");
+      var spy = function () {
+        var best = 0;
+        for (var i = 0; i < heads.length; i++) {
+          if (heads[i].getBoundingClientRect().top - 90 <= 0) best = i; else break;
+        }
+        links.forEach(function (l, i) { l.classList.toggle("on", i === best); });
+      };
+      var queued = false;
+      window.addEventListener("scroll", function () {
+        if (queued) return;
+        queued = true;
+        requestAnimationFrame(function () { spy(); queued = false; });
+      }, { passive: true });
+      spy();
+    }
+  }
+
+  /* ---- year stamp ----------------------------------------------------- */
+
+  var y = document.getElementById("year");
+  if (y) y.textContent = String(new Date().getFullYear());
 })();
