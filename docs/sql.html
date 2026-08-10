@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>SQL reference — NusaDB</title>
+<title>SQL reference · NusaDB</title>
 <meta name="description" content="The SQL surface NusaDB accepts: data types, statements, query features, and the behaviours where NusaDB makes a deliberate choice of its own." />
 <meta name="theme-color" content="#293880" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -125,7 +125,7 @@ and not-matched-by-source clauses, <code>TRUNCATE</code> with <code>CASCADE</cod
 <h3 id="collation">Text sorts by byte value</h3>
 <p>Comparison and ordering are bytewise, equivalent to a <code>C</code> collation, and
 <code>COLLATE "C"</code> or <code>"POSIX"</code> is accepted while locale collations are refused.
-Byte order is deterministic and does not change when a system library is upgraded — locale
+Byte order is deterministic and does not change when a system library is upgraded. Locale
 collations can silently invalidate an index when the library's ordering rules change. The
 practical effect is that uppercase letters sort before lowercase.</p>
 
@@ -165,8 +165,8 @@ changed. <code>SHOW</code> reads them back and <code>RESET ALL</code> clears wha
 <p>These are recognised and refused with a clear message rather than half-implemented:
 temporary tables, cursors, <code>PREPARE</code>/<code>EXECUTE</code> as statements,
 <code>FOR UPDATE NOWAIT</code>, advisory locks, <code>OVERLAPS</code>, index methods other than
-B-tree and HNSW, and locale collations. Setting a session time zone is not available either — the
-session time zone is UTC.</p>
+B-tree and HNSW, and locale collations. Setting a session time zone is not available either. The
+session time zone is fixed at UTC.</p>
 
 <div class="nextprev">
 <a href="getting-started.html"><small>Previous</small>Getting started</a>

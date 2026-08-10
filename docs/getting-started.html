@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Getting started — NusaDB</title>
+<title>Getting started · NusaDB</title>
 <meta name="description" content="Install NusaDB from the container image or from source, connect with nusa-cli, create databases and schemas, and move data in bulk with COPY." />
 <meta name="theme-color" content="#293880" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -104,7 +104,7 @@ docker exec -it nusadb nusa-cli --user app --database nusadb</pre></div>
   <b>Clients for other databases will not connect</b>
   <p>NusaDB speaks its own protocol. A tool built for a different engine gets no answer to its
   handshake, which looks like a dead socket from its side. Use <code>nusa-cli</code>, one of the
-  official drivers, or write a client against the specification — see
+  official drivers, or write a client against the specification. See
   <a href="clients.html">clients and protocol</a>.</p>
 </div>
 
@@ -156,8 +156,9 @@ refuses the second rather than reporting that it loaded nothing. Typing
 keyboard is already the session's input.</p>
 
 <h2 id="batch">Running statements from scripts</h2>
-<p>In both batch forms — <code>-c</code> for a statement and <code>-f</code> for a file — a server
-error is printed to standard error and the remaining statements still run. The process then exits
+<p>Both batch forms behave the same way: <code>-c</code> takes a statement and
+<code>-f</code> takes a file. A server error is printed to standard error and the
+remaining statements still run. The process then exits
 non-zero, so a shell script that loads data in stages stops at the failed stage instead of
 continuing as though it had worked.</p>
 <div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
@@ -168,9 +169,9 @@ nusa-cli -c "ANALYZE customers"    # refresh planner statistics after a load</pr
 
 <h2 id="next">Next</h2>
 <ul>
-  <li><a href="sql.html">SQL reference</a> — the types and statements the engine accepts.</li>
-  <li><a href="configuration.html">Configuration</a> — flags for authentication, TLS, limits and metrics.</li>
-  <li><a href="limits.html">Limits and capacity</a> — read this before loading a large dataset.</li>
+  <li><a href="sql.html">SQL reference</a>. The types and statements the engine accepts.</li>
+  <li><a href="configuration.html">Configuration</a>. Flags for authentication, TLS, limits and metrics.</li>
+  <li><a href="limits.html">Limits and capacity</a>. Read this before loading a large dataset.</li>
 </ul>
 
 <div class="nextprev">

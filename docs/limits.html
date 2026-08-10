@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Limits and capacity — NusaDB</title>
+<title>Limits and capacity · NusaDB</title>
 <meta name="description" content="What bounds a NusaDB deployment today: data size is bounded by memory, the write-ahead log is not yet truncated, restart replays it, and there is no built-in backup tooling." />
 <meta name="theme-color" content="#293880" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -59,16 +59,16 @@
 
 <div class="note caution">
   <b>Read this before loading a large dataset</b>
-  <p>A dataset larger than the resident ceiling does not load slowly — it does not load. The
-  section below explains the ceiling and how to raise it.</p>
+  <p>A dataset larger than the resident ceiling does not load slowly. It does not load at
+  all. The section below explains the ceiling and how to raise it.</p>
 </div>
 
 <h2 id="memory">Working data is bounded by memory</h2>
 <p>Table data lives in memory. Rows are held in an in-memory page store and made durable through
 the write-ahead log, and pages are <strong>not evicted to disk</strong>. Once the resident store
-reaches its ceiling — <code>--max-resident-bytes</code>, derived from the detected memory budget
-when unset — further row inserts are refused with an error naming the limit and the bytes
-resident.</p>
+reaches its ceiling, further row inserts are refused with an error naming the limit and the
+bytes resident. That ceiling comes from <code>--max-resident-bytes</code>, or is derived from
+the detected memory budget when the flag is unset.</p>
 <div class="code out"><div class="code-bar"><span>output</span><button class="copy" type="button"><em>Copy</em></button></div>
 <pre>ERROR XX000: out of memory: the in-memory store reached its resident-memory
 limit of 858993440 bytes (859001088 bytes resident); free rows
@@ -80,8 +80,8 @@ resident ceiling</strong>, and on a memory-constrained host that ceiling is a fr
 <ul>
   <li>Updates and index builds are not gated by this ceiling, so an update-heavy workload already
   at the limit can still grow past it.</li>
-  <li>Deleting rows frees pages for reuse but does not lower the resident meter — page memory is
-  recycled rather than returned — and restarting does not lower it either, because recovery replays
+  <li>Deleting rows frees pages for reuse but does not lower the resident meter, because page
+  memory is recycled rather than returned. Restarting does not lower it either: recovery replays
   the log in order and rebuilds the same high-water mark.</li>
 </ul>
 <p>Once the ceiling has been reached the remedies are raising it, moving to a larger host, or
@@ -136,9 +136,9 @@ budget rather than spilling.</p>
 <h2 id="vectors">Vector index build cost</h2>
 <p>Vector search is available with a <code>VECTOR(n)</code> type, the four distance operators, and
 an HNSW index whose recall reaches exact-search results at a high enough
-<code>hnsw_ef_search</code>. Building the index is expensive — substantially more so than
-specialised vector extensions — and the graph is rebuilt rather than checkpointed, so plan index
-builds as scheduled work rather than something to do during a load.</p>
+<code>hnsw_ef_search</code>. Building the index is expensive, substantially more so than a specialised vector
+extension, and the graph is rebuilt rather than checkpointed. Plan index builds as
+scheduled work rather than something to do during a load.</p>
 
 <h2 id="not-built">Not in this release</h2>
 <div class="table-scroll"><table><thead><tr><th>Area</th><th>Status</th></tr></thead><tbody><tr><td>Backup, restore, point-in-time recovery</td><td>Not built. Stop-and-copy or export with <code>COPY</code>.</td></tr><tr><td>Replication and clustering</td><td>Not built. Single node only.</td></tr><tr><td>Checkpointing and log truncation</td><td>Not built. See above.</td></tr><tr><td>Page eviction to disk</td><td>Not built. Data is bounded by memory.</td></tr><tr><td>Temporary tables</td><td>Refused with a clear error.</td></tr><tr><td>Cursors, <code>PREPARE</code>/<code>EXECUTE</code> statements</td><td>Refused.</td></tr><tr><td>Session time zone</td><td>Fixed at UTC.</td></tr><tr><td>Locale collations</td><td>Refused; byte ordering only.</td></tr><tr><td>Index methods beyond B-tree and HNSW</td><td>Refused.</td></tr><tr><td>Latency and storage metrics</td><td>Four counters only.</td></tr></tbody></table></div>

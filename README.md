@@ -1,4 +1,4 @@
-# NusaDB — website and documentation
+# NusaDB website and documentation
 
 The public site for [NusaDB](https://github.com/nusadb/nusadb), a relational database
 engine written from scratch in Rust. Static HTML, CSS and JavaScript: no framework, no
@@ -34,8 +34,8 @@ npx serve .
 ## Design notes
 
 Two brand colours: `#293880` for structure and `#4297C8` for interaction. The blue is
-too light to carry body text on white — around 3.2:1 against it, below the 4.5:1 needed
-for normal text — so links and inline text use a darkened step of the same hue
+too light to carry body text on white: around 3.2:1 against it, below the 4.5:1 needed
+for normal text. Links and inline text therefore use a darkened step of the same hue
 (`--blue-ink`), and the lighter blue is kept for fills, rules and focus rings. Both a
 light and a dark scheme are defined; the page follows the operating system by default and
 a toggle overrides it, remembered in `localStorage`.
@@ -50,7 +50,7 @@ honest shape for the content, and there are no decorative gradients.
 
 ## Editing
 
-The documentation pages share one shell — masthead, sidebar, breadcrumb, contents,
+The documentation pages share one shell: masthead, sidebar, breadcrumb, contents and
 footer. When adding a page, copy an existing one in `docs/`, then add it to three places
 so navigation stays consistent:
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Configuration — NusaDB</title>
+<title>Configuration · NusaDB</title>
 <meta name="description" content="NusaDB server flags, resource defaults, authentication and TLS, metrics, and running as a systemd service." />
 <meta name="theme-color" content="#293880" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -58,7 +58,7 @@
       <p class="summary">Every setting is a command-line flag on nusadb-server. Defaults are chosen to stay healthy on a small host; a larger machine raises them deliberately.</p>
 
 <h2 id="flags">Server flags</h2>
-<div class="table-scroll"><table><thead><tr><th>Flag</th><th>Default</th><th>Purpose</th></tr></thead><tbody><tr><td><code>--listen</code></td><td><code>0.0.0.0:5678</code></td><td>TCP address for the wire protocol.</td></tr><tr><td><code>--data-dir</code></td><td><code>./data</code></td><td>Data directory; holds the write-ahead log, which is the durable copy of the data.</td></tr><tr><td><code>--auth-user USER:PASSWORD</code></td><td>—</td><td>Require SCRAM-SHA-256 for this user. Repeatable. Once any is set, every connection must authenticate.</td></tr><tr><td><code>NUSADB_USER</code> + <code>NUSADB_PASSWORD</code></td><td>—</td><td>Environment fallback when no <code>--auth-user</code> is given. Setting only one is an error.</td></tr><tr><td><code>--tls-cert</code> / <code>--tls-key</code></td><td>—</td><td>PEM chain and key; TLS is enabled when both are set.</td></tr><tr><td><code>--tls-client-ca</code></td><td>—</td><td>PEM CA for mutual TLS: every client must present a certificate signed by it.</td></tr><tr><td><code>--metrics-listen</code></td><td>off</td><td>Serve Prometheus metrics on this address, for example <code>127.0.0.1:9100</code>.</td></tr><tr><td><code>--max-connections</code></td><td><code>25</code></td><td>Cap on concurrent connections; excess queue. <code>0</code> is unlimited.</td></tr><tr><td><code>--idle-timeout</code></td><td><code>0</code></td><td>Close a connection idle this many seconds. <code>0</code> is no limit.</td></tr><tr><td><code>--statement-timeout</code></td><td><code>0</code></td><td>Cancel statements running longer than this many seconds.</td></tr><tr><td><code>--drain-timeout</code></td><td><code>30</code></td><td>On shutdown, wait this long for in-flight connections to finish.</td></tr><tr><td><code>--mem-budget</code></td><td><code>0</code></td><td>Engine memory budget in bytes; new transactions are refused past it instead of the process being killed by the system.</td></tr><tr><td><code>--max-resident-bytes</code></td><td>derived</td><td>Ceiling on each database's in-memory page store. Row inserts past it are refused with an error naming the limit.</td></tr><tr><td><code>--work-mem</code></td><td><code>0</code></td><td>Per-query materialisation budget in bytes; a query over it fails with a clear error rather than exhausting memory.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>Flag</th><th>Default</th><th>Purpose</th></tr></thead><tbody><tr><td><code>--listen</code></td><td><code>0.0.0.0:5678</code></td><td>TCP address for the wire protocol.</td></tr><tr><td><code>--data-dir</code></td><td><code>./data</code></td><td>Data directory; holds the write-ahead log, which is the durable copy of the data.</td></tr><tr><td><code>--auth-user USER:PASSWORD</code></td><td>none</td><td>Require SCRAM-SHA-256 for this user. Repeatable. Once any is set, every connection must authenticate.</td></tr><tr><td><code>NUSADB_USER</code> + <code>NUSADB_PASSWORD</code></td><td>none</td><td>Environment fallback when no <code>--auth-user</code> is given. Setting only one is an error.</td></tr><tr><td><code>--tls-cert</code> / <code>--tls-key</code></td><td>none</td><td>PEM chain and key; TLS is enabled when both are set.</td></tr><tr><td><code>--tls-client-ca</code></td><td>none</td><td>PEM CA for mutual TLS: every client must present a certificate signed by it.</td></tr><tr><td><code>--metrics-listen</code></td><td>off</td><td>Serve Prometheus metrics on this address, for example <code>127.0.0.1:9100</code>.</td></tr><tr><td><code>--max-connections</code></td><td><code>25</code></td><td>Cap on concurrent connections; excess queue. <code>0</code> is unlimited.</td></tr><tr><td><code>--idle-timeout</code></td><td><code>0</code></td><td>Close a connection idle this many seconds. <code>0</code> is no limit.</td></tr><tr><td><code>--statement-timeout</code></td><td><code>0</code></td><td>Cancel statements running longer than this many seconds.</td></tr><tr><td><code>--drain-timeout</code></td><td><code>30</code></td><td>On shutdown, wait this long for in-flight connections to finish.</td></tr><tr><td><code>--mem-budget</code></td><td><code>0</code></td><td>Engine memory budget in bytes; new transactions are refused past it instead of the process being killed by the system.</td></tr><tr><td><code>--max-resident-bytes</code></td><td>derived</td><td>Ceiling on each database's in-memory page store. Row inserts past it are refused with an error naming the limit.</td></tr><tr><td><code>--work-mem</code></td><td><code>0</code></td><td>Per-query materialisation budget in bytes; a query over it fails with a clear error rather than exhausting memory.</td></tr></tbody></table></div>
 <p><code>RUST_LOG</code> sets log verbosity, for example <code>RUST_LOG=info</code>.</p>
 
 <div class="note caution">
@@ -66,7 +66,8 @@
   <p>Require authentication with at least one <code>--auth-user</code> or the environment pair;
   terminate TLS with <code>--tls-cert</code> and <code>--tls-key</code>; and keep
   <code>--data-dir</code> on a persistent volume you back up. With no credentials the server runs
-  trust-on-startup — every client accepted, no password — and logs a warning at start-up.</p>
+  trust-on-startup: every client is accepted and no password is asked for. It logs a
+  warning at start-up.</p>
 </div>
 
 <h2 id="defaults">Resource defaults</h2>
@@ -108,7 +109,8 @@ ReadWritePaths=/var/lib/nusadb
 [Install]
 WantedBy=multi-user.target</pre></div>
 <p>Put the credential in a unit drop-in or an environment file readable only by root rather than in
-a world-readable unit, and keep the metrics port on localhost — it is not authenticated.</p>
+a world-readable unit, and keep the metrics port on localhost, because it is not
+authenticated.</p>
 
 <h2 id="metrics">Metrics</h2>
 <p>With <code>--metrics-listen</code> set, the server answers Prometheus scrapes in the text
@@ -118,7 +120,7 @@ exposition format.</p>
 there are no query-duration histograms, per-database counters, or write-ahead log and storage
 metrics yet. Given the retry behaviour described under
 <a href="transactions.html#occ">transactions</a>, a serialization-conflict counter is a gap worth
-knowing about — track conflicts from the application side for now.</p>
+knowing about. Track conflicts from the application side for now.</p>
 
 <h2 id="upgrades">Upgrades and engine changes</h2>
 <p>Each database directory records which storage engine wrote it. A directory written by the

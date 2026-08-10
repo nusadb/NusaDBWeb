@@ -415,7 +415,7 @@ tbody tr:hover td { background: var(--bg-2); }
 /* ---------- motion ----------
    Restrained on purpose: short durations, one easing curve, movement measured in
    a few pixels. The hidden state is scoped to html.js so that a visitor without
-   JavaScript — or one whose observer never fires — still sees every section.
+   JavaScript, or one whose observer never fires, still sees every section.
    Everything here is switched off under prefers-reduced-motion. */
 
 :root { --ease: cubic-bezier(.22, .61, .36, 1); --t: 220ms; }

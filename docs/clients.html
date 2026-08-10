@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Clients and protocol — NusaDB</title>
+<title>Clients and protocol · NusaDB</title>
 <meta name="description" content="The Nusa wire protocol, the official drivers, connection settings, TLS and SCRAM-SHA-256 authentication." />
 <meta name="theme-color" content="#293880" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -59,8 +59,8 @@
 
 <h2 id="own-protocol">Its own protocol, deliberately</h2>
 <p>NusaDB does not implement another database's wire format. A client built for a different engine
-sends a handshake the server does not recognise, gets no reply, and eventually times out — from the
-client's side it looks like a dead socket rather than a refusal. This is by design.</p>
+sends a handshake the server does not recognise, gets no reply, and eventually times out. From the
+client's side that looks like a dead socket rather than a refusal. This is by design.</p>
 <p>Keep two things separate when planning an integration:</p>
 <ul>
   <li><strong>The wire format</strong> is NusaDB's own. Tools for other databases cannot connect,
@@ -106,7 +106,7 @@ which usernames exist.</p>
 <h2 id="copy">Bulk transfer</h2>
 <p><code>COPY</code> moves rows in a single streaming exchange rather than a round trip per row, in
 both directions. The shell forms read from the command's standard input and write to its standard
-output, which makes them composable with ordinary Unix pipelines — see
+output, which makes them composable with ordinary Unix pipelines. See
 <a href="getting-started.html#bulk">getting started</a>.</p>
 
 <h2 id="pooling">Connections and pooling</h2>

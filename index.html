@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>NusaDB — one engine for transactions and analytics</title>
+<title>NusaDB · one engine for transactions and analytics</title>
 <meta name="description" content="NusaDB is a relational database for a single machine: serializable transactions, a cost-based SQL planner over a vectorized executor, and durable commits. One binary, no cluster to operate. Open source, Apache-2.0." />
 <meta name="theme-color" content="#293880" />
 <meta property="og:type" content="website" />
-<meta property="og:title" content="NusaDB — one engine for transactions and analytics" />
+<meta property="og:title" content="NusaDB · one engine for transactions and analytics" />
 <meta property="og:description" content="A relational database for a single machine. Serializable transactions, a cost-based planner, durable commits. Open source, Apache-2.0." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -53,10 +53,10 @@
         <p class="eyebrow"><i></i> Open source · Apache-2.0</p>
         <h1>One engine for transactions and analytics.</h1>
         <p class="lede">
-          NusaDB is a relational database for a single machine. <b>Serializable
-          transactions</b>, a cost-based planner over a vectorized executor, and every
-          commit durable before it is acknowledged — in one binary, with no cluster to
-          operate.
+          NusaDB is a relational database for a single machine. It gives you
+          <b>serializable transactions</b>, a cost-based planner over a vectorized
+          executor, and commits that are durable before they are acknowledged. All of it
+          runs in one binary. There is no cluster to operate.
         </p>
         <div class="hero-cta">
           <a class="btn btn-primary" href="docs/getting-started.html">Get started</a>
@@ -153,30 +153,14 @@
           <h3>A broad SQL surface</h3>
           <p>Window functions, recursive CTEs, set operations, lateral joins, grouping sets, <code>MERGE</code>, <code>ON CONFLICT</code>, views, materialized views, sequences, domains, triggers and routines.</p>
         </div>
-        <div class="card">
-          <span class="tag">types</span>
-          <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v14H4zM4 10h16M10 10v9"/></svg></span>
-          <h3>Types beyond the basics</h3>
-          <p><code>NUMERIC</code>, <code>JSONB</code>, arrays, <code>UUID</code>, intervals, network and bit-string types, ranges, enums, composites — and <code>VECTOR(n)</code> with an HNSW index.</p>
-        </div>
+        
         <div class="card">
           <span class="tag">security</span>
           <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
           <h3>Authentication and access control</h3>
           <p>SCRAM-SHA-256 over optional TLS, including mutual TLS. Roles, <code>GRANT</code> and <code>REVOKE</code>, and row-level security policies are enforced inside the engine.</p>
         </div>
-        <div class="card">
-          <span class="tag">operations</span>
-          <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg></span>
-          <h3>Bounded, not brittle</h3>
-          <p>Connection caps, statement timeouts and memory budgets refuse work with a clear error naming the limit rather than letting the host run out of memory.</p>
-        </div>
-        <div class="card">
-          <span class="tag">data movement</span>
-          <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h13l-4-4M21 12H8l4 4"/></svg></span>
-          <h3>Streaming bulk transfer</h3>
-          <p><code>COPY</code> loads and exports in one streaming exchange instead of a round trip per row, reading and writing the command's own standard input and output.</p>
-        </div>
+
       </div>
     </div>
   </section>
@@ -218,6 +202,49 @@
     </div>
   </section>
 
+
+  <section class="section">
+    <div class="wrap split">
+      <div>
+        <div class="section-head" style="margin-bottom:20px">
+          <span class="kicker">Measured</span>
+          <h2>Numbers from our own runs</h2>
+        </div>
+        <p>
+          These come from the project's test machines, not from a formal benchmark suite.
+          They are here because a release note that only says "faster" is not worth reading.
+        </p>
+        <p>
+          The first pair is the one to look at. <code>TRUNCATE</code> used to remove rows one
+          at a time, so its cost grew with the table. It now takes roughly the same time
+          whichever size you point it at.
+        </p>
+        <p style="color:var(--ink-3);font-size:14.5px">
+          Release build, single node, one connection. Your hardware will not produce these
+          exact figures. Nothing here is a comparison against another database.
+        </p>
+      </div>
+      <div>
+        <div class="table-scroll" style="margin:0">
+          <table>
+            <thead><tr><th>Operation</th><th>Rows</th><th style="text-align:right">Time</th></tr></thead>
+            <tbody>
+              <tr><td><code>TRUNCATE</code></td><td>100,000</td><td style="text-align:right">28.5 ms</td></tr>
+              <tr><td><code>TRUNCATE</code></td><td>200,000</td><td style="text-align:right">77.8 ms</td></tr>
+              <tr><td><code>COUNT(*)</code></td><td>1,000,000</td><td style="text-align:right">249 ms</td></tr>
+              <tr><td><code>UPDATE</code> a filtered set</td><td>100,000 of 1,000,000</td><td style="text-align:right">6.0 s</td></tr>
+              <tr><td>Primary-key lookup, 1,000 of them</td><td>1,000,000 in table</td><td style="text-align:right">569 ms</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="margin:14px 0 0;font-size:14.5px;color:var(--ink-3)">
+          Vector search reaches the same answers as an exact scan once
+          <code>hnsw_ef_search</code> is raised far enough. Building that index is the slow
+          part, and the <a href="docs/limits.html#vectors">limits page</a> says so.
+        </p>
+      </div>
+    </div>
+  </section>
 
   <section class="section tint">
     <div class="wrap">
@@ -278,9 +305,9 @@
       </div>
 
       <ul class="diagram-legend">
-        <li><b>Single process</b> — no coordinator, agent or sidecar</li>
-        <li><b>Snapshot reads</b> — a reader never waits for a writer</li>
-        <li><b>Durability first</b> — a commit is acknowledged after its record is safe</li>
+        <li><b>Single process.</b> No coordinator, agent or sidecar</li>
+        <li><b>Snapshot reads.</b> A reader never waits for a writer</li>
+        <li><b>Durability first.</b> A commit is acknowledged after its record is safe</li>
       </ul>
     </div>
   </section>
@@ -290,7 +317,7 @@
       <div class="section-head">
         <span class="kicker">Install</span>
         <h2>Running in about a minute</h2>
-        <p>The container image needs no build step. Building from source needs only a Rust toolchain.</p>
+        <p>The container image needs no build step. From source you need a Rust toolchain and nothing else.</p>
       </div>
       <div class="cards cards-2">
         <div class="card">
@@ -339,7 +366,7 @@ cargo build --release
       <div class="section-head">
         <span class="kicker">Documentation</span>
         <h2>Read the whole thing</h2>
-        <p>Six pages, written to be looked things up in rather than skimmed once.</p>
+        <p>Six pages. They are written to be looked things up in, not skimmed once.</p>
       </div>
       <div class="cards cards-3">
         <a class="card" href="docs/getting-started.html" style="text-decoration:none">
@@ -384,7 +411,7 @@ cargo build --release
       <div class="cards cards-3">
         <div class="card">
           <h3>Working data must fit in memory</h3>
-          <p>Table pages are held in memory and are not evicted to disk. Past the resident ceiling, inserts are refused with an error naming the limit. A dataset larger than memory does not fit — it is not merely slower.</p>
+          <p>Table pages are held in memory and are not evicted to disk. Past the resident ceiling, inserts are refused with an error naming the limit. A dataset larger than memory does not fit at all. It is not simply slower.</p>
         </div>
         <div class="card">
           <h3>The log is the durable copy</h3>
@@ -470,7 +497,7 @@ cargo build --release
     </div>
     <div class="foot-note">
       <p>&copy; <span id="year">2026</span> The NusaDB authors. Licensed under Apache-2.0.</p>
-      <p>Before 1.0 — interfaces may change between releases.</p>
+      <p>Before 1.0. Interfaces may change between releases.</p>
     </div>
   </div>
 </footer>
