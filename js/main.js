@@ -9,6 +9,7 @@
 
   var KEY = "nusadb-theme";
   var root = document.documentElement;
+  root.classList.add("js");
 
   try {
     var saved = localStorage.getItem(KEY);
@@ -154,8 +155,58 @@
     }
   }
 
+
   /* ---- year stamp ----------------------------------------------------- */
 
   var y = document.getElementById("year");
   if (y) y.textContent = String(new Date().getFullYear());
+
+  /* ---- motion --------------------------------------------------------- */
+
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+  // A slight shadow once the page has moved, so the sticky masthead reads as
+  // sitting above the content instead of being welded to it.
+  var mast = document.querySelector(".masthead");
+  if (mast) {
+    var shade = function () { mast.classList.toggle("scrolled", window.scrollY > 4); };
+    window.addEventListener("scroll", shade, { passive: true });
+    shade();
+  }
+
+  // Reveal on first approach only. Groups stagger by a few tens of milliseconds,
+  // which reads as the group settling rather than as items animating one by one.
+  var targets = document.querySelectorAll(
+    ".hero-grid > *, .strip-in > div, .section-head, .cards > *, .split > *, .factlist, .prose > *"
+  );
+  if (!targets.length) return;
+
+  if (reduced.matches || !("IntersectionObserver" in window)) {
+    targets.forEach(function (el) { el.classList.add("reveal", "in"); });
+    return;
+  }
+
+  targets.forEach(function (el) { el.classList.add("reveal"); });
+
+  var io = new IntersectionObserver(function (entries) {
+    // Stagger within one batch, capped so a long list never waits noticeably.
+    var shown = 0;
+    entries.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      e.target.style.setProperty("--d", Math.min(shown, 5) * 55 + "ms");
+      e.target.classList.add("in");
+      io.unobserve(e.target);
+      shown++;
+    });
+  }, { rootMargin: "0px 0px -8% 0px", threshold: 0.06 });
+
+  targets.forEach(function (el) { io.observe(el); });
+
+  // Anything already on screen at load should not wait for a scroll event.
+  requestAnimationFrame(function () {
+    targets.forEach(function (el) {
+      if (el.getBoundingClientRect().top < window.innerHeight) el.classList.add("in");
+    });
+  });
+
 })();

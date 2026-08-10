@@ -69,7 +69,7 @@ the write-ahead log, and pages are <strong>not evicted to disk</strong>. Once th
 reaches its ceiling — <code>--max-resident-bytes</code>, derived from the detected memory budget
 when unset — further row inserts are refused with an error naming the limit and the bytes
 resident.</p>
-<div class="code"><div class="code-bar"><span>output</span><button class="copy" type="button"><em>Copy</em></button></div>
+<div class="code out"><div class="code-bar"><span>output</span><button class="copy" type="button"><em>Copy</em></button></div>
 <pre>ERROR XX000: out of memory: the in-memory store reached its resident-memory
 limit of 858993440 bytes (859001088 bytes resident); free rows
 (DELETE/TRUNCATE), raise the limit, or use a larger host</pre></div>

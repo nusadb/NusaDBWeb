@@ -66,7 +66,7 @@ the data directory holds the write-ahead log, which is the durable copy of your 
   -v nusadb-data:/var/lib/nusadb \
   -e NUSADB_USER=app \
   -e NUSADB_PASSWORD=change-me \
-  nusadb/nusadb:0.1.0-beta.8</pre></div>
+  nusadb/nusadb</pre></div>
 <p>Setting <code>NUSADB_USER</code> together with <code>NUSADB_PASSWORD</code> turns on
 SCRAM-SHA-256 for that user. Setting only one of the pair is an error, so a half-configured
 container fails at start-up instead of quietly accepting everyone.</p>
