@@ -74,11 +74,14 @@
             <span>nusa-cli</span>
             <button class="copy" type="button"><em>Copy</em></button>
           </div>
-<pre><span class="c">-- transactional writes and an analytical read,
--- same table, same engine, one connection</span>
+<pre><span class="c">-- write and read, one engine, one connection</span>
 <span class="k">BEGIN</span>;
-  <span class="k">UPDATE</span> stock <span class="k">SET</span> qty = qty - <span class="s">1</span> <span class="k">WHERE</span> sku = <span class="s">'A-77'</span>;
-  <span class="k">INSERT INTO</span> orders (sku, region) <span class="k">VALUES</span> (<span class="s">'A-77'</span>, <span class="s">'east'</span>);
+  <span class="k">UPDATE</span> stock
+     <span class="k">SET</span> qty = qty - <span class="s">1</span>
+   <span class="k">WHERE</span> sku = <span class="s">'A-77'</span>;
+
+  <span class="k">INSERT INTO</span> orders (sku, region)
+  <span class="k">VALUES</span> (<span class="s">'A-77'</span>, <span class="s">'east'</span>);
 <span class="k">COMMIT</span>;
 
 <span class="k">SELECT</span> region,
@@ -122,46 +125,55 @@
       <div class="cards cards-3">
         <div class="card">
           <span class="tag">transactions</span>
+          <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h14l-3-3M21 16H7l3 3"/></svg></span>
           <h3>MVCC and snapshot isolation</h3>
           <p>Readers work from a snapshot and never block writers. All four standard isolation levels are available, up to serializable snapshot isolation, with savepoints and partial rollback.</p>
         </div>
         <div class="card">
           <span class="tag">storage</span>
+          <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></span>
           <h3>Clustered B+tree</h3>
           <p>Rows live in the leaves of a B-link/B+tree keyed by a row id the engine mints, so reaching a row by primary key does not need a second lookup in a separate heap.</p>
         </div>
         <div class="card">
           <span class="tag">durability</span>
+          <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 5 3.4 8.3 8 9 4.6-.7 8-4 8-9V6l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg></span>
           <h3>Write-ahead log</h3>
           <p>Every record carries a CRC32 and is lz4-compressed. A commit is acknowledged only once its record is durable, and recovery replays the log on start-up.</p>
         </div>
         <div class="card">
           <span class="tag">queries</span>
+          <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></span>
           <h3>Cost-based planner</h3>
           <p>Histograms and most-common-value statistics drive join order and index choice. Plans run through a vectorized executor in batches rather than one row at a time.</p>
         </div>
         <div class="card">
           <span class="tag">sql</span>
+          <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h13"/></svg></span>
           <h3>A broad SQL surface</h3>
           <p>Window functions, recursive CTEs, set operations, lateral joins, grouping sets, <code>MERGE</code>, <code>ON CONFLICT</code>, views, materialized views, sequences, domains, triggers and routines.</p>
         </div>
         <div class="card">
           <span class="tag">types</span>
+          <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v14H4zM4 10h16M10 10v9"/></svg></span>
           <h3>Types beyond the basics</h3>
           <p><code>NUMERIC</code>, <code>JSONB</code>, arrays, <code>UUID</code>, intervals, network and bit-string types, ranges, enums, composites — and <code>VECTOR(n)</code> with an HNSW index.</p>
         </div>
         <div class="card">
           <span class="tag">security</span>
+          <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
           <h3>Authentication and access control</h3>
           <p>SCRAM-SHA-256 over optional TLS, including mutual TLS. Roles, <code>GRANT</code> and <code>REVOKE</code>, and row-level security policies are enforced inside the engine.</p>
         </div>
         <div class="card">
           <span class="tag">operations</span>
+          <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg></span>
           <h3>Bounded, not brittle</h3>
           <p>Connection caps, statement timeouts and memory budgets refuse work with a clear error naming the limit rather than letting the host run out of memory.</p>
         </div>
         <div class="card">
           <span class="tag">data movement</span>
+          <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h13l-4-4M21 12H8l4 4"/></svg></span>
           <h3>Streaming bulk transfer</h3>
           <p><code>COPY</code> loads and exports in one streaming exchange instead of a round trip per row, reading and writing the command's own standard input and output.</p>
         </div>
@@ -203,6 +215,73 @@
           <li><b>Databases</b> <span>Many per server, many schemas per database</span></li>
         </ul>
       </div>
+    </div>
+  </section>
+
+
+  <section class="section tint">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="kicker">Architecture</span>
+        <h2>What a statement passes through</h2>
+        <p>
+          Every stage below runs inside the one process you started. There is no coordinator
+          to stand up, no agent to keep alive, and no queue in between.
+        </p>
+      </div>
+
+      <div class="diagram">
+        <svg viewBox="0 0 900 196" role="img" aria-label="A statement arrives from a client over the protocol, passes through the parser, analyzer and planner to the executor, which reaches the clustered B+tree storage; every commit is written to the write-ahead log before it is acknowledged.">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+              <path d="M0 0 10 5 0 10z" fill="#4297C8"/>
+            </marker>
+          </defs>
+          <g font-family="IBM Plex Sans, sans-serif">
+            <g fill="#293880">
+              <rect x="4"   y="40"  width="114" height="46" rx="7" opacity=".07"/>
+              <rect x="148" y="40"  width="114" height="46" rx="7" opacity=".07"/>
+              <rect x="292" y="40"  width="114" height="46" rx="7" opacity=".07"/>
+              <rect x="436" y="40"  width="114" height="46" rx="7" opacity=".07"/>
+              <rect x="580" y="40"  width="114" height="46" rx="7" opacity=".07"/>
+              <rect x="724" y="40"  width="172" height="46" rx="7" opacity=".14"/>
+              <rect x="724" y="132" width="172" height="48" rx="7" opacity=".14"/>
+              <rect x="470" y="132" width="216" height="48" rx="7" opacity=".07"/>
+            </g>
+            <g fill="none" stroke="#4297C8" stroke-width="1.6" marker-end="url(#ar)">
+              <path d="M118 63h26"/><path d="M262 63h26"/><path d="M406 63h26"/>
+              <path d="M550 63h26"/><path d="M694 63h26"/>
+              <path d="M810 86v42"/><path d="M724 156h-34"/>
+            </g>
+            <g fill="#293880" font-weight="600" font-size="12.5" text-anchor="middle">
+              <text x="61"  y="61">Client</text>
+              <text x="205" y="61">Protocol</text>
+              <text x="349" y="61">Parser</text>
+              <text x="493" y="61">Analyzer</text>
+              <text x="637" y="61">Planner</text>
+              <text x="810" y="61">Executor</text>
+              <text x="810" y="155">Storage</text>
+              <text x="578" y="155">Write-ahead log</text>
+            </g>
+            <g fill="#626a7a" font-size="10.5" text-anchor="middle">
+              <text x="61"  y="77">nusa-cli, drivers</text>
+              <text x="205" y="77">TLS, SCRAM</text>
+              <text x="349" y="77">text to a tree</text>
+              <text x="493" y="77">names, types</text>
+              <text x="637" y="77">cost model</text>
+              <text x="810" y="77">vectorized batches</text>
+              <text x="810" y="171">clustered B+tree</text>
+              <text x="578" y="171">durable before a commit returns</text>
+            </g>
+          </g>
+        </svg>
+      </div>
+
+      <ul class="diagram-legend">
+        <li><b>Single process</b> — no coordinator, agent or sidecar</li>
+        <li><b>Snapshot reads</b> — a reader never waits for a writer</li>
+        <li><b>Durability first</b> — a commit is acknowledged after its record is safe</li>
+      </ul>
     </div>
   </section>
 
@@ -332,6 +411,19 @@ cargo build --release
   </section>
 
 </main>
+
+<section class="band">
+  <div class="wrap band-in">
+    <div>
+      <h2>Try it against your own schema</h2>
+      <p>The container image starts in one command, and the getting-started page takes you from an empty database to loaded data.</p>
+    </div>
+    <div class="band-cta">
+      <a class="btn btn-primary" href="docs/getting-started.html">Get started</a>
+      <a class="btn btn-onnavy" href="docs/">Read the documentation</a>
+    </div>
+  </div>
+</section>
 
 <footer class="foot">
   <div class="wrap">

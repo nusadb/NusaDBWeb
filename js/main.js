@@ -105,6 +105,26 @@
     });
   });
 
+  /* ---- overflow hint on code blocks ----------------------------------- */
+
+  // Mark a sample that is wider than its box so the stylesheet can fade its
+  // right edge. Re-measured on resize because the font size scales with the
+  // viewport, so a block that overflowed at one width may not at another.
+  var codes = document.querySelectorAll(".code");
+  if (codes.length) {
+    var measure = function () {
+      codes.forEach(function (block) {
+        var pre = block.querySelector("pre");
+        if (!pre) return;
+        block.classList.toggle("overflowing", pre.scrollWidth > pre.clientWidth + 2);
+      });
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    // Fonts land after first paint and change the measurement.
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+  }
+
   /* ---- heading anchors + table of contents ---------------------------- */
 
   var prose = document.querySelector(".prose");

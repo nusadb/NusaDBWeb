@@ -278,9 +278,21 @@ h2:hover .anchor, h3:hover .anchor, .anchor:focus { opacity: 1; }
 .copy:hover { background: #202b4e; color: #fff; }
 .copy[data-done="1"] { color: #86dcaa; border-color: #2d5a43; }
 .code pre {
-  margin: 0; padding: 16px; overflow-x: auto;
-  font-size: 13.5px; line-height: 1.62; color: var(--code-ink); tab-size: 2;
+  margin: 0; padding: 16px; overflow-x: auto; overscroll-behavior-x: contain;
+  /* Shrinks with the viewport rather than clipping: a sample that has to be
+     side-scrolled to be read is a sample nobody reads. */
+  font-size: clamp(11px, 1.02vw, 13.5px); line-height: 1.6;
+  color: var(--code-ink); tab-size: 2;
 }
+/* Fades the right edge only while there is more to scroll to, so an overflowing
+   sample says so instead of ending mid-token. */
+.code { position: relative; }
+.code::after {
+  content: ""; position: absolute; right: 0; bottom: 1px; width: 34px; top: 38px;
+  background: linear-gradient(90deg, transparent, var(--code-bg));
+  pointer-events: none; opacity: 0; transition: opacity var(--t, 200ms) ease;
+}
+.code.overflowing::after { opacity: 1; }
 /* Server output is prose, not something to retype: wrap it instead of clipping. */
 .code.out pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 .code pre .c { color: #7684a8; font-style: italic; }
@@ -340,9 +352,10 @@ tbody tr:hover td { background: var(--bg-2); }
   .docs { grid-template-columns: var(--sidebar) minmax(0, 1fr); }
   .toc { display: none; }
 }
-@media (max-width: 960px) {
+@media (max-width: 1080px) {
   .hero-grid, .split { grid-template-columns: minmax(0, 1fr); gap: 36px; }
   .cards-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .section { padding: 60px 0; }
   .strip-in { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .strip-in > div:nth-child(3) { border-left: 0; padding-left: 0; }
   .strip-in > div:nth-child(n+3) { border-top: 1px solid rgba(255,255,255,.08); }
@@ -373,11 +386,18 @@ tbody tr:hover td { background: var(--bg-2); }
 }
 @media (min-width: 821px) { .sidebar-toggle { display: none; } }
 
+@media (max-width: 760px) {
+  .strip-in > div { padding: 15px 0; }
+  .strip b { font-size: 16px; }
+}
+
 @media (max-width: 620px) {
   .wrap { padding: 0 18px; }
   .hero { padding: 52px 0 46px; }
   .section { padding: 48px 0; }
   .cards-2, .cards-3 { grid-template-columns: minmax(0, 1fr); }
+  .card { padding: 18px; }
+  .code pre { padding: 13px; }
   .strip-in { grid-template-columns: minmax(0, 1fr); }
   .strip-in > div + div { border-left: 0; padding-left: 0; border-top: 1px solid rgba(255,255,255,.08); }
   .factlist li { flex-direction: column; gap: 3px; }
@@ -431,3 +451,40 @@ html.js .reveal.in {
   html.js .reveal { opacity: 1; transform: none; }
   .btn:hover, a.card:hover { transform: none; }
 }
+
+/* ---------- card icons ---------- */
+
+.card .ic {
+  display: inline-grid; place-items: center; width: 34px; height: 34px;
+  border-radius: 8px; margin-bottom: 13px;
+  background: var(--blue-100); color: var(--blue-ink);
+  border: 1px solid var(--blue-200);
+}
+:root[data-theme="dark"] .card .ic { background: var(--blue-100); }
+
+/* ---------- architecture diagram ---------- */
+
+.diagram {
+  border: 1px solid var(--line); border-radius: var(--r-lg);
+  background: var(--bg); padding: 26px 24px; overflow-x: auto;
+}
+.diagram svg { display: block; min-width: 620px; width: 100%; height: auto; }
+.diagram-legend {
+  display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 18px 0 0;
+  padding: 16px 0 0; border-top: 1px solid var(--line-2);
+  list-style: none; font-size: 13.8px; color: var(--ink-3);
+}
+.diagram-legend b { color: var(--ink); font-weight: 500; }
+
+/* ---------- closing band ---------- */
+
+.band {
+  background:
+    radial-gradient(90% 160% at 12% 0%, rgba(66,151,200,.26) 0%, rgba(66,151,200,0) 60%),
+    var(--navy);
+  color: #e7eef6; padding: 58px 0;
+}
+.band-in { display: flex; align-items: center; justify-content: space-between; gap: 34px; flex-wrap: wrap; }
+.band h2 { color: #fff; font-size: clamp(22px, 2.5vw, 28px); letter-spacing: -0.022em; margin-bottom: 8px; }
+.band p { margin: 0; color: #b6c9dc; font-size: 15.5px; max-width: 52ch; }
+.band-cta { display: flex; gap: 11px; flex-wrap: wrap; }
