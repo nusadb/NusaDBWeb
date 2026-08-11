@@ -102,15 +102,6 @@
     </div>
   </section>
 
-  <div class="strip">
-    <div class="wrap strip-in">
-      <div><b>Serializable</b><span>All four isolation levels</span></div>
-      <div><b>Single binary</b><span>No cluster, no sidecars</span></div>
-      <div><b>Nine clients</b><span>Plus a documented protocol</span></div>
-      <div><b>Apache-2.0</b><span>Open source, no tiers</span></div>
-    </div>
-  </div>
-
   <section class="section">
     <div class="wrap">
       <div class="section-head">
@@ -249,65 +240,74 @@
   <section class="section tint">
     <div class="wrap">
       <div class="section-head">
-        <span class="kicker">Architecture</span>
-        <h2>What a statement passes through</h2>
+        <span class="kicker">Storage</span>
+        <h2>The row lives inside the index</h2>
         <p>
-          Every stage below runs inside the one process you started. There is no coordinator
-          to stand up, no agent to keep alive, and no queue in between.
+          Most engines keep rows in a heap and have the index point at them, so reading by
+          key costs a descent and then a second fetch. Here the row is the leaf entry. The
+          descent is the read.
         </p>
       </div>
 
       <div class="diagram">
-        <svg viewBox="0 0 900 196" role="img" aria-label="A statement arrives from a client over the protocol, passes through the parser, analyzer and planner to the executor, which reaches the clustered B+tree storage; every commit is written to the write-ahead log before it is acknowledged.">
+        <svg viewBox="0 0 900 244" role="img" aria-label="A key lookup descends the tree to a leaf page. The leaf holds the row itself, each version stamped with the transaction that created it and the transaction that removed it. Every change is also appended to the write-ahead log.">
           <defs>
             <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
               <path d="M0 0 10 5 0 10z" fill="#4297C8"/>
             </marker>
           </defs>
           <g font-family="IBM Plex Sans, sans-serif">
+
             <g fill="#293880">
-              <rect x="4"   y="40"  width="114" height="46" rx="7" opacity=".07"/>
-              <rect x="148" y="40"  width="114" height="46" rx="7" opacity=".07"/>
-              <rect x="292" y="40"  width="114" height="46" rx="7" opacity=".07"/>
-              <rect x="436" y="40"  width="114" height="46" rx="7" opacity=".07"/>
-              <rect x="580" y="40"  width="114" height="46" rx="7" opacity=".07"/>
-              <rect x="724" y="40"  width="172" height="46" rx="7" opacity=".14"/>
-              <rect x="724" y="132" width="172" height="48" rx="7" opacity=".14"/>
-              <rect x="470" y="132" width="216" height="48" rx="7" opacity=".07"/>
+              <rect x="92"  y="16"  width="96" height="30" rx="6" opacity=".07"/>
+              <rect x="24"  y="78"  width="96" height="30" rx="6" opacity=".07"/>
+              <rect x="160" y="78"  width="96" height="30" rx="6" opacity=".07"/>
+              <rect x="24"  y="140" width="96" height="30" rx="6" opacity=".18"/>
             </g>
-            <g fill="none" stroke="#4297C8" stroke-width="1.6" marker-end="url(#ar)">
-              <path d="M118 63h26"/><path d="M262 63h26"/><path d="M406 63h26"/>
-              <path d="M550 63h26"/><path d="M694 63h26"/>
-              <path d="M810 86v42"/><path d="M724 156h-34"/>
+            <g fill="none" stroke="#4297C8" stroke-width="1.5" marker-end="url(#ar)">
+              <path d="M128 46 78 74"/>
+              <path d="M152 46 202 74"/>
+              <path d="M72 108v28"/>
             </g>
-            <g fill="#293880" font-weight="600" font-size="12.5" text-anchor="middle">
-              <text x="61"  y="61">Client</text>
-              <text x="205" y="61">Protocol</text>
-              <text x="349" y="61">Parser</text>
-              <text x="493" y="61">Analyzer</text>
-              <text x="637" y="61">Planner</text>
-              <text x="810" y="61">Executor</text>
-              <text x="810" y="155">Storage</text>
-              <text x="578" y="155">Write-ahead log</text>
+            <g fill="#293880" font-size="11.5" font-weight="500" text-anchor="middle">
+              <text x="140" y="35">root</text>
+              <text x="72"  y="97">branch</text>
+              <text x="208" y="97">branch</text>
+              <text x="72"  y="159">leaf</text>
             </g>
-            <g fill="#626a7a" font-size="10.5" text-anchor="middle">
-              <text x="61"  y="77">nusa-cli, drivers</text>
-              <text x="205" y="77">TLS, SCRAM</text>
-              <text x="349" y="77">text to a tree</text>
-              <text x="493" y="77">names, types</text>
-              <text x="637" y="77">cost model</text>
-              <text x="810" y="77">vectorized batches</text>
-              <text x="810" y="171">clustered B+tree</text>
-              <text x="578" y="171">durable before a commit returns</text>
+            <text x="140" y="196" fill="#626a7a" font-size="11" text-anchor="middle">two comparisons, then the row</text>
+
+            <path d="M126 155h190" fill="none" stroke="#4297C8" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#ar)"/>
+
+            <text x="330" y="30" fill="#626a7a" font-family="IBM Plex Mono, monospace" font-size="10.5" letter-spacing=".08em">LEAF ENTRY</text>
+            <rect x="330" y="40" width="558" height="104" rx="8" fill="#293880" opacity=".07"/>
+            <g font-size="10" fill="#8b93a3" font-family="IBM Plex Mono, monospace" letter-spacing=".05em">
+              <text x="352" y="64">ROW ID</text>
+              <text x="432" y="64">CREATED BY</text>
+              <text x="546" y="64">REMOVED BY</text>
+              <text x="662" y="64">COLUMNS</text>
             </g>
+            <line x1="330" y1="74" x2="888" y2="74" stroke="#293880" stroke-opacity=".12"/>
+            <g font-family="IBM Plex Mono, monospace" font-size="11.5" fill="#293880">
+              <text x="352" y="97">4181</text><text x="432" y="97">txn 902</text>
+              <text x="546" y="97">txn 918</text><text x="662" y="97">'A-77', 12, 'east'</text>
+              <text x="352" y="126">4181</text><text x="432" y="126">txn 918</text>
+              <text x="546" y="126" fill="#8b93a3">still live</text>
+              <text x="662" y="126">'A-77', 11, 'east'</text>
+            </g>
+            <text x="330" y="164" fill="#626a7a" font-size="11">Two versions of one row. A reader compares its own snapshot against these stamps, so it never waits for the writer.</text>
+
+            <rect x="330" y="182" width="558" height="44" rx="8" fill="#293880" opacity=".14"/>
+            <text x="352" y="203" fill="#293880" font-size="11.5" font-weight="600">Write-ahead log</text>
+            <text x="352" y="218" fill="#626a7a" font-size="10.5">One record per change, on disk before the commit returns. This is the durable copy.</text>
           </g>
         </svg>
       </div>
 
       <ul class="diagram-legend">
-        <li><b>Single process.</b> No coordinator, agent or sidecar</li>
-        <li><b>Snapshot reads.</b> A reader never waits for a writer</li>
-        <li><b>Durability first.</b> A commit is acknowledged after its record is safe</li>
+        <li><b>No heap fetch.</b> The key lookup ends at the leaf</li>
+        <li><b>No reader locks.</b> Visibility comes from the stamps on the row</li>
+        <li><b>No background flush to wait on.</b> The log is what makes a commit durable</li>
       </ul>
     </div>
   </section>

@@ -197,7 +197,7 @@
   // Reveal on first approach only. Groups stagger by a few tens of milliseconds,
   // which reads as the group settling rather than as items animating one by one.
   var targets = document.querySelectorAll(
-    ".hero-grid > *, .strip-in > div, .section-head, .cards > *, .split > *, .factlist, .prose > *"
+    ".hero-grid > *, .section-head, .cards > *, .split > *, .factlist, .prose > *"
   );
   if (!targets.length) return;
 
