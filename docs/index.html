@@ -143,7 +143,7 @@
         <table>
           <thead><tr><th>Layer</th><th>Responsibility</th></tr></thead>
           <tbody>
-            <tr><td>Client</td><td><code>nusa-cli</code> and the official drivers.</td></tr>
+            <tr><td>Client</td><td><code>nusadb-cli</code> and the official drivers.</td></tr>
             <tr><td>Protocol</td><td>Framing, TLS, SCRAM-SHA-256 authentication, extended query flow.</td></tr>
             <tr><td>SQL engine</td><td>Parser, analyzer, planner and cost model, vectorized executor.</td></tr>
             <tr><td>Transactions</td><td>Multi-version rows, no-wait locking, isolation levels, rollback.</td></tr>
@@ -163,7 +163,7 @@
       <p>
         The SQL dialect is separate from the wire format. Queries written against other engines
         usually run unchanged once they reach NusaDB. What changes is how you connect. Use
-        <code>nusa-cli</code>, one of the drivers listed under
+        <code>nusadb-cli</code>, one of the drivers listed under
         <a href="clients.html">clients</a>, or implement the protocol yourself from its
         specification.
       </p>
@@ -171,7 +171,7 @@
       <h2 id="conventions">Conventions in these pages</h2>
       <ul>
         <li>Shell commands assume the release binaries are on your path or run from <code>./target/release/</code>.</li>
-        <li>SQL examples are written for <code>nusa-cli</code> and end with a semicolon.</li>
+        <li>SQL examples are written for <code>nusadb-cli</code> and end with a semicolon.</li>
         <li>Measured numbers state the conditions they were measured under; where a figure depends on the host, that is said instead of quoting one.</li>
         <li>Anything described as planned is not in this release. Features are only listed as present when they are implemented and tested.</li>
       </ul>

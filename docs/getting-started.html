@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Getting started · NusaDB</title>
-<meta name="description" content="Install NusaDB from the container image or from source, connect with nusa-cli, create databases and schemas, and move data in bulk with COPY." />
+<meta name="description" content="Install NusaDB from the container image or from source, connect with nusadb-cli, create databases and schemas, and move data in bulk with COPY." />
 <meta name="theme-color" content="#293880" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -96,14 +96,24 @@ verbosity, for example <code>RUST_LOG=info</code>.</p>
 bootstrap superuser <code>nusa-root</code>. A trust-on-startup server ignores the password; a
 server configured with credentials requires it.</p>
 <div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
-<pre>nusa-cli --host 127.0.0.1:5678 --user nusa-root --database nusadb
+<pre>nusadb-cli --host 127.0.0.1:5678 --user nusa-root --database nusadb
 
 # inside the container
-docker exec -it nusadb nusa-cli --user app --database nusadb</pre></div>
+docker exec -it nusadb nusadb-cli --user app --database nusadb</pre></div>
+<div class="note">
+  <b>The shell was named <code>nusa-cli</code> until recently</b>
+  <p>
+    The command is <code>nusadb-cli</code>, matching the crate and the rest of the
+    <code>nusadb</code> naming. Container images published before that change ship it under
+    the older name, so if <code>nusadb-cli</code> is not found, the image predates the rename
+    and <code>nusa-cli</code> is the command it carries.
+  </p>
+</div>
+
 <div class="note">
   <b>Clients for other databases will not connect</b>
   <p>NusaDB speaks its own protocol. A tool built for a different engine gets no answer to its
-  handshake, which looks like a dead socket from its side. Use <code>nusa-cli</code>, one of the
+  handshake, which looks like a dead socket from its side. Use <code>nusadb-cli</code>, one of the
   official drivers, or write a client against the specification. See
   <a href="clients.html">clients and protocol</a>.</p>
 </div>
@@ -135,20 +145,20 @@ targets one database.</p>
 <span class="k">SELECT</span> * <span class="k">FROM</span> tenant.t;           <span class="c">-- resolved through search_path, then public</span></pre></div>
 <p>Connect to another database by name; a session cannot query across databases.</p>
 <div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
-<pre>nusa-cli --host 127.0.0.1:5678 --user nusa-root --database app</pre></div>
+<pre>nusadb-cli --host 127.0.0.1:5678 --user nusa-root --database app</pre></div>
 
 <h2 id="bulk">Load and export in bulk</h2>
 <p><code>COPY</code> streams rows in one exchange instead of a round trip per row. In the shell
 forms the data travels on the command's own standard input and output.</p>
 <div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
 <pre># tab-delimited, \N for NULL (the server's text format)
-nusa-cli -c "COPY customers FROM STDIN" < rows.tsv
+nusadb-cli -c "COPY customers FROM STDIN" < rows.tsv
 
 # CSV with a header line
-nusa-cli -c "COPY customers FROM STDIN WITH (FORMAT csv, HEADER)" < rows.csv
+nusadb-cli -c "COPY customers FROM STDIN WITH (FORMAT csv, HEADER)" < rows.csv
 
 # export the same way
-nusa-cli -c "COPY customers TO STDOUT" > rows.tsv</pre></div>
+nusadb-cli -c "COPY customers TO STDOUT" > rows.tsv</pre></div>
 <p>During an export the row count goes to standard error, so it never lands in the exported file.
 One redirect feeds one load: a batch containing two <code>COPY … FROM STDIN</code> statements
 refuses the second rather than reporting that it loaded nothing. Typing
@@ -163,9 +173,9 @@ non-zero, so a shell script that loads data in stages stops at the failed stage 
 continuing as though it had worked.</p>
 <div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
 <pre>set -eu
-nusa-cli -f schema.sql
-nusa-cli -c "COPY customers FROM STDIN" < customers.tsv
-nusa-cli -c "ANALYZE customers"    # refresh planner statistics after a load</pre></div>
+nusadb-cli -f schema.sql
+nusadb-cli -c "COPY customers FROM STDIN" < customers.tsv
+nusadb-cli -c "ANALYZE customers"    # refresh planner statistics after a load</pre></div>
 
 <h2 id="next">Next</h2>
 <ul>

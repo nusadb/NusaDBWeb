@@ -71,7 +71,17 @@ client's side that looks like a dead socket rather than a refusal. This is by de
 <p>So porting an application means changing how it connects, not rewriting its SQL.</p>
 
 <h2 id="drivers">Official clients</h2>
-<div class="table-scroll"><table><thead><tr><th>Client</th><th>Notes</th></tr></thead><tbody><tr><td><code>nusa-cli</code></td><td>Interactive shell and batch runner; ships in the container image.</td></tr><tr><td>Rust</td><td>Synchronous and asynchronous APIs.</td></tr><tr><td>Java (JDBC)</td><td>Driver with <code>DatabaseMetaData</code> support for schema browsing tools.</td></tr><tr><td>Node.js</td><td>Promise-based client.</td></tr><tr><td>Python</td><td>DB-API client with a SQLAlchemy dialect.</td></tr><tr><td>Go</td><td><code>database/sql</code> driver.</td></tr><tr><td>Ruby</td><td>Native client.</td></tr><tr><td>PHP</td><td>PDO-style client.</td></tr><tr><td>.NET</td><td>ADO.NET provider.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>Client</th><th>Notes</th></tr></thead><tbody><tr><td><code>nusadb-cli</code></td><td>Interactive shell and batch runner; ships in the container image.</td></tr><tr><td>Rust</td><td>Synchronous and asynchronous APIs.</td></tr><tr><td>Java (JDBC)</td><td>Driver with <code>DatabaseMetaData</code> support for schema browsing tools.</td></tr><tr><td>Node.js</td><td>Promise-based client.</td></tr><tr><td>Python</td><td>DB-API client with a SQLAlchemy dialect.</td></tr><tr><td>Go</td><td><code>database/sql</code> driver.</td></tr><tr><td>Ruby</td><td>Native client.</td></tr><tr><td>PHP</td><td>PDO-style client.</td></tr><tr><td>.NET</td><td>ADO.NET provider.</td></tr></tbody></table></div>
+<div class="note">
+  <b>The shell was named <code>nusa-cli</code> until recently</b>
+  <p>
+    The command is <code>nusadb-cli</code>, matching the crate and the rest of the
+    <code>nusadb</code> naming. Container images published before that change ship it under
+    the older name, so if <code>nusadb-cli</code> is not found, the image predates the rename
+    and <code>nusa-cli</code> is the command it carries.
+  </p>
+</div>
+
 <p>All of them carry data as the protocol's text form, which round-trips every type without loss.
 A binary result format exists on the server and is negotiated per column; drivers have not adopted
 it because text is already lossless and the gain is limited to prepared statements.</p>
@@ -84,7 +94,7 @@ it because text is already lossless and the gain is limited to prepared statemen
 plaintext client is then refused. Because there is no system trust store in play, the client is told
 what to trust.</p>
 <div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
-<pre>nusa-cli --host db.internal:5678 \
+<pre>nusadb-cli --host db.internal:5678 \
   --user app --database nusadb \
   --tls --tls-ca /etc/nusadb/ca.crt</pre></div>
 <div class="note caution">
