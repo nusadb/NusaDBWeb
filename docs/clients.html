@@ -73,12 +73,12 @@ client's side that looks like a dead socket rather than a refusal. This is by de
 <h2 id="drivers">Official clients</h2>
 <div class="table-scroll"><table><thead><tr><th>Client</th><th>Notes</th></tr></thead><tbody><tr><td><code>nusadb-cli</code></td><td>Interactive shell and batch runner; ships in the container image.</td></tr><tr><td>Rust</td><td>Synchronous and asynchronous APIs.</td></tr><tr><td>Java (JDBC)</td><td>Driver with <code>DatabaseMetaData</code> support for schema browsing tools.</td></tr><tr><td>Node.js</td><td>Promise-based client.</td></tr><tr><td>Python</td><td>DB-API client with a SQLAlchemy dialect.</td></tr><tr><td>Go</td><td><code>database/sql</code> driver.</td></tr><tr><td>Ruby</td><td>Native client.</td></tr><tr><td>PHP</td><td>PDO-style client.</td></tr><tr><td>.NET</td><td>ADO.NET provider.</td></tr></tbody></table></div>
 <div class="note">
-  <b>The shell was named <code>nusa-cli</code> until recently</b>
+  <b>Two names changed recently</b>
   <p>
-    The command is <code>nusadb-cli</code>, matching the crate and the rest of the
-    <code>nusadb</code> naming. Container images published before that change ship it under
-    the older name, so if <code>nusadb-cli</code> is not found, the image predates the rename
-    and <code>nusa-cli</code> is the command it carries.
+    The shell is <code>nusadb-cli</code> and the bootstrap superuser is
+    <code>nusadb-root</code>, matching the crate and the rest of the <code>nusadb</code>
+    naming. Container images published before that change carry the older
+    <code>nusa-cli</code> and <code>nusa-root</code>, so on an older image use those instead.
   </p>
 </div>
 
@@ -87,7 +87,7 @@ A binary result format exists on the server and is negotiated per column; driver
 it because text is already lossless and the gain is limited to prepared statements.</p>
 
 <h2 id="connect">Connection settings</h2>
-<div class="table-scroll"><table><thead><tr><th>Setting</th><th>Default</th><th>Notes</th></tr></thead><tbody><tr><td>Host and port</td><td><code>127.0.0.1:5678</code></td><td>One connection targets one database.</td></tr><tr><td>Database</td><td><code>nusadb</code></td><td>Cross-database queries are refused.</td></tr><tr><td>User</td><td><code>nusa-root</code></td><td>The bootstrap superuser.</td></tr><tr><td>Authentication</td><td>trust-on-startup</td><td>SCRAM-SHA-256 once any credential is configured.</td></tr><tr><td>TLS</td><td>off</td><td>Enabled on the server with a certificate and key; the same port.</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>Setting</th><th>Default</th><th>Notes</th></tr></thead><tbody><tr><td>Host and port</td><td><code>127.0.0.1:5678</code></td><td>One connection targets one database.</td></tr><tr><td>Database</td><td><code>nusadb</code></td><td>Cross-database queries are refused.</td></tr><tr><td>User</td><td><code>nusadb-root</code></td><td>The bootstrap superuser.</td></tr><tr><td>Authentication</td><td>trust-on-startup</td><td>SCRAM-SHA-256 once any credential is configured.</td></tr><tr><td>TLS</td><td>off</td><td>Enabled on the server with a certificate and key; the same port.</td></tr></tbody></table></div>
 
 <h2 id="tls">TLS and authentication</h2>
 <p>TLS runs on the same port: the server offers it when a certificate and key are configured, and a

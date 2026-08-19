@@ -93,20 +93,20 @@ verbosity, for example <code>RUST_LOG=info</code>.</p>
 
 <h2 id="connect">Connect</h2>
 <p>The defaults are host <code>127.0.0.1:5678</code>, database <code>nusadb</code>, and the
-bootstrap superuser <code>nusa-root</code>. A trust-on-startup server ignores the password; a
+bootstrap superuser <code>nusadb-root</code>. A trust-on-startup server ignores the password; a
 server configured with credentials requires it.</p>
 <div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
-<pre>nusadb-cli --host 127.0.0.1:5678 --user nusa-root --database nusadb
+<pre>nusadb-cli --host 127.0.0.1:5678 --user nusadb-root --database nusadb
 
 # inside the container
 docker exec -it nusadb nusadb-cli --user app --database nusadb</pre></div>
 <div class="note">
-  <b>The shell was named <code>nusa-cli</code> until recently</b>
+  <b>Two names changed recently</b>
   <p>
-    The command is <code>nusadb-cli</code>, matching the crate and the rest of the
-    <code>nusadb</code> naming. Container images published before that change ship it under
-    the older name, so if <code>nusadb-cli</code> is not found, the image predates the rename
-    and <code>nusa-cli</code> is the command it carries.
+    The shell is <code>nusadb-cli</code> and the bootstrap superuser is
+    <code>nusadb-root</code>, matching the crate and the rest of the <code>nusadb</code>
+    naming. Container images published before that change carry the older
+    <code>nusa-cli</code> and <code>nusa-root</code>, so on an older image use those instead.
   </p>
 </div>
 
@@ -145,7 +145,7 @@ targets one database.</p>
 <span class="k">SELECT</span> * <span class="k">FROM</span> tenant.t;           <span class="c">-- resolved through search_path, then public</span></pre></div>
 <p>Connect to another database by name; a session cannot query across databases.</p>
 <div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
-<pre>nusadb-cli --host 127.0.0.1:5678 --user nusa-root --database app</pre></div>
+<pre>nusadb-cli --host 127.0.0.1:5678 --user nusadb-root --database app</pre></div>
 
 <h2 id="bulk">Load and export in bulk</h2>
 <p><code>COPY</code> streams rows in one exchange instead of a round trip per row. In the shell
