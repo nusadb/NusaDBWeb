@@ -55,205 +55,825 @@
     <main class="prose" id="main">
       <p class="crumb"><a href="./">Documentation</a> / SQL reference</p>
       <h1>SQL reference</h1>
-      <p class="summary">What the engine accepts, with an example for each part, followed by the places where NusaDB deliberately behaves differently and why.</p>
+      <p class="summary">Every type, statement and function the engine accepts, each with an example that was run against this release, followed by the error codes and the places where NusaDB deliberately behaves differently.</p>
 
-<h2 id="types">Data types</h2>
-<p>
-  Every type below is native: it compares, sorts, and brings its own operators and functions rather
-  than being stored as text under another name.
-</p>
-<div class="table-scroll"><table><thead><tr><th>Group</th><th>Types</th></tr></thead><tbody><tr><td>Numeric</td><td><code>SMALLINT</code>, <code>INT</code>, <code>BIGINT</code>, <code>REAL</code>, <code>DOUBLE PRECISION</code>, <code>NUMERIC(p,s)</code></td></tr><tr><td>Character</td><td><code>TEXT</code>, <code>VARCHAR(n)</code>, <code>CHAR(n)</code></td></tr><tr><td>Binary and boolean</td><td><code>BYTEA</code>, <code>BOOLEAN</code></td></tr><tr><td>Date and time</td><td><code>DATE</code>, <code>TIME</code>, <code>TIMETZ</code>, <code>TIMESTAMP</code>, <code>TIMESTAMPTZ</code>, <code>INTERVAL</code></td></tr><tr><td>Identifier</td><td><code>UUID</code></td></tr><tr><td>Structured</td><td><code>JSON</code>, <code>JSONB</code>, arrays, composite types</td></tr><tr><td>Network</td><td><code>INET</code>, <code>CIDR</code>, <code>MACADDR</code>, <code>MACADDR8</code></td></tr><tr><td>Bit string</td><td><code>BIT(n)</code>, <code>BIT VARYING(n)</code></td></tr><tr><td>Ranges</td><td><code>INT4RANGE</code>, <code>INT8RANGE</code>, <code>NUMRANGE</code>, <code>DATERANGE</code>, <code>TSRANGE</code></td></tr><tr><td>Geometric</td><td><code>POINT</code>, <code>BOX</code>, <code>CIRCLE</code>, <code>LSEG</code>, <code>LINE</code>, <code>PATH</code>, <code>POLYGON</code></td></tr><tr><td>Document</td><td><code>XML</code>, validated well-formed on store</td></tr><tr><td>Enumerated</td><td><code>CREATE TYPE … AS ENUM</code>, labels enforced</td></tr><tr><td>Vector</td><td><code>VECTOR(n)</code> with an HNSW index</td></tr></tbody></table></div>
-
-<h3 id="types-json">JSON</h3>
+<p>Everything on this page is accepted by the current engine. Each section shows the syntax and a runnable example; the examples are written to be pasted into <code>nusadb-cli</code> in order. Where NusaDB deliberately behaves differently from what you may expect, that is called out in <a href="#behaviour-worth-knowing">Behaviour worth knowing</a> rather than hidden.</p>
+<h2 id="statement-index">Statement index</h2>
+<p>A quick map from the statement you are looking for to the section that shows it.</p>
+<div class="table-scroll"><table><thead><tr><th>Statement</th><th>Section</th></tr></thead><tbody><tr><td><code>CREATE</code> / <code>ALTER</code> / <code>DROP TABLE</code>, <code>CREATE TEMP TABLE</code>, <code>CREATE TABLE AS</code>, <code>LIKE</code></td><td><a href="#tables">Tables</a>, <a href="#altering">Altering</a></td></tr><tr><td><code>CREATE</code> / <code>DROP INDEX</code></td><td><a href="#indexes">Indexes</a></td></tr><tr><td><code>CREATE</code> / <code>DROP VIEW</code>, <code>CREATE MATERIALIZED VIEW</code>, <code>REFRESH</code></td><td><a href="#views-sequences-domains-schemas-databases">Views</a></td></tr><tr><td><code>CREATE</code> / <code>DROP SEQUENCE</code>, <code>DOMAIN</code>, <code>TYPE</code>, <code>SCHEMA</code>, <code>DATABASE</code></td><td><a href="#views-sequences-domains-schemas-databases">Views, sequences, ...</a></td></tr><tr><td><code>COMMENT ON</code></td><td><a href="#comments">Comments</a></td></tr><tr><td><code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>, <code>MERGE</code>, <code>TRUNCATE</code>, <code>COPY</code></td><td><a href="#inserting-and-changing-rows">Inserting and changing rows</a></td></tr><tr><td><code>SELECT</code> and all its clauses, <code>VALUES</code>, set operations</td><td><a href="#querying">Querying</a></td></tr><tr><td><code>EXPLAIN</code></td><td><a href="#reading-a-plan-explain">Reading a plan</a></td></tr><tr><td><code>CREATE FUNCTION</code>, <code>CREATE PROCEDURE</code>, <code>CALL</code>, <code>DO</code></td><td><a href="#routines-and-triggers">Routines and triggers</a></td></tr><tr><td><code>CREATE</code> / <code>ALTER</code> / <code>DROP TRIGGER</code></td><td><a href="#triggers">Triggers</a></td></tr><tr><td>parameters <code>$1..$n</code>, <code>PREPARE</code></td><td><a href="#prepared-statements">Prepared statements</a></td></tr><tr><td><code>DECLARE</code>, <code>FETCH</code>, <code>CLOSE</code></td><td><a href="#cursors">Cursors</a></td></tr><tr><td><code>BEGIN</code>, <code>COMMIT</code>, <code>ROLLBACK</code>, <code>SAVEPOINT</code>, <code>SET TRANSACTION</code></td><td><a href="#transactions-and-locking">Transactions and locking</a></td></tr><tr><td><code>SELECT ... FOR UPDATE</code>, <code>LOCK TABLE</code></td><td><a href="#row-and-table-locks">Row and table locks</a></td></tr><tr><td><code>LISTEN</code>, <code>UNLISTEN</code>, <code>NOTIFY</code></td><td><a href="#notifications">Notifications</a></td></tr><tr><td><code>ANALYZE</code>, <code>VACUUM</code>, <code>REINDEX</code>, <code>CHECKPOINT</code></td><td><a href="#maintenance">Maintenance</a></td></tr><tr><td><code>SHOW TABLES</code>, <code>SHOW COLUMNS</code>, <code>DESCRIBE</code>, <code>information_schema</code></td><td><a href="#introspection">Introspection</a></td></tr><tr><td><code>CREATE ROLE</code>, <code>GRANT</code>, <code>REVOKE</code>, <code>SET ROLE</code>, <code>CREATE POLICY</code></td><td><a href="#access-control">Access control</a></td></tr><tr><td><code>SET</code>, <code>SHOW</code>, <code>RESET</code></td><td><a href="#session-settings">Session settings</a></td></tr></tbody></table></div>
+<h2 id="data-types">Data types</h2>
+<h3 id="numbers">Numbers</h3>
+<div class="table-scroll"><table><thead><tr><th>Type</th><th>Notes</th></tr></thead><tbody><tr><td><code>SMALLINT</code> / <code>INT</code> / <code>BIGINT</code></td><td>16 / 32 / 64-bit signed integers (<code>INT2</code>, <code>INT4</code>, <code>INT8</code>, <code>INTEGER</code> are accepted spellings)</td></tr><tr><td><code>REAL</code> / <code>DOUBLE PRECISION</code></td><td>IEEE-754 binary floating point (<code>FLOAT4</code>, <code>FLOAT8</code>, <code>FLOAT</code>)</td></tr><tr><td><code>NUMERIC(p,s)</code> / <code>DECIMAL(p,s)</code></td><td>exact base-10 decimal; use this for money</td></tr></tbody></table></div>
 <div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
-<pre><span class="k">CREATE TABLE</span> docs (id <span class="k">INT</span> <span class="k">PRIMARY KEY</span>, body <span class="k">JSONB</span>);
-<span class="k">INSERT INTO</span> docs <span class="k">VALUES</span> (<span class="s">1</span>, <span class="s">'{"user":{"name":"ana","tags":["a","b"]},"active":true}'</span>);
-
-<span class="k">SELECT</span> body -&gt; <span class="s">'user'</span> -&gt;&gt; <span class="s">'name'</span>          <span class="k">AS</span> name,
-       body #&gt;&gt; <span class="s">'{user,tags,0}'</span>        <span class="k">AS</span> first_tag,
-       body @&gt; <span class="s">'{"active":true}'</span>          <span class="k">AS</span> is_active,
-       jsonb_path_query(body, <span class="s">'$.user.tags[*]'</span>) <span class="k">AS</span> tag
-<span class="k">FROM</span>   docs;</pre></div>
-
-<h3 id="types-ranges">Ranges, network and bit strings</h3>
+<pre><span class="k">CREATE</span> <span class="k">TABLE</span> amounts (
+  qty   <span class="k">INT</span>,
+  ratio <span class="k">DOUBLE</span> <span class="k">PRECISION</span>,
+  price <span class="k">NUMERIC</span>(<span class="s">12</span>,<span class="s">2</span>)
+);
+<span class="k">INSERT</span> <span class="k">INTO</span> amounts <span class="k">VALUES</span> (<span class="s">3</span>, <span class="s">0.5</span>, <span class="s">19.99</span>);
+<span class="k">SELECT</span> qty * price <span class="k">AS</span> total <span class="k">FROM</span> amounts;
+<span class="c">--  total</span>
+<span class="c">-- -------</span>
+<span class="c">--  59.97</span></pre></div>
+<p>Integer arithmetic that overflows is an error (<code>22003</code>), not a silent wrap. Division by zero is <code>22012</code>.</p>
+<h3 id="auto-incrementing-columns">Auto-incrementing columns</h3>
+<p><code>SERIAL</code>, <code>BIGSERIAL</code>, <code>SMALLSERIAL</code> and the standard <code>GENERATED { ALWAYS | BY DEFAULT } AS IDENTITY</code> all create a column backed by its own sequence (<code>&lt;table&gt;_&lt;column&gt;_seq</code>). An omitted value takes the next number; the column is implicitly <code>NOT NULL</code>.</p>
 <div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
-<pre><span class="k">SELECT</span> int4range(<span class="s">1</span>, <span class="s">10</span>)                   <span class="k">AS</span> r,          <span class="c">-- [1,10)</span>
-       int4range(<span class="s">1</span>,<span class="s">10</span>) @&gt; <span class="s">5</span>            <span class="k">AS</span> contains,
-       int4range(<span class="s">1</span>,<span class="s">10</span>) &amp;&amp; int4range(<span class="s">5</span>,<span class="s">20</span>) <span class="k">AS</span> overlaps,
+<pre><span class="k">CREATE</span> <span class="k">TABLE</span> tickets (
+  id   <span class="k">BIGINT</span> <span class="k">GENERATED</span> <span class="k">ALWAYS</span> <span class="k">AS</span> <span class="k">IDENTITY</span> <span class="k">PRIMARY</span> <span class="k">KEY</span>,
+  note <span class="k">TEXT</span>
+);
+<span class="k">INSERT</span> <span class="k">INTO</span> tickets (note) <span class="k">VALUES</span> (<span class="s">'first'</span>), (<span class="s">'second'</span>) <span class="k">RETURNING</span> id;
+<span class="c">--  id</span>
+<span class="c">-- ----</span>
+<span class="c">--   1</span>
+<span class="c">--   2</span></pre></div>
+<h3 id="text-and-binary">Text and binary</h3>
+<div class="table-scroll"><table><thead><tr><th>Type</th><th>Notes</th></tr></thead><tbody><tr><td><code>TEXT</code></td><td>variable length, no limit</td></tr><tr><td><code>VARCHAR(n)</code></td><td>variable length, rejected past <code>n</code> characters (<code>22001</code>)</td></tr><tr><td><code>CHAR(n)</code></td><td>fixed width; see <a href="#fixed-width-characters-charn"><code>CHAR(n)</code></a></td></tr><tr><td><code>BYTEA</code></td><td>binary, written as <code>'\xDEADBEEF'</code></td></tr></tbody></table></div>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">SELECT</span> <span class="s">'hello'</span> || <span class="s">' '</span> || <span class="s">'world'</span> <span class="k">AS</span> greeting,
+       length(<span class="s">'héllo'</span>)           <span class="k">AS</span> chars,
+       octet_length(<span class="s">'héllo'</span>)     <span class="k">AS</span> bytes,
+       <span class="s">'\xdeadbeef'</span>::<span class="k">BYTEA</span>       <span class="k">AS</span> blob,
+       encode(<span class="s">'\xdeadbeef'</span>::<span class="k">BYTEA</span>, <span class="s">'base64'</span>) <span class="k">AS</span> b64;</pre></div>
+<p>A quote inside a literal is doubled: <code>'it''s'</code>. Dollar quoting (<code>$$ ... $$</code>) is accepted only for routine bodies, not for ordinary string literals.</p>
+<h3 id="booleans-and-uuids">Booleans and UUIDs</h3>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">SELECT</span> <span class="k">TRUE</span> <span class="k">AS</span> t,
+       <span class="s">'f'</span>::<span class="k">BOOLEAN</span>                              <span class="k">AS</span> parsed,
+       gen_random_uuid()                         <span class="k">AS</span> fresh,
+       <span class="s">'5b8f0b3e-2c4d-4f7a-9d1e-1a2b3c4d5e6f'</span>::<span class="k">UUID</span> <span class="k">AS</span> fixed;</pre></div>
+<h3 id="dates-times-and-intervals">Dates, times and intervals</h3>
+<div class="table-scroll"><table><thead><tr><th>Type</th><th>Example literal</th></tr></thead><tbody><tr><td><code>DATE</code></td><td><code>DATE '2026-08-30'</code></td></tr><tr><td><code>TIME</code> / <code>TIME WITH TIME ZONE</code></td><td><code>TIME '14:30:00'</code></td></tr><tr><td><code>TIMESTAMP</code></td><td><code>TIMESTAMP '2026-08-30 14:30:00'</code></td></tr><tr><td><code>TIMESTAMPTZ</code></td><td><code>TIMESTAMPTZ '2026-08-30 14:30:00+07'</code></td></tr><tr><td><code>INTERVAL</code></td><td><code>INTERVAL '1 day 2 hours'</code>, <code>INTERVAL '90 minutes'</code></td></tr></tbody></table></div>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">SELECT</span> now()                                   <span class="k">AS</span> instant,
+       date_trunc(<span class="s">'month'</span>, <span class="k">DATE</span> <span class="s">'2026-08-30'</span>)  <span class="k">AS</span> month_start,
+       <span class="k">EXTRACT</span>(dow <span class="k">FROM</span> <span class="k">DATE</span> <span class="s">'2026-08-30'</span>)     <span class="k">AS</span> day_of_week,
+       <span class="k">DATE</span> <span class="s">'2026-08-30'</span> + <span class="k">INTERVAL</span> <span class="s">'10 days'</span>  <span class="k">AS</span> later,
+       age(<span class="k">TIMESTAMP</span> <span class="s">'2026-08-30'</span>, <span class="k">TIMESTAMP</span> <span class="s">'2020-01-01'</span>) <span class="k">AS</span> elapsed,
+       to_char(now(), <span class="s">'YYYY-MM-DD HH24:MI'</span>)    <span class="k">AS</span> formatted;</pre></div>
+<p>The session time zone is UTC and cannot be changed. <code>AT TIME ZONE</code> accepts <code>UTC</code> and numeric offsets such as <code>+07:00</code>; named zones with daylight-saving rules are not available.</p>
+<h3 id="json">JSON</h3>
+<p><code>JSON</code> and <code>JSONB</code> both store a parsed value. See <a href="#how-json-is-stored">How JSON is stored</a>.</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">CREATE</span> <span class="k">TABLE</span> docs (id <span class="k">INT</span> <span class="k">PRIMARY</span> <span class="k">KEY</span>, body <span class="k">JSONB</span>);
+<span class="k">INSERT</span> <span class="k">INTO</span> docs <span class="k">VALUES</span> (<span class="s">1</span>, <span class="s">'{"user":{"name":"ana","tags":["a","b"]},"active":true}'</span>);
+
+<span class="k">SELECT</span> body -&gt; <span class="s">'user'</span> -&gt;&gt; <span class="s">'name'</span>                <span class="k">AS</span> name,
+       body #&gt;&gt; <span class="s">'{user,tags,0}'</span>                 <span class="k">AS</span> first_tag,
+       body @&gt; <span class="s">'{"active":true}'</span>                <span class="k">AS</span> is_active,
+       jsonb_exists(body, <span class="s">'active'</span>)             <span class="k">AS</span> has_key,     <span class="c">-- the ? operator, as a function</span>
+       jsonb_path_query_first(body, <span class="s">'$.user.tags[*]'</span>) <span class="k">AS</span> tag
+<span class="k">FROM</span>   docs;
+
+<span class="c">-- Build and modify</span>
+<span class="k">SELECT</span> jsonb_build_object(<span class="s">'id'</span>, id, <span class="s">'name'</span>, body -&gt; <span class="s">'user'</span> -&gt;&gt; <span class="s">'name'</span>) <span class="k">FROM</span> docs;
+<span class="k">UPDATE</span> docs <span class="k">SET</span> body = jsonb_set(body, <span class="s">'{user,name}'</span>, <span class="s">'"budi"'</span>) <span class="k">WHERE</span> id = <span class="s">1</span>;
+
+<span class="c">-- Expand: one row per element / per key (a set-returning function goes in the select list)</span>
+<span class="k">SELECT</span> id, jsonb_array_elements_text(body #&gt; <span class="s">'{user,tags}'</span>) <span class="k">AS</span> tag <span class="k">FROM</span> docs;
+<span class="k">SELECT</span> id, jsonb_object_keys(body) <span class="k">AS</span> key <span class="k">FROM</span> docs;</pre></div>
+<p>The <code>?</code> operator is not available because <code>?</code> is reserved for query parameters; use <code>jsonb_exists(doc, key)</code> instead.</p>
+<h3 id="arrays">Arrays</h3>
+<p>One-dimensional arrays of any scalar type.</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">CREATE</span> <span class="k">TABLE</span> posts (id <span class="k">INT</span>, tags <span class="k">TEXT</span>[]);
+<span class="k">INSERT</span> <span class="k">INTO</span> posts <span class="k">VALUES</span> (<span class="s">1</span>, <span class="k">ARRAY</span>[<span class="s">'rust'</span>,<span class="s">'db'</span>]), (<span class="s">2</span>, <span class="s">'{"sql"}'</span>);
+
+<span class="k">SELECT</span> id, tags[<span class="s">1</span>] <span class="k">AS</span> first, cardinality(tags) <span class="k">AS</span> n
+<span class="k">FROM</span>   posts
+<span class="k">WHERE</span>  tags @&gt; <span class="k">ARRAY</span>[<span class="s">'rust'</span>] <span class="k">OR</span> <span class="s">'sql'</span> = <span class="k">ANY</span>(tags);
+
+<span class="k">SELECT</span> id, unnest(tags) <span class="k">AS</span> tag <span class="k">FROM</span> posts;                       <span class="c">-- one row per element</span>
+<span class="k">SELECT</span> * <span class="k">FROM</span> unnest(<span class="k">ARRAY</span>[<span class="s">'a'</span>,<span class="s">'b'</span>]) <span class="k">WITH</span> <span class="k">ORDINALITY</span> <span class="k">AS</span> u(tag, n);
+
+<span class="k">SELECT</span> array_append(tags, <span class="s">'new'</span>), array_to_string(tags, <span class="s">', '</span>), string_to_array(<span class="s">'a,b'</span>, <span class="s">','</span>)
+<span class="k">FROM</span>   posts;
+<span class="k">SELECT</span> <span class="k">ARRAY</span>[<span class="s">1</span>,<span class="s">2</span>] || <span class="k">ARRAY</span>[<span class="s">3</span>] <span class="k">AS</span> joined, <span class="k">ARRAY</span>[<span class="s">1</span>,<span class="s">2</span>] &amp;&amp; <span class="k">ARRAY</span>[<span class="s">2</span>,<span class="s">9</span>] <span class="k">AS</span> overlaps, <span class="k">ARRAY</span>[<span class="s">1</span>] &lt;@ <span class="k">ARRAY</span>[<span class="s">1</span>,<span class="s">2</span>] <span class="k">AS</span> contained;</pre></div>
+<h3 id="ranges">Ranges</h3>
+<p><code>INT4RANGE</code>, <code>INT8RANGE</code>, <code>NUMRANGE</code>, <code>DATERANGE</code>, <code>TSRANGE</code>, <code>TSTZRANGE</code>.</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">SELECT</span> int4range(<span class="s">1</span>, <span class="s">10</span>)                       <span class="k">AS</span> r,          <span class="c">-- [1,10)</span>
+       int4range(<span class="s">1</span>, <span class="s">10</span>, <span class="s">'[]'</span>)                 <span class="k">AS</span> closed,
+       int4range(<span class="s">1</span>,<span class="s">10</span>) @&gt; <span class="s">5</span>                   <span class="k">AS</span> contains,
+       int4range(<span class="s">1</span>,<span class="s">10</span>) &amp;&amp; int4range(<span class="s">5</span>,<span class="s">20</span>)     <span class="k">AS</span> overlaps,
+       lower(int4range(<span class="s">1</span>,<span class="s">10</span>))                 <span class="k">AS</span> lo,
+       int4range(<span class="s">1</span>,<span class="s">5</span>) + int4range(<span class="s">4</span>,<span class="s">9</span>)        <span class="k">AS</span> merged,
+       isempty(int4range(<span class="s">5</span>,<span class="s">5</span>))                <span class="k">AS</span> empty;</pre></div>
+<h3 id="network-and-mac-addresses">Network and MAC addresses</h3>
+<p><code>INET</code>, <code>CIDR</code>, <code>MACADDR</code>, <code>MACADDR8</code>.</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">SELECT</span> <span class="s">'192.168.1.5/24'</span>::<span class="k">INET</span>            <span class="k">AS</span> addr,
        host(<span class="s">'192.168.1.5/24'</span>::<span class="k">INET</span>)      <span class="k">AS</span> just_host,
-       <span class="s">'192.168.1.0/24'</span>::<span class="k">CIDR</span> &gt;&gt; <span class="s">'192.168.1.5'</span>::<span class="k">INET</span> <span class="k">AS</span> in_subnet,
-       <span class="s">B'1011'</span> &amp; <span class="s">B'1101'</span>                     <span class="k">AS</span> bit_and;</pre></div>
-
-<h3 id="types-vector">Vectors</h3>
-<p>
-  Four distance operators: <code>&lt;-&gt;</code> L2, <code>&lt;=&gt;</code> cosine,
-  <code>&lt;#&gt;</code> negative inner product, <code>&lt;+&gt;</code> L1. An index answers only the
-  metric its operator class declared, so build one index per metric you query.
-</p>
+       masklen(<span class="s">'192.168.1.5/24'</span>::<span class="k">INET</span>)   <span class="k">AS</span> bits,
+       network(<span class="s">'192.168.1.5/24'</span>::<span class="k">INET</span>)   <span class="k">AS</span> net,
+       <span class="s">'192.168.1.0/24'</span>::<span class="k">CIDR</span> &gt;&gt; <span class="s">'192.168.1.5'</span>::<span class="k">INET</span> <span class="k">AS</span> contains,
+       <span class="s">'08:00:2b:01:02:03'</span>::<span class="k">MACADDR</span>      <span class="k">AS</span> mac;</pre></div>
+<h3 id="bit-strings">Bit strings</h3>
+<p><code>BIT(n)</code> and <code>BIT VARYING(n)</code>, with literals <code>B'1011'</code> and <code>X'0f'</code>.</p>
 <div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
-<pre><span class="k">CREATE TABLE</span> items (id <span class="k">INT</span> <span class="k">PRIMARY KEY</span>, emb <span class="k">VECTOR</span>(<span class="s">3</span>));
-<span class="k">INSERT INTO</span> items <span class="k">VALUES</span> (<span class="s">1</span>, <span class="s">'[1,0,0]'</span>), (<span class="s">2</span>, <span class="s">'[0,1,0]'</span>);
+<pre><span class="k">SELECT</span> B<span class="s">'1011'</span> &amp; B<span class="s">'1101'</span>  <span class="k">AS</span> and_,
+       B<span class="s">'1011'</span> | B<span class="s">'1101'</span>  <span class="k">AS</span> or_,
+       ~B<span class="s">'1011'</span>           <span class="k">AS</span> not_,
+       B<span class="s">'1011'</span> &lt;&lt; <span class="s">1</span>       <span class="k">AS</span> shifted,
+       length(B<span class="s">'1011'</span>)    <span class="k">AS</span> len;</pre></div>
+<h3 id="geometric-types">Geometric types</h3>
+<p><code>POINT</code>, <code>BOX</code>, <code>CIRCLE</code>, <code>LSEG</code>, <code>LINE</code>, <code>PATH</code>, <code>POLYGON</code>.</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">CREATE</span> <span class="k">TABLE</span> places (id <span class="k">INT</span>, at <span class="k">POINT</span>, area <span class="k">POLYGON</span>);
+<span class="k">INSERT</span> <span class="k">INTO</span> places <span class="k">VALUES</span> (<span class="s">1</span>, <span class="s">'(1,2)'</span>, <span class="s">'((0,0),(0,4),(4,4),(4,0))'</span>);
+
+<span class="k">SELECT</span> id <span class="k">FROM</span> places <span class="k">WHERE</span> area @&gt; at;      <span class="c">-- point inside polygon</span>
+<span class="k">SELECT</span> area(<span class="s">'((0,0),(2,3))'</span>::<span class="k">BOX</span>) <span class="k">AS</span> box_area, <span class="s">'((0,0),(3,4))'</span>::<span class="k">LSEG</span> <span class="k">AS</span> segment;</pre></div>
+<h3 id="xml">XML</h3>
+<p>Stored verbatim and validated as well-formed on cast or store; malformed input is a hard error.</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">SELECT</span> <span class="s">'&lt;a&gt;1&lt;/a&gt;'</span>::<span class="k">XML</span>                       <span class="k">AS</span> doc,
+       xml_is_well_formed(<span class="s">'&lt;a&gt;1&lt;/a&gt;'</span>)        <span class="k">AS</span> ok,
+       xmlconcat(<span class="s">'&lt;a/&gt;'</span>::<span class="k">XML</span>, <span class="s">'&lt;b/&gt;'</span>::<span class="k">XML</span>)   <span class="k">AS</span> joined;</pre></div>
+<h3 id="vectors">Vectors</h3>
+<p><code>VECTOR(n)</code> with four distance operators and an HNSW index.</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">CREATE</span> <span class="k">TABLE</span> items (id <span class="k">INT</span> <span class="k">PRIMARY</span> <span class="k">KEY</span>, emb <span class="k">VECTOR</span>(<span class="s">3</span>));
+<span class="k">INSERT</span> <span class="k">INTO</span> items <span class="k">VALUES</span> (<span class="s">1</span>, <span class="s">'[1,0,0]'</span>), (<span class="s">2</span>, <span class="s">'[0,1,0]'</span>);
 
 <span class="k">CREATE</span> <span class="k">INDEX</span> items_emb <span class="k">ON</span> items <span class="k">USING</span> hnsw (emb vector_cosine_ops);
-<span class="k">SET</span> hnsw_ef_search = <span class="s">100</span>;   <span class="c">-- higher trades latency for recall</span>
 
+<span class="k">SET</span> hnsw_ef_search = <span class="s">100</span>;                    <span class="c">-- higher trades latency for recall</span>
 <span class="k">SELECT</span> id, emb &lt;=&gt; <span class="s">'[1,0,0]'</span> <span class="k">AS</span> distance
-<span class="k">FROM</span>   items <span class="k">ORDER BY</span> distance <span class="k">LIMIT</span> <span class="s">5</span>;</pre></div>
-
-<h2 id="ddl">Defining objects</h2>
-<p>
-  Tables with constraints, generated columns and defaults; indexes including partial, expression and
-  descending; views, materialized views, sequences, domains, schemas, databases, enumerated and
-  composite types, triggers and routines.
-</p>
+<span class="k">FROM</span>   items <span class="k">ORDER</span> <span class="k">BY</span> distance <span class="k">LIMIT</span> <span class="s">5</span>;</pre></div>
+<p>Operators: <code>&lt;-&gt;</code> L2, <code>&lt;=&gt;</code> cosine, <code>&lt;#&gt;</code> negative inner product, <code>&lt;+&gt;</code> L1. Operator classes: <code>vector_l2_ops</code>, <code>vector_cosine_ops</code>, <code>vector_ip_ops</code>, <code>vector_l1_ops</code>. An index answers only the metric its operator class declared, so build one index per metric you query; <code>EXPLAIN</code> says whether a query used the index or fell back to an exact scan.</p>
+<h3 id="enumerated-and-composite-types">Enumerated and composite types</h3>
 <div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
-<pre><span class="k">CREATE TABLE</span> orders (
-  id       <span class="k">BIGSERIAL</span> <span class="k">PRIMARY KEY</span>,
-  customer <span class="k">BIGINT</span> <span class="k">REFERENCES</span> customers (id) <span class="k">ON DELETE CASCADE</span>,
-  total    <span class="k">NUMERIC</span>(<span class="s">12,2</span>) <span class="k">CHECK</span> (total &gt;= <span class="s">0</span>),
-  tax      <span class="k">NUMERIC</span>(<span class="s">12,2</span>) <span class="k">GENERATED ALWAYS AS</span> (total * <span class="s">0.11</span>) <span class="k">STORED</span>,
-  placed   <span class="k">TIMESTAMPTZ</span> <span class="k">DEFAULT</span> now()
+<pre><span class="k">CREATE</span> <span class="k">TYPE</span> mood <span class="k">AS</span> <span class="k">ENUM</span> (<span class="s">'sad'</span>, <span class="s">'ok'</span>, <span class="s">'happy'</span>);
+<span class="k">CREATE</span> <span class="k">TYPE</span> point3 <span class="k">AS</span> (x <span class="k">INT</span>, y <span class="k">INT</span>, z <span class="k">INT</span>);
+
+<span class="k">CREATE</span> <span class="k">TABLE</span> t (id <span class="k">INT</span>, m mood, p point3);
+<span class="k">INSERT</span> <span class="k">INTO</span> t <span class="k">VALUES</span> (<span class="s">1</span>, <span class="s">'happy'</span>, <span class="s">'(1,2,3)'</span>);
+<span class="k">SELECT</span> m, p <span class="k">FROM</span> t;
+<span class="c">--    m    |    p</span>
+<span class="c">-- --------+---------</span>
+<span class="c">--  happy  | (1,2,3)</span>
+
+<span class="k">DROP</span> <span class="k">TABLE</span> t;
+<span class="k">DROP</span> <span class="k">TYPE</span> point3;</pre></div>
+<p>An enum value outside its label list is rejected on insert (<code>22P02</code>). A composite value is written and read as a whole, in its <code>'(a,b,c)'</code> text form; reading a single field out of it is not available yet.</p>
+<h2 id="creating-and-changing-objects">Creating and changing objects</h2>
+<h3 id="tables">Tables</h3>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">CREATE</span> <span class="k">TABLE</span> customers (
+  id       <span class="k">BIGINT</span> <span class="k">GENERATED</span> <span class="k">ALWAYS</span> <span class="k">AS</span> <span class="k">IDENTITY</span> <span class="k">PRIMARY</span> <span class="k">KEY</span>,
+  email    <span class="k">TEXT</span> <span class="k">NOT</span> <span class="k">NULL</span> <span class="k">UNIQUE</span>,
+  country  <span class="k">TEXT</span> <span class="k">DEFAULT</span> <span class="s">'ID'</span>,
+  spend    <span class="k">NUMERIC</span>(<span class="s">12</span>,<span class="s">2</span>) <span class="k">CHECK</span> (spend &gt;= <span class="s">0</span>),
+  tax      <span class="k">NUMERIC</span>(<span class="s">12</span>,<span class="s">2</span>) <span class="k">GENERATED</span> <span class="k">ALWAYS</span> <span class="k">AS</span> (spend * <span class="s">0.11</span>) <span class="k">STORED</span>,
+  joined   <span class="k">TIMESTAMPTZ</span> <span class="k">DEFAULT</span> now()
 );
 
-<span class="k">CREATE</span> <span class="k">INDEX</span> orders_big <span class="k">ON</span> orders (customer) <span class="k">WHERE</span> total &gt; <span class="s">1000</span>;   <span class="c">-- partial</span>
-<span class="k">CREATE</span> <span class="k">INDEX</span> orders_low <span class="k">ON</span> customers ((lower(email)));         <span class="c">-- expression</span>
-<span class="k">CREATE TABLE</span> archive (<span class="k">LIKE</span> orders);                             <span class="c">-- copy the shape, not the rows</span></pre></div>
-<div class="note">
-  <b>Temporary tables and cursors are available</b>
-  <p>
-    A temporary table belongs to the session that made it, is invisible to others, and disappears
-    when the session ends. <code>ON COMMIT DELETE ROWS</code> and <code>ON COMMIT DROP</code> are
-    accepted. Cursors work over a connection with <code>DECLARE</code>, <code>FETCH</code> and
-    <code>CLOSE</code>. A view over one table with no aggregate is auto-updatable, so
-    <code>INSERT</code>, <code>UPDATE</code> and <code>DELETE</code> through it reach the base table.
-  </p>
-</div>
-<div class="note caution">
-  <b><code>ALTER TABLE … RENAME COLUMN</code> is refused when something records the column by name</b>
-  <p>
-    A user-defined check, foreign key, index, default, view, trigger or policy keeps the column name
-    as text. Rather than rename and leave those pointing at a name that no longer exists, the engine
-    refuses and names what is in the way. Drop it, rename, recreate it.
-  </p>
-</div>
+<span class="k">CREATE</span> <span class="k">TABLE</span> orders (
+  id       <span class="k">BIGINT</span> <span class="k">GENERATED</span> <span class="k">ALWAYS</span> <span class="k">AS</span> <span class="k">IDENTITY</span> <span class="k">PRIMARY</span> <span class="k">KEY</span>,
+  customer <span class="k">BIGINT</span> <span class="k">REFERENCES</span> customers (id) <span class="k">ON</span> <span class="k">DELETE</span> <span class="k">CASCADE</span>,
+  total    <span class="k">NUMERIC</span>(<span class="s">12</span>,<span class="s">2</span>),
+  placed   <span class="k">TIMESTAMPTZ</span> <span class="k">DEFAULT</span> now(),
+  <span class="k">CONSTRAINT</span> total_positive <span class="k">CHECK</span> (total &gt; <span class="s">0</span>)
+);
 
-<h2 id="queries">Querying</h2>
-<p>
-  Joins of every kind, lateral joins, scalar and quantified subqueries, set operations,
-  <code>DISTINCT ON</code>, grouping sets, window functions with named windows and
-  <code>ROWS</code>/<code>RANGE</code>/<code>GROUPS</code> frames including <code>EXCLUDE</code>,
-  recursive common table expressions, <code>TABLESAMPLE</code> and <code>WITH ORDINALITY</code>.
-</p>
+<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="k">IF</span> <span class="k">NOT</span> <span class="k">EXISTS</span> archive (<span class="k">LIKE</span> orders);   <span class="c">-- copy the shape, not the rows</span>
+<span class="k">CREATE</span> <span class="k">TABLE</span> recent <span class="k">AS</span> <span class="k">SELECT</span> * <span class="k">FROM</span> orders <span class="k">WHERE</span> total &gt; <span class="s">100</span>;
+<span class="k">DROP</span> <span class="k">TABLE</span> <span class="k">IF</span> <span class="k">EXISTS</span> recent;</pre></div>
+<p>Constraints available: <code>PRIMARY KEY</code>, <code>UNIQUE</code>, <code>NOT NULL</code>, <code>CHECK</code>, <code>FOREIGN KEY ... REFERENCES</code> with <code>ON DELETE</code> / <code>ON UPDATE</code> <code>CASCADE</code>, <code>SET NULL</code>, <code>SET DEFAULT</code>, <code>RESTRICT</code>, <code>NO ACTION</code>; each can be written at column or table level. Generated columns are <code>STORED</code>.</p>
+<p>Temporary tables belong to the session that made them, are invisible to others, and disappear when the session ends. <code>ON COMMIT DELETE ROWS</code> and <code>ON COMMIT DROP</code> are accepted.</p>
 <div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
-<pre><span class="k">SELECT</span> c.country,
-       count(*)                                 <span class="k">AS</span> orders,
-       sum(o.total)                             <span class="k">AS</span> revenue,
-       rank() <span class="k">OVER</span> (<span class="k">ORDER BY</span> sum(o.total) <span class="k">DESC</span>) <span class="k">AS</span> by_revenue
-<span class="k">FROM</span>   customers c
-<span class="k">JOIN</span>   orders    o <span class="k">ON</span> o.customer = c.id
-<span class="k">WHERE</span>  o.placed &gt;= now() - <span class="k">INTERVAL</span> <span class="s">'30 days'</span>
-<span class="k">GROUP BY</span> c.country
-<span class="k">HAVING</span> count(*) &gt; <span class="s">2</span>
-<span class="k">ORDER BY</span> revenue <span class="k">DESC</span>;
-
-<span class="o"></span>  country | orders | revenue | by_revenue
-<span class="o"></span> ---------+--------+---------+------------
-<span class="o"></span>  SG      |      1 |  900.00 |          1
-<span class="o"></span>  ID      |      3 |  245.50 |          2</pre></div>
-
-<h2 id="dml">Changing data</h2>
+<pre><span class="k">CREATE</span> <span class="k">TEMP</span> <span class="k">TABLE</span> scratch (id <span class="k">INT</span>) <span class="k">ON</span> <span class="k">COMMIT</span> <span class="k">DROP</span>;</pre></div>
+<h3 id="altering">Altering</h3>
+<p>One action per <code>ALTER TABLE</code> statement.</p>
 <div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
-<pre><span class="k">INSERT INTO</span> customers (email, country) <span class="k">VALUES</span> (<span class="s">'ana@example.com'</span>, <span class="s">'ID'</span>)
-<span class="k">ON CONFLICT</span> (email) <span class="k">DO UPDATE SET</span> country = <span class="k">EXCLUDED</span>.country
+<pre><span class="k">ALTER</span> <span class="k">TABLE</span> orders <span class="k">ADD</span> <span class="k">COLUMN</span> note <span class="k">TEXT</span>;
+<span class="k">ALTER</span> <span class="k">TABLE</span> orders <span class="k">ADD</span> <span class="k">COLUMN</span> channel <span class="k">TEXT</span> <span class="k">DEFAULT</span> <span class="s">'web'</span> <span class="k">NOT</span> <span class="k">NULL</span>;
+<span class="k">ALTER</span> <span class="k">TABLE</span> orders <span class="k">ALTER</span> <span class="k">COLUMN</span> note <span class="k">SET</span> <span class="k">DEFAULT</span> <span class="s">''</span>;
+<span class="k">ALTER</span> <span class="k">TABLE</span> orders <span class="k">ALTER</span> <span class="k">COLUMN</span> note <span class="k">DROP</span> <span class="k">DEFAULT</span>;
+<span class="k">ALTER</span> <span class="k">TABLE</span> orders <span class="k">ALTER</span> <span class="k">COLUMN</span> note <span class="k">SET</span> <span class="k">NOT</span> <span class="k">NULL</span>;
+<span class="k">ALTER</span> <span class="k">TABLE</span> orders <span class="k">ALTER</span> <span class="k">COLUMN</span> note <span class="k">DROP</span> <span class="k">NOT</span> <span class="k">NULL</span>;
+<span class="k">ALTER</span> <span class="k">TABLE</span> orders <span class="k">ALTER</span> <span class="k">COLUMN</span> note <span class="k">TYPE</span> <span class="k">VARCHAR</span>(<span class="s">200</span>);
+<span class="k">ALTER</span> <span class="k">TABLE</span> orders <span class="k">RENAME</span> <span class="k">COLUMN</span> note <span class="k">TO</span> memo;
+<span class="k">ALTER</span> <span class="k">TABLE</span> orders <span class="k">DROP</span> <span class="k">COLUMN</span> memo;
+<span class="k">ALTER</span> <span class="k">TABLE</span> orders <span class="k">DROP</span> <span class="k">COLUMN</span> channel;
+<span class="k">ALTER</span> <span class="k">TABLE</span> orders <span class="k">RENAME</span> <span class="k">TO</span> sales_orders;
+<span class="k">ALTER</span> <span class="k">TABLE</span> sales_orders <span class="k">RENAME</span> <span class="k">TO</span> orders;
+
+<span class="k">ALTER</span> <span class="k">TABLE</span> orders <span class="k">DROP</span> <span class="k">CONSTRAINT</span> total_positive;
+<span class="k">ALTER</span> <span class="k">TABLE</span> orders <span class="k">ADD</span> <span class="k">CONSTRAINT</span> total_positive <span class="k">CHECK</span> (total &gt; <span class="s">0</span>);
+<span class="k">ALTER</span> <span class="k">TABLE</span> orders <span class="k">ADD</span> <span class="k">CONSTRAINT</span> orders_customer_fk <span class="k">FOREIGN</span> <span class="k">KEY</span> (customer) <span class="k">REFERENCES</span> customers (id);
+<span class="k">ALTER</span> <span class="k">TABLE</span> orders <span class="k">DROP</span> <span class="k">CONSTRAINT</span> orders_customer_fk;
+
+<span class="k">ALTER</span> <span class="k">TABLE</span> orders <span class="k">ENABLE</span> <span class="k">ROW</span> <span class="k">LEVEL</span> <span class="k">SECURITY</span>;
+<span class="k">ALTER</span> <span class="k">TABLE</span> orders <span class="k">DISABLE</span> <span class="k">ROW</span> <span class="k">LEVEL</span> <span class="k">SECURITY</span>;</pre></div>
+<p><code>ALTER TABLE t DISABLE TRIGGER name</code> and <code>ENABLE TRIGGER name</code> are shown under <a href="#triggers">Triggers</a>.</p>
+<p><code>RENAME COLUMN</code> succeeds when nothing else records the column by name. If a user-defined check, foreign key, index, default, view, trigger or policy refers to it, the rename is refused and the error names what is in the way. Drop that object, rename, and recreate it.</p>
+<p>Not accepted: <code>ADD COLUMN ... FIRST | AFTER</code>, an inline <code>CHECK</code> or <code>REFERENCES</code> on <code>ADD COLUMN</code>, <code>DROP COLUMN ... CASCADE</code>, dropping several columns in one statement, <code>ADD CONSTRAINT ... NOT VALID</code>, <code>ALTER COLUMN ... TYPE ... USING &lt;expr&gt;</code>, <code>ALTER COLUMN ... ADD GENERATED AS IDENTITY</code>, and a comma-separated list of actions.</p>
+<h3 id="indexes">Indexes</h3>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">CREATE</span> <span class="k">INDEX</span> orders_customer <span class="k">ON</span> orders (customer);
+<span class="k">CREATE</span> <span class="k">INDEX</span> orders_big      <span class="k">ON</span> orders (customer) <span class="k">WHERE</span> total &gt; <span class="s">1000</span>;   <span class="c">-- partial</span>
+<span class="k">CREATE</span> <span class="k">INDEX</span> orders_lower    <span class="k">ON</span> customers ((lower(email)));             <span class="c">-- expression</span>
+<span class="k">CREATE</span> <span class="k">UNIQUE</span> <span class="k">INDEX</span> customers_email <span class="k">ON</span> customers (email);   <span class="c">-- an index needs a name</span>
+<span class="k">CREATE</span> <span class="k">INDEX</span> orders_desc     <span class="k">ON</span> orders (total <span class="k">DESC</span>);
+<span class="k">CREATE</span> <span class="k">INDEX</span> <span class="k">IF</span> <span class="k">NOT</span> <span class="k">EXISTS</span> orders_total <span class="k">ON</span> orders (total) <span class="k">INCLUDE</span> (customer);
+<span class="k">DROP</span> <span class="k">INDEX</span> <span class="k">IF</span> <span class="k">EXISTS</span> orders_desc;</pre></div>
+<p>Index methods are the default B-tree and <code>hnsw</code> for vectors. The planner picks an index from collected statistics, so run <code>ANALYZE</code> after a large load (see <a href="#maintenance">Maintenance</a>).</p>
+<h3 id="views-sequences-domains-schemas-databases">Views, sequences, domains, schemas, databases</h3>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">CREATE</span> <span class="k">VIEW</span> big_orders <span class="k">AS</span> <span class="k">SELECT</span> * <span class="k">FROM</span> orders <span class="k">WHERE</span> total &gt; <span class="s">1000</span>;
+<span class="k">CREATE</span> <span class="k">OR</span> <span class="k">REPLACE</span> <span class="k">VIEW</span> big_orders <span class="k">AS</span> <span class="k">SELECT</span> * <span class="k">FROM</span> orders <span class="k">WHERE</span> total &gt; <span class="s">500</span>;
+<span class="k">DROP</span> <span class="k">VIEW</span> big_orders;
+
+<span class="k">CREATE</span> <span class="k">MATERIALIZED</span> <span class="k">VIEW</span> daily <span class="k">AS</span>
+  <span class="k">SELECT</span> date_trunc(<span class="s">'day'</span>, placed) <span class="k">AS</span> d, count(*) <span class="k">AS</span> n <span class="k">FROM</span> orders <span class="k">GROUP</span> <span class="k">BY</span> <span class="s">1</span>;
+<span class="k">REFRESH</span> <span class="k">MATERIALIZED</span> <span class="k">VIEW</span> daily;
+
+<span class="k">CREATE</span> <span class="k">SEQUENCE</span> invoice_no <span class="k">START</span> <span class="s">1000</span> INCREMENT <span class="k">BY</span> <span class="s">5</span>;
+<span class="k">SELECT</span> nextval(<span class="s">'invoice_no'</span>), currval(<span class="s">'invoice_no'</span>);
+<span class="k">SELECT</span> setval(<span class="s">'invoice_no'</span>, <span class="s">5000</span>);
+<span class="k">DROP</span> <span class="k">SEQUENCE</span> invoice_no;
+
+<span class="k">CREATE</span> <span class="k">DOMAIN</span> positive_int <span class="k">AS</span> <span class="k">INT</span> <span class="k">CHECK</span> (<span class="k">VALUE</span> &gt; <span class="s">0</span>);
+<span class="k">DROP</span> <span class="k">DOMAIN</span> positive_int;
+
+<span class="k">CREATE</span> <span class="k">SCHEMA</span> reporting;
+<span class="k">CREATE</span> <span class="k">TABLE</span> reporting.facts (id <span class="k">INT</span>);
+<span class="k">DROP</span> <span class="k">SCHEMA</span> reporting <span class="k">CASCADE</span>;          <span class="c">-- RESTRICT (the default) refuses a non-empty schema</span>
+
+<span class="k">CREATE</span> <span class="k">DATABASE</span> app;                    <span class="c">-- a separate physical database; connect to it by name</span>
+<span class="k">DROP</span> <span class="k">DATABASE</span> app;</pre></div>
+<p>A view over a single table with no aggregate is auto-updatable: <code>INSERT</code>, <code>UPDATE</code> and <code>DELETE</code> through it reach the base table.</p>
+<p>A materialized view holds the result of its last <code>REFRESH</code>. Incremental maintenance is opt-in with <code>CREATE MATERIALIZED VIEW ... WITH (incremental = true) AS ...</code>; a body that cannot be maintained incrementally is refused rather than silently downgraded.</p>
+<p>Sequence functions take the sequence name as a text literal and may only appear where they are evaluated exactly once: a <code>SELECT</code> without <code>FROM</code>, a <code>VALUES</code> row, or a column default.</p>
+<p><code>CREATE DOMAIN</code> accepts a base type and a <code>CHECK</code>; a <code>DEFAULT</code> or <code>COLLATE</code> on a domain is not accepted yet.</p>
+<h3 id="comments">Comments</h3>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">COMMENT</span> <span class="k">ON</span> <span class="k">TABLE</span> orders <span class="k">IS</span> <span class="s">'One row per checkout'</span>;
+<span class="k">COMMENT</span> <span class="k">ON</span> <span class="k">COLUMN</span> orders.total <span class="k">IS</span> <span class="s">'Gross, including tax'</span>;
+<span class="k">COMMENT</span> <span class="k">ON</span> <span class="k">TABLE</span> orders <span class="k">IS</span> <span class="k">NULL</span>;        <span class="c">-- remove</span></pre></div>
+<p>Only table and column targets are accepted.</p>
+<h2 id="inserting-and-changing-rows">Inserting and changing rows</h2>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">INSERT</span> <span class="k">INTO</span> customers (email, country) <span class="k">VALUES</span> (<span class="s">'ana@example.com'</span>, <span class="s">'ID'</span>)
 <span class="k">RETURNING</span> id, joined;
 
-<span class="k">MERGE INTO</span> stock t <span class="k">USING</span> shipment s <span class="k">ON</span> t.sku = s.sku
-<span class="k">WHEN MATCHED</span>             <span class="k">THEN UPDATE SET</span> qty = t.qty + s.qty
-<span class="k">WHEN NOT MATCHED</span>         <span class="k">THEN INSERT</span> (sku, qty) <span class="k">VALUES</span> (s.sku, s.qty)
-<span class="k">WHEN NOT MATCHED BY SOURCE</span> <span class="k">THEN UPDATE SET</span> qty = <span class="s">0</span>;
+<span class="k">INSERT</span> <span class="k">INTO</span> archive <span class="k">SELECT</span> * <span class="k">FROM</span> orders <span class="k">WHERE</span> total &lt; <span class="s">10</span>;
 
-<span class="k">TRUNCATE</span> orders <span class="k">CASCADE</span>;      <span class="c">-- also empties tables that reference it</span></pre></div>
+<span class="k">INSERT</span> <span class="k">INTO</span> customers (email) <span class="k">VALUES</span> (<span class="s">'ana@example.com'</span>)
+<span class="k">ON</span> CONFLICT <span class="k">DO</span> NOTHING;
 
-<h2 id="access">Access control</h2>
-<p>
-  Roles, membership, object and column-level grants, and row-level security policies, all enforced
-  inside the engine.
-</p>
+<span class="k">INSERT</span> <span class="k">INTO</span> customers (email, country) <span class="k">VALUES</span> (<span class="s">'ana@example.com'</span>, <span class="s">'SG'</span>)
+<span class="k">ON</span> CONFLICT (email) <span class="k">DO</span> <span class="k">UPDATE</span> <span class="k">SET</span> country = EXCLUDED.country
+<span class="k">WHERE</span> customers.country &lt;&gt; EXCLUDED.country;
+
+<span class="k">UPDATE</span> orders o <span class="k">SET</span> total = total * <span class="s">1.1</span>
+<span class="k">FROM</span>   customers c
+<span class="k">WHERE</span>  o.customer = c.id <span class="k">AND</span> c.country = <span class="s">'ID'</span>
+<span class="k">RETURNING</span> id, total;
+
+<span class="k">DELETE</span> <span class="k">FROM</span> orders <span class="k">USING</span> customers c
+<span class="k">WHERE</span>  orders.customer = c.id <span class="k">AND</span> c.country = <span class="s">'XX'</span>;
+
+<span class="k">CREATE</span> <span class="k">TABLE</span> stock    (sku <span class="k">TEXT</span> <span class="k">PRIMARY</span> <span class="k">KEY</span>, qty <span class="k">INT</span>);
+<span class="k">CREATE</span> <span class="k">TABLE</span> shipment (sku <span class="k">TEXT</span>, qty <span class="k">INT</span>);
+<span class="k">INSERT</span> <span class="k">INTO</span> stock    <span class="k">VALUES</span> (<span class="s">'A'</span>, <span class="s">1</span>), (<span class="s">'B'</span>, <span class="s">5</span>), (<span class="s">'C'</span>, <span class="s">2</span>);
+<span class="k">INSERT</span> <span class="k">INTO</span> shipment <span class="k">VALUES</span> (<span class="s">'A'</span>, <span class="s">3</span>), (<span class="s">'B'</span>, <span class="s">0</span>), (<span class="s">'D'</span>, <span class="s">7</span>);
+
+<span class="k">MERGE</span> <span class="k">INTO</span> stock t <span class="k">USING</span> shipment s <span class="k">ON</span> t.sku = s.sku
+<span class="k">WHEN</span> <span class="k">MATCHED</span> <span class="k">AND</span> s.qty = <span class="s">0</span>   <span class="k">THEN</span> <span class="k">DELETE</span>
+<span class="k">WHEN</span> <span class="k">MATCHED</span>                 <span class="k">THEN</span> <span class="k">UPDATE</span> <span class="k">SET</span> qty = t.qty + s.qty
+<span class="k">WHEN</span> <span class="k">NOT</span> <span class="k">MATCHED</span>             <span class="k">THEN</span> <span class="k">INSERT</span> (sku, qty) <span class="k">VALUES</span> (s.sku, s.qty)
+<span class="k">WHEN</span> <span class="k">NOT</span> <span class="k">MATCHED</span> <span class="k">BY</span> SOURCE   <span class="k">THEN</span> <span class="k">UPDATE</span> <span class="k">SET</span> qty = <span class="s">0</span>;
+
+<span class="k">SELECT</span> * <span class="k">FROM</span> stock <span class="k">ORDER</span> <span class="k">BY</span> sku;
+<span class="c">--  sku | qty</span>
+<span class="c">-- -----+-----</span>
+<span class="c">--  A   |   4</span>
+<span class="c">--  C   |   0</span>
+<span class="c">--  D   |   7</span>
+
+<span class="k">TRUNCATE</span> shipment;
+<span class="k">TRUNCATE</span> stock <span class="k">RESTART</span> <span class="k">IDENTITY</span>;
+<span class="k">TRUNCATE</span> customers <span class="k">CASCADE</span>;      <span class="c">-- also empties tables that reference it</span>
+<span class="k">DROP</span> <span class="k">TABLE</span> shipment;
+<span class="k">DROP</span> <span class="k">TABLE</span> stock;</pre></div>
+<p><code>UPDATE ... FROM</code>, <code>DELETE ... USING</code> and <code>MERGE ... USING</code> take a single named table as the extra source.</p>
+<h3 id="bulk-load-and-export">Bulk load and export</h3>
+<p><code>COPY</code> streams rows in one exchange instead of a round trip per row. The only targets are <code>STDIN</code> and <code>STDOUT</code>; in the shell the data travels on the command's own standard streams.</p>
+<div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre>nusadb-cli -c "COPY customers FROM STDIN" &lt; rows.tsv
+nusadb-cli -c "COPY customers (email, country) FROM STDIN WITH (FORMAT csv, HEADER)" &lt; rows.csv
+nusadb-cli -c "COPY customers FROM STDIN WITH (DELIMITER '|', NULL '')" &lt; rows.psv
+nusadb-cli -c "COPY customers TO STDOUT" &gt; out.tsv
+nusadb-cli -c "COPY customers (email, country) TO STDOUT WITH (FORMAT csv, HEADER)" &gt; out.csv</pre></div>
+<p>Options: <code>FORMAT text | csv</code>, <code>DELIMITER 'c'</code>, <code>NULL 'string'</code>, <code>HEADER</code>, and for CSV only <code>QUOTE 'c'</code> and <code>ESCAPE 'c'</code>. The text format is tab-delimited with <code>\N</code> for NULL. The source or target is a table (optionally with a column list), not a query, and binary format is not available. A load larger than <code>--copy-max-bytes</code> is refused rather than buffered without bound.</p>
+<h2 id="querying">Querying</h2>
+<h3 id="the-select-statement">The SELECT statement</h3>
+<div class="code"><div class="code-bar"><span>output</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="o">SELECT [DISTINCT | DISTINCT ON (expr, ...)] projection</span>
+<span class="o">FROM   source [JOIN ...] [, lateral_source]</span>
+<span class="o">WHERE  predicate</span>
+<span class="o">GROUP  BY expr | ROLLUP (...) | CUBE (...) | GROUPING SETS (...)</span>
+<span class="o">HAVING predicate</span>
+<span class="o">WINDOW name AS (...)</span>
+<span class="o">ORDER  BY expr [ASC | DESC] [NULLS FIRST | LAST]</span>
+<span class="o">LIMIT  n OFFSET m           -- or: OFFSET m ROWS FETCH FIRST n ROWS ONLY</span>
+<span class="o">FOR    UPDATE | SHARE [OF table] [NOWAIT | SKIP LOCKED]</span></pre></div>
+<h3 id="joins-subqueries-set-operations">Joins, subqueries, set operations</h3>
 <div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
-<pre><span class="k">CREATE ROLE</span> analyst <span class="k">LOGIN</span> <span class="k">PASSWORD</span> <span class="s">'secret'</span>;
+<pre><span class="k">SELECT</span> c.email, count(o.id) <span class="k">AS</span> orders
+<span class="k">FROM</span>   customers c
+<span class="k">LEFT</span> <span class="k">JOIN</span> orders o <span class="k">ON</span> o.customer = c.id
+<span class="k">WHERE</span>  c.country = <span class="s">'ID'</span>
+<span class="k">GROUP</span> <span class="k">BY</span> c.email
+<span class="k">HAVING</span> count(o.id) &gt; <span class="s">2</span>
+<span class="k">ORDER</span> <span class="k">BY</span> orders <span class="k">DESC</span> <span class="k">NULLS</span> LAST
+<span class="k">LIMIT</span> <span class="s">10</span> <span class="k">OFFSET</span> <span class="s">20</span>;
+
+<span class="k">SELECT</span> <span class="k">DISTINCT</span> <span class="k">ON</span> (customer) customer, total
+<span class="k">FROM</span>   orders <span class="k">ORDER</span> <span class="k">BY</span> customer, total <span class="k">DESC</span>;          <span class="c">-- the biggest order per customer</span>
+
+<span class="k">SELECT</span> * <span class="k">FROM</span> customers c
+<span class="k">WHERE</span> <span class="k">EXISTS</span> (<span class="k">SELECT</span> <span class="s">1</span> <span class="k">FROM</span> orders o <span class="k">WHERE</span> o.customer = c.id <span class="k">AND</span> o.total &gt; <span class="s">500</span>);
+
+<span class="k">SELECT</span> email <span class="k">FROM</span> customers <span class="k">WHERE</span> id <span class="k">IN</span> (<span class="k">SELECT</span> customer <span class="k">FROM</span> orders <span class="k">WHERE</span> total &gt; <span class="s">100</span>);
+<span class="k">SELECT</span> email <span class="k">FROM</span> customers <span class="k">WHERE</span> spend &gt; <span class="k">ALL</span> (<span class="k">SELECT</span> total <span class="k">FROM</span> orders <span class="k">WHERE</span> customer = <span class="s">2</span>);
+<span class="k">SELECT</span> (id, email) <span class="k">IN</span> ((<span class="s">1</span>,<span class="s">'a@x'</span>), (<span class="s">2</span>,<span class="s">'b@x'</span>)) <span class="k">AS</span> matched <span class="k">FROM</span> customers;
+
+<span class="k">SELECT</span> email <span class="k">FROM</span> customers <span class="k">WHERE</span> country = <span class="s">'ID'</span>
+<span class="k">UNION</span>      <span class="k">SELECT</span> email <span class="k">FROM</span> customers <span class="k">WHERE</span> spend &gt; <span class="s">100</span>
+<span class="k">EXCEPT</span>     <span class="k">SELECT</span> email <span class="k">FROM</span> customers <span class="k">WHERE</span> email <span class="k">LIKE</span> <span class="s">'%@blocked.example'</span>
+<span class="k">INTERSECT</span>  <span class="k">SELECT</span> email <span class="k">FROM</span> customers;
+
+<span class="k">SELECT</span> c.email, o.total
+<span class="k">FROM</span>   customers c
+<span class="k">CROSS</span> <span class="k">JOIN</span> <span class="k">LATERAL</span> (<span class="k">SELECT</span> total <span class="k">FROM</span> orders <span class="k">WHERE</span> customer = c.id <span class="k">ORDER</span> <span class="k">BY</span> total <span class="k">DESC</span> <span class="k">LIMIT</span> <span class="s">1</span>) o;
+
+<span class="k">SELECT</span> * <span class="k">FROM</span> (<span class="k">VALUES</span> (<span class="s">1</span>, <span class="s">'one'</span>), (<span class="s">2</span>, <span class="s">'two'</span>)) <span class="k">AS</span> v(n, word);
+
+<span class="k">CREATE</span> <span class="k">TABLE</span> profiles (id <span class="k">BIGINT</span>, nick <span class="k">TEXT</span>);
+<span class="k">SELECT</span> email, nick <span class="k">FROM</span> customers <span class="k">NATURAL</span> <span class="k">JOIN</span> profiles;
+<span class="k">SELECT</span> email, nick <span class="k">FROM</span> customers <span class="k">JOIN</span> profiles <span class="k">USING</span> (id);</pre></div>
+<p>Join types: <code>INNER</code>, <code>LEFT</code>, <code>RIGHT</code>, <code>FULL</code>, <code>CROSS</code>, <code>NATURAL</code>, <code>LATERAL</code>, and <code>USING (...)</code>. Subqueries may be scalar, <code>IN</code> / <code>NOT IN</code>, <code>EXISTS</code>, quantified (<code>ANY</code> / <code>SOME</code> / <code>ALL</code>), correlated, and used in <code>FROM</code> as a derived table. <code>IN (subquery)</code> and a quantified comparison require the same type on both sides (<code>BIGINT</code> against <code>BIGINT</code>, <code>NUMERIC(12,2)</code> against <code>NUMERIC(12,2)</code>); cast when they differ.</p>
+<h3 id="pattern-matching">Pattern matching</h3>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">SELECT</span> email <span class="k">FROM</span> customers
+<span class="k">WHERE</span>  email <span class="k">LIKE</span> <span class="s">'%@example.com'</span>
+   <span class="k">OR</span>  email <span class="k">ILIKE</span> <span class="s">'ANA%'</span>                       <span class="c">-- case-insensitive</span>
+   <span class="k">OR</span>  email <span class="k">SIMILAR</span> <span class="k">TO</span> <span class="s">'(ana|budi)@%'</span>
+   <span class="k">OR</span>  email ~ <span class="s">'^[a-c]'</span>                         <span class="c">-- regular expression, ~* for case-insensitive</span>
+   <span class="k">OR</span>  email <span class="k">LIKE</span> <span class="s">'50\%'</span> <span class="k">ESCAPE</span> <span class="s">'\'</span>;</pre></div>
+<h3 id="window-functions">Window functions</h3>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">SELECT</span> country, email, spend,
+       rank()       <span class="k">OVER</span> w                         <span class="k">AS</span> rk,
+       row_number() <span class="k">OVER</span> w                         <span class="k">AS</span> n,
+       sum(spend)   <span class="k">OVER</span> (<span class="k">PARTITION</span> <span class="k">BY</span> country)    <span class="k">AS</span> country_total,
+       lag(spend)   <span class="k">OVER</span> w                         <span class="k">AS</span> previous,
+       avg(spend)   <span class="k">OVER</span> (<span class="k">ORDER</span> <span class="k">BY</span> joined <span class="k">ROWS</span> <span class="k">BETWEEN</span> <span class="s">2</span> <span class="k">PRECEDING</span> <span class="k">AND</span> <span class="k">CURRENT</span> <span class="k">ROW</span>) <span class="k">AS</span> moving
+<span class="k">FROM</span>   customers
+<span class="k">WINDOW</span> w <span class="k">AS</span> (<span class="k">PARTITION</span> <span class="k">BY</span> country <span class="k">ORDER</span> <span class="k">BY</span> spend <span class="k">DESC</span>);</pre></div>
+<p>Functions: <code>row_number</code>, <code>rank</code>, <code>dense_rank</code>, <code>ntile</code>, <code>cume_dist</code>, <code>percent_rank</code>, <code>lag</code>, <code>lead</code>, <code>first_value</code>, <code>last_value</code>, <code>nth_value</code>, and <code>count</code> / <code>sum</code> / <code>avg</code> / <code>min</code> / <code>max</code> over a window. Frames support <code>ROWS</code>, <code>RANGE</code>, <code>GROUPS</code> and the <code>EXCLUDE</code> clause.</p>
+<h3 id="common-table-expressions">Common table expressions</h3>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">CREATE</span> <span class="k">TABLE</span> staff (id <span class="k">INT</span>, manager <span class="k">INT</span>);
+<span class="k">INSERT</span> <span class="k">INTO</span> staff <span class="k">VALUES</span> (<span class="s">1</span>, <span class="k">NULL</span>), (<span class="s">2</span>, <span class="s">1</span>), (<span class="s">3</span>, <span class="s">1</span>), (<span class="s">4</span>, <span class="s">2</span>);
+
+<span class="k">WITH</span> <span class="k">RECURSIVE</span> chain <span class="k">AS</span> (
+  <span class="k">SELECT</span> id, manager, <span class="s">1</span> <span class="k">AS</span> depth <span class="k">FROM</span> staff <span class="k">WHERE</span> manager <span class="k">IS</span> <span class="k">NULL</span>
+  <span class="k">UNION</span> <span class="k">ALL</span>
+  <span class="k">SELECT</span> s.id, s.manager, c.depth + <span class="s">1</span>
+  <span class="k">FROM</span> staff s <span class="k">JOIN</span> chain c <span class="k">ON</span> s.manager = c.id
+)
+<span class="k">SELECT</span> depth, count(*) <span class="k">FROM</span> chain <span class="k">GROUP</span> <span class="k">BY</span> depth <span class="k">ORDER</span> <span class="k">BY</span> depth;
+<span class="c">--  depth | count</span>
+<span class="c">-- -------+-------</span>
+<span class="c">--      1 |     1</span>
+<span class="c">--      2 |     2</span>
+<span class="c">--      3 |     1</span>
+
+<span class="k">WITH</span> gone <span class="k">AS</span> (
+  <span class="k">DELETE</span> <span class="k">FROM</span> staff <span class="k">WHERE</span> id = <span class="s">4</span> <span class="k">RETURNING</span> *
+)
+<span class="k">INSERT</span> <span class="k">INTO</span> profiles <span class="k">SELECT</span> id, <span class="s">'former staff'</span> <span class="k">FROM</span> gone;</pre></div>
+<p><code>WITH x AS MATERIALIZED (...)</code> and <code>NOT MATERIALIZED</code> are accepted as hints. A data-modifying statement with <code>RETURNING</code> can be used inside <code>WITH</code>.</p>
+<h3 id="grouping-sets-and-aggregates-with-filters">Grouping sets and aggregates with filters</h3>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">SELECT</span> country, date_trunc(<span class="s">'month'</span>, joined) <span class="k">AS</span> month, count(*)
+<span class="k">FROM</span>   customers
+<span class="k">GROUP</span> <span class="k">BY</span> <span class="k">GROUPING</span> <span class="k">SETS</span> ((country), (date_trunc(<span class="s">'month'</span>, joined)), ());   <span class="c">-- repeat the expression, not the alias</span>
+
+<span class="k">SELECT</span> country, count(*) <span class="k">FROM</span> customers <span class="k">GROUP</span> <span class="k">BY</span> <span class="k">ROLLUP</span> (country);
+
+<span class="k">SELECT</span> count(*) <span class="k">FILTER</span> (<span class="k">WHERE</span> spend &gt; <span class="s">100</span>)             <span class="k">AS</span> big,
+       count(<span class="k">DISTINCT</span> country)                          <span class="k">AS</span> countries,
+       string_agg(email, <span class="s">','</span> <span class="k">ORDER</span> <span class="k">BY</span> email)            <span class="k">AS</span> list,
+       percentile_cont(<span class="s">0.5</span>) <span class="k">WITHIN</span> <span class="k">GROUP</span> (<span class="k">ORDER</span> <span class="k">BY</span> spend) <span class="k">AS</span> median,
+       mode() <span class="k">WITHIN</span> <span class="k">GROUP</span> (<span class="k">ORDER</span> <span class="k">BY</span> country)           <span class="k">AS</span> commonest,
+       rank(<span class="s">500</span>) <span class="k">WITHIN</span> <span class="k">GROUP</span> (<span class="k">ORDER</span> <span class="k">BY</span> spend)          <span class="k">AS</span> where_500_would_rank
+<span class="k">FROM</span>   customers;</pre></div>
+<h3 id="set-returning-functions">Set-returning functions</h3>
+<p>A function that returns rows can be used in <code>FROM</code>, optionally with <code>WITH ORDINALITY</code>.</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">SELECT</span> d::<span class="k">DATE</span> <span class="k">FROM</span> generate_series(<span class="k">DATE</span> <span class="s">'2026-01-01'</span>, <span class="k">DATE</span> <span class="s">'2026-01-07'</span>, <span class="k">INTERVAL</span> <span class="s">'1 day'</span>) <span class="k">AS</span> d;
+<span class="k">SELECT</span> n <span class="k">FROM</span> generate_series(<span class="s">1</span>, <span class="s">5</span>) <span class="k">AS</span> n;
+<span class="k">SELECT</span> word <span class="k">FROM</span> regexp_split_to_table(<span class="s">'a b  c'</span>, <span class="s">'\s+'</span>) <span class="k">AS</span> word;
+<span class="k">SELECT</span> part, i <span class="k">FROM</span> string_to_table(<span class="s">'x,y,z'</span>, <span class="s">','</span>) <span class="k">WITH</span> <span class="k">ORDINALITY</span> <span class="k">AS</span> t(part, i);</pre></div>
+<h3 id="reading-a-plan-explain">Reading a plan (<code>EXPLAIN</code>)</h3>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">EXPLAIN</span> <span class="k">SELECT</span> c.email, sum(o.total)
+<span class="k">FROM</span>   customers c <span class="k">JOIN</span> orders o <span class="k">ON</span> o.customer = c.id
+<span class="k">WHERE</span>  c.country = <span class="s">'ID'</span>
+<span class="k">GROUP</span> <span class="k">BY</span> c.email;
+
+<span class="k">EXPLAIN</span> <span class="k">ANALYZE</span> <span class="k">SELECT</span> * <span class="k">FROM</span> orders <span class="k">WHERE</span> total &gt; <span class="s">100</span>;   <span class="c">-- runs it, reports actual rows and time</span>
+<span class="k">EXPLAIN</span> VERBOSE <span class="k">SELECT</span> id <span class="k">FROM</span> orders;                    <span class="c">-- adds each node's output columns</span>
+<span class="k">EXPLAIN</span> (FORMAT <span class="k">JSON</span>) <span class="k">SELECT</span> id <span class="k">FROM</span> orders;              <span class="c">-- one JSON document</span></pre></div>
+<p>The plan is an indented tree, one node per line:</p>
+<div class="code"><div class="code-bar"><span>output</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="o">Project (2 column(s))</span>
+<span class="o">  GroupAggregate (1 key(s), 1 aggregate(s))</span>
+<span class="o">    HashJoin (Inner, 1 key(s))</span>
+<span class="o">      Filter</span>
+<span class="o">        SeqScan: customers</span>
+<span class="o">      SeqScan: orders</span></pre></div>
+<p>With <code>ANALYZE</code>, each node also reports what happened:</p>
+<div class="code"><div class="code-bar"><span>output</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="o">Project (4 column(s)) (est. rows=4 cost=4.8) (actual rows=2)</span>
+<span class="o">  Filter (est. rows=4 cost=4.4) (actual rows=2)</span>
+<span class="o">    SeqScan: orders (est. rows=4 cost=4.0) (actual rows=4)</span>
+<span class="o">Execution: actual rows=2, total time=0.034 ms</span></pre></div>
+<p><code>est. rows</code> and <code>cost</code> come from statistics, so they appear once the table has been analyzed (by hand or by the background worker). Node names include <code>SeqScan</code>, <code>IndexScan</code>, <code>Filter</code>, <code>Sort</code>, <code>HashJoin</code>, <code>NestedLoopJoin</code>, <code>GroupAggregate</code>, <code>Limit</code>, <code>Window</code> and <code>VectorKnn</code>; a vector query that cannot use an HNSW index says so (<code>exact scan, no HNSW index for vector_l2_ops</code>).</p>
+<h2 id="full-text-search">Full-text search</h2>
+<p>Text is turned into a <code>tsvector</code> (a sorted list of lexemes with positions) and matched against a <code>tsquery</code> with <code>@@</code>. Two configurations exist: <code>simple</code> lower-cases words, and <code>english</code> (the default) also removes stop words and stems.</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">CREATE</span> <span class="k">TABLE</span> articles (id <span class="k">INT</span> <span class="k">PRIMARY</span> <span class="k">KEY</span>, body <span class="k">TEXT</span>);
+<span class="k">INSERT</span> <span class="k">INTO</span> articles <span class="k">VALUES</span>
+  (<span class="s">1</span>, <span class="s">'The quick brown fox jumps over the lazy dog'</span>),
+  (<span class="s">2</span>, <span class="s">'A slow red fox'</span>);
+
+<span class="k">SELECT</span> to_tsvector(<span class="s">'simple'</span>, <span class="s">'The quick brown fox'</span>);
+<span class="c">-- 'brown':3 'fox':4 'quick':2 'the':1</span>
+
+<span class="k">SELECT</span> to_tsvector(<span class="s">'english'</span>, <span class="s">'The quick brown foxes'</span>);
+<span class="c">-- 'brown':3 'fox':4 'quick':2</span>
+
+<span class="k">SELECT</span> id <span class="k">FROM</span> articles
+<span class="k">WHERE</span>  to_tsvector(<span class="s">'english'</span>, body) @@ to_tsquery(<span class="s">'english'</span>, <span class="s">'quick &amp; fox'</span>);
+<span class="c">--  id</span>
+<span class="c">-- ----</span>
+<span class="c">--   1</span>
+
+<span class="k">SELECT</span> id, ts_rank(to_tsvector(body), plainto_tsquery(<span class="s">'red fox'</span>)) <span class="k">AS</span> score
+<span class="k">FROM</span>   articles
+<span class="k">WHERE</span>  to_tsvector(body) @@ plainto_tsquery(<span class="s">'red fox'</span>)
+<span class="k">ORDER</span>  <span class="k">BY</span> score <span class="k">DESC</span>;</pre></div>
+<p>Query operators: <code>&amp;</code> and, <code>|</code> or, <code>!</code> not, with parentheses. <code>to_tsquery</code> takes that syntax; <code>plainto_tsquery</code> takes plain words and ANDs them. Ranking: <code>ts_rank</code>, <code>ts_rank_cd</code>; <code>setweight(vector, 'A')</code> marks lexemes, <code>strip(vector)</code> drops positions. Other configurations, phrase search (<code>&lt;-&gt;</code>), and prefix matching are refused with a clear error rather than approximated. For hybrid search over a vector index and a text match, <code>rrf_score(rank [, k])</code> fuses two rankings.</p>
+<h2 id="routines-and-triggers">Routines and triggers</h2>
+<h3 id="sql-functions">SQL functions</h3>
+<p>A function body is a single <code>SELECT &lt;expression&gt;</code> without <code>FROM</code>; its parameters are <code>$1..$n</code>. The expression is inlined at each call site, so a function costs nothing at run time.</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">CREATE</span> <span class="k">FUNCTION</span> with_tax(amount <span class="k">NUMERIC</span>) RETURNS <span class="k">NUMERIC</span>
+<span class="k">LANGUAGE</span> SQL <span class="k">AS</span> <span class="s">'SELECT $1 * 1.11'</span>;
+
+<span class="k">CREATE</span> <span class="k">OR</span> <span class="k">REPLACE</span> <span class="k">FUNCTION</span> greet(name <span class="k">TEXT</span>) RETURNS <span class="k">TEXT</span> <span class="k">AS</span> <span class="s">$$</span> <span class="k">SELECT</span> <span class="s">'hello, '</span> || $<span class="s">1</span> <span class="s">$$</span>;
+
+<span class="k">SELECT</span> with_tax(<span class="s">100</span>), greet(<span class="s">'ana'</span>);
+<span class="c">--  with_tax | greet</span>
+<span class="c">-- ----------+------------</span>
+<span class="c">--    111.00 | hello, ana</span>
+
+<span class="k">DROP</span> <span class="k">FUNCTION</span> greet;          <span class="c">-- by name, without a parameter list</span></pre></div>
+<h3 id="procedures-and-call">Procedures and <code>CALL</code></h3>
+<p>A procedure body is a <code>$$ ... $$</code> block of statements. A plain sequence of SQL statements is fine; a body that starts with <code>BEGIN</code> is a NusaScript block with variables and control flow. Parameters are <code>$1..$n</code>. <code>CALL</code> runs the procedure inside the caller's transaction.</p>
+<div class="note caution"><b>Send routine bodies from a driver.</b><p><code>nusadb-cli</code> splits a batch on every <code>;</code>, including one inside a <code>$$</code> body, so a body with more than one statement cannot be created from the shell. Any driver sends the whole <code>CREATE PROCEDURE</code> as one statement, which is what the server expects.</p></div>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">CREATE</span> <span class="k">TABLE</span> audit (what <span class="k">TEXT</span>, n <span class="k">INT</span>);
+
+<span class="k">CREATE</span> <span class="k">PROCEDURE</span> classify(v <span class="k">INT</span>) <span class="k">AS</span> <span class="s">$$</span>
+<span class="k">BEGIN</span>
+  <span class="k">DECLARE</span> label <span class="k">TEXT</span>;
+  <span class="k">IF</span> $<span class="s">1</span> &gt; <span class="s">100</span> <span class="k">THEN</span>
+    <span class="k">SET</span> label = <span class="s">'big'</span>;
+  <span class="k">ELSIF</span> $<span class="s">1</span> &gt; <span class="s">10</span> <span class="k">THEN</span>
+    <span class="k">SET</span> label = <span class="s">'medium'</span>;
+  <span class="k">ELSE</span>
+    <span class="k">SET</span> label = <span class="s">'small'</span>;
+  <span class="k">END</span> <span class="k">IF</span>;
+  <span class="k">INSERT</span> <span class="k">INTO</span> audit <span class="k">VALUES</span> (label, $<span class="s">1</span>);
+<span class="k">END</span>
+<span class="s">$$</span>;
+
+<span class="k">CREATE</span> <span class="k">PROCEDURE</span> countdown(start <span class="k">INT</span>) <span class="k">AS</span> <span class="s">$$</span>
+<span class="k">BEGIN</span>
+  <span class="k">DECLARE</span> i <span class="k">INT</span> <span class="k">DEFAULT</span> $<span class="s">1</span>;
+  <span class="k">WHILE</span> i &gt; <span class="s">0</span> <span class="k">LOOP</span>
+    <span class="k">INSERT</span> <span class="k">INTO</span> audit <span class="k">VALUES</span> (<span class="s">'tick'</span>, i);
+    <span class="k">SET</span> i = i - <span class="s">1</span>;
+  <span class="k">END</span> <span class="k">LOOP</span>;
+<span class="k">END</span>
+<span class="s">$$</span>;
+
+<span class="k">CREATE</span> <span class="k">PROCEDURE</span> guarded(v <span class="k">INT</span>) <span class="k">AS</span> <span class="s">$$</span>
+<span class="k">BEGIN</span>
+  <span class="k">IF</span> $<span class="s">1</span> &lt; <span class="s">0</span> <span class="k">THEN</span>
+    <span class="k">RAISE</span> <span class="s">'negative input'</span>;
+  <span class="k">END</span> <span class="k">IF</span>;
+  <span class="k">INSERT</span> <span class="k">INTO</span> audit <span class="k">VALUES</span> (<span class="s">'ok'</span>, $<span class="s">1</span>);
+<span class="k">EXCEPTION</span> <span class="k">WHEN</span> <span class="k">OTHERS</span> <span class="k">THEN</span>
+  <span class="k">INSERT</span> <span class="k">INTO</span> audit <span class="k">VALUES</span> (<span class="s">'failed'</span>, $<span class="s">1</span>);
+<span class="k">END</span>
+<span class="s">$$</span>;
+
+<span class="k">CALL</span> classify(<span class="s">500</span>);
+<span class="k">CALL</span> countdown(<span class="s">3</span>);
+<span class="k">CALL</span> guarded(-<span class="s">1</span>);
+<span class="k">SELECT</span> * <span class="k">FROM</span> audit <span class="k">ORDER</span> <span class="k">BY</span> what, n;
+<span class="c">--   what  |  n</span>
+<span class="c">-- --------+-----</span>
+<span class="c">--  big    | 500</span>
+<span class="c">--  failed |  -1</span>
+<span class="c">--  tick   |   1</span>
+<span class="c">--  tick   |   2</span>
+<span class="c">--  tick   |   3</span>
+
+<span class="k">DROP</span> <span class="k">PROCEDURE</span> countdown;</pre></div>
+<p><code>CALL loud(-1)</code> on a body without a handler reports <code>P0001: raised exception: negative input</code> and the caller's statement fails.</p>
+<p>NusaScript statements: <code>DECLARE name TYPE [DEFAULT expr]</code>, <code>SET name = expr</code>, <code>IF ... THEN ... [ELSIF ...] [ELSE ...] END IF</code>, <code>WHILE cond LOOP ... END LOOP</code>, <code>FOR i IN low TO high LOOP ... END LOOP</code>, <code>RAISE 'message'</code> (reported as <code>P0001</code>), <code>RETURN</code>, and any SQL data statement. An <code>EXCEPTION WHEN OTHERS THEN</code> handler rolls the body's writes back to a savepoint and runs in their place. Variables may be referenced by name inside embedded SQL; a column of the same name wins. <code>LANGUAGE SQL</code> is the only language.</p>
+<h3 id="do-blocks"><code>DO</code> blocks</h3>
+<p>The same body grammar, run once without parameters:</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">DO</span> <span class="s">$$</span>
+<span class="k">BEGIN</span>
+  <span class="k">DECLARE</span> n <span class="k">INT</span> <span class="k">DEFAULT</span> <span class="s">3</span>;
+  <span class="k">WHILE</span> n &gt; <span class="s">0</span> <span class="k">LOOP</span>
+    <span class="k">INSERT</span> <span class="k">INTO</span> audit <span class="k">VALUES</span> (<span class="s">'do'</span>, n);
+    <span class="k">SET</span> n = n - <span class="s">1</span>;
+  <span class="k">END</span> <span class="k">LOOP</span>;
+<span class="k">END</span>
+<span class="s">$$</span>;</pre></div>
+<h3 id="triggers">Triggers</h3>
+<p>A trigger runs one SQL statement when a table is written. <code>NEW.col</code> and <code>OLD.col</code> refer to the affected row.</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">CREATE</span> <span class="k">TABLE</span> stock (sku <span class="k">TEXT</span> <span class="k">PRIMARY</span> <span class="k">KEY</span>, qty <span class="k">INT</span>);
+<span class="k">CREATE</span> <span class="k">TABLE</span> stock_log (sku <span class="k">TEXT</span>, before <span class="k">INT</span>, after <span class="k">INT</span>, at <span class="k">TIMESTAMPTZ</span> <span class="k">DEFAULT</span> now());
+
+<span class="k">CREATE</span> <span class="k">TRIGGER</span> stock_changes
+<span class="k">AFTER</span> <span class="k">UPDATE</span> <span class="k">ON</span> stock
+<span class="k">FOR</span> <span class="k">EACH</span> <span class="k">ROW</span>
+<span class="k">WHEN</span> (NEW.qty &lt;&gt; OLD.qty)
+<span class="k">INSERT</span> <span class="k">INTO</span> stock_log (sku, before, after) <span class="k">VALUES</span> (OLD.sku, OLD.qty, NEW.qty);
+
+<span class="k">INSERT</span> <span class="k">INTO</span> stock <span class="k">VALUES</span> (<span class="s">'A-77'</span>, <span class="s">10</span>);
+<span class="k">UPDATE</span> stock <span class="k">SET</span> qty = <span class="s">8</span> <span class="k">WHERE</span> sku = <span class="s">'A-77'</span>;
+<span class="k">SELECT</span> sku, before, after <span class="k">FROM</span> stock_log;
+<span class="c">--  sku  | before | after</span>
+<span class="c">-- ------+--------+-------</span>
+<span class="c">--  A-77 |     10 |     8</span>
+
+<span class="k">ALTER</span> <span class="k">TABLE</span> stock <span class="k">DISABLE</span> <span class="k">TRIGGER</span> stock_changes;
+<span class="k">ALTER</span> <span class="k">TRIGGER</span> stock_changes <span class="k">ON</span> stock <span class="k">RENAME</span> <span class="k">TO</span> log_stock;
+<span class="k">DROP</span> <span class="k">TRIGGER</span> log_stock <span class="k">ON</span> stock;</pre></div>
+<p>Syntax: <code>CREATE [OR REPLACE] TRIGGER name {BEFORE | AFTER} {INSERT | UPDATE | DELETE} [OR ...] ON table FOR EACH {ROW | STATEMENT} [WHEN (condition)] &lt;statement&gt;</code>. The action is one <code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code> or <code>SELECT</code>, run in the same transaction as the triggering statement; an error in it aborts that statement. Cascading triggers are bounded by a depth limit (<code>54001</code>). <code>INSTEAD OF</code> triggers are not accepted.</p>
+<h2 id="prepared-statements-and-cursors">Prepared statements and cursors</h2>
+<h3 id="prepared-statements">Prepared statements</h3>
+<p>A statement is prepared through the wire protocol, not with SQL: every driver parses a statement once and runs it with values for <code>$1..$n</code>, and the server caches the plan. <code>PREPARE</code> / <code>EXECUTE</code> / <code>DEALLOCATE</code> typed as SQL over a connection are refused with <code>0A000</code> and a message that says so.</p>
+<div class="code"><div class="code-bar"><span>python</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre>cur.execute("SELECT email FROM customers WHERE country = $1 ORDER BY email", ["ID"])</pre></div>
+<div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="c"># nusadb-cli has no parameter binding; substitute the value into the text instead</span>
+nusadb-cli -c "SELECT email FROM customers WHERE country = 'ID' ORDER BY email"</pre></div>
+<h3 id="cursors">Cursors</h3>
+<p>A cursor reads a result in pieces inside a transaction.</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">BEGIN</span>;
+<span class="k">DECLARE</span> c <span class="k">CURSOR</span> <span class="k">FOR</span> <span class="k">SELECT</span> id, email <span class="k">FROM</span> customers <span class="k">ORDER</span> <span class="k">BY</span> id;
+<span class="k">FETCH</span> <span class="s">2</span> <span class="k">FROM</span> c;
+<span class="k">FETCH</span> <span class="k">NEXT</span> <span class="k">FROM</span> c;
+<span class="k">FETCH</span> <span class="k">ALL</span> <span class="k">FROM</span> c;
+<span class="k">CLOSE</span> c;
+<span class="k">COMMIT</span>;</pre></div>
+<p>Cursors are forward-only and are closed when the transaction ends. Fetching from an unknown cursor is <code>34000</code>.</p>
+<h2 id="transactions-and-locking">Transactions and locking</h2>
+<p>The full model, including what to do on a conflict, is in <a href="transactions.html">transactions</a>. The statements:</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">BEGIN</span>;                                             <span class="c">-- or START TRANSACTION</span>
+<span class="k">BEGIN</span> <span class="k">ISOLATION</span> <span class="k">LEVEL</span> <span class="k">SERIALIZABLE</span>;
+<span class="k">SET</span> <span class="k">TRANSACTION</span> <span class="k">ISOLATION</span> <span class="k">LEVEL</span> <span class="k">REPEATABLE</span> <span class="k">READ</span>;   <span class="c">-- before the transaction's first query</span>
+<span class="k">SAVEPOINT</span> s1;
+<span class="k">ROLLBACK</span> <span class="k">TO</span> <span class="k">SAVEPOINT</span> s1;
+<span class="k">RELEASE</span> <span class="k">SAVEPOINT</span> s1;
+<span class="k">COMMIT</span>;                                            <span class="c">-- or END</span>
+<span class="k">ROLLBACK</span>;
+
+<span class="k">SET</span> <span class="k">SESSION</span> <span class="k">CHARACTERISTICS</span> <span class="k">AS</span> <span class="k">TRANSACTION</span> <span class="k">ISOLATION</span> <span class="k">LEVEL</span> <span class="k">SERIALIZABLE</span>;   <span class="c">-- session default</span></pre></div>
+<p>The default isolation level is <code>READ COMMITTED</code>. A statement outside <code>BEGIN</code> runs in its own transaction. After an error inside a transaction, every further statement is refused with <code>25P02</code> until <code>ROLLBACK</code> (or <code>ROLLBACK TO SAVEPOINT</code>).</p>
+<h3 id="row-and-table-locks">Row and table locks</h3>
+<p>Locks never wait. A row someone else has locked fails immediately with <code>40001</code>, so <code>NOWAIT</code> is implied; <code>SKIP LOCKED</code> steps over such rows instead, which is the usual shape for a job queue.</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">SELECT</span> * <span class="k">FROM</span> orders <span class="k">WHERE</span> id = <span class="s">1</span> <span class="k">FOR</span> <span class="k">UPDATE</span>;
+<span class="k">SELECT</span> * <span class="k">FROM</span> orders <span class="k">ORDER</span> <span class="k">BY</span> id <span class="k">LIMIT</span> <span class="s">1</span> <span class="k">FOR</span> <span class="k">UPDATE</span> <span class="k">SKIP</span> <span class="k">LOCKED</span>;   <span class="c">-- claim one job</span>
+<span class="k">SELECT</span> * <span class="k">FROM</span> orders <span class="k">FOR</span> <span class="k">UPDATE</span> <span class="k">OF</span> orders <span class="k">NOWAIT</span>;
+<span class="k">SELECT</span> * <span class="k">FROM</span> orders <span class="k">FOR</span> <span class="k">SHARE</span>;
+
+<span class="k">LOCK</span> <span class="k">TABLE</span> orders <span class="k">IN</span> <span class="k">ACCESS</span> <span class="k">EXCLUSIVE</span> <span class="k">MODE</span>;        <span class="c">-- inside a transaction</span>
+<span class="k">LOCK</span> <span class="k">TABLE</span> orders, customers <span class="k">IN</span> <span class="k">ACCESS</span> <span class="k">SHARE</span> <span class="k">MODE</span>;</pre></div>
+<p><code>LOCK TABLE</code> accepts <code>ACCESS SHARE</code> and <code>ACCESS EXCLUSIVE</code>; the other modes are refused.</p>
+<h2 id="notifications">Notifications</h2>
+<p><code>LISTEN</code> subscribes a connection to a channel; <code>NOTIFY</code> from any connection in the same database delivers to every listener. Inside a transaction the notification is queued and sent at <code>COMMIT</code> (and dropped on <code>ROLLBACK</code>); in autocommit it is sent at once. A listener receives notifications between its own statements, which is how the drivers surface them.</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="c">-- session 1</span>
+<span class="k">LISTEN</span> orders_changed;
+
+<span class="c">-- session 2</span>
+<span class="k">NOTIFY</span> orders_changed, <span class="s">'order 42 shipped'</span>;
+
+<span class="c">-- session 1</span>
+<span class="k">UNLISTEN</span> orders_changed;
+<span class="k">UNLISTEN</span> *;</pre></div>
+<h2 id="maintenance">Maintenance</h2>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">ANALYZE</span> customers;        <span class="c">-- refresh planner statistics for one table</span>
+<span class="k">ANALYZE</span>;                  <span class="c">-- every table</span>
+<span class="k">VACUUM</span>;                   <span class="c">-- reclaim row versions no snapshot can see</span>
+<span class="k">VACUUM</span> (<span class="k">FULL</span>, <span class="k">ANALYZE</span>) orders;
+<span class="k">REINDEX</span> <span class="k">TABLE</span> orders;     <span class="c">-- accepted for compatibility; indexes are always consistent, so it is a no-op</span>
+<span class="k">CHECKPOINT</span>;               <span class="c">-- fold the log into an image and truncate it; needs a quiet engine</span></pre></div>
+<p>A background worker re-analyzes tables whose statistics have gone stale, so <code>ANALYZE</code> by hand matters mainly right after a large load. Version reclamation also runs in the background; <code>VACUUM</code> triggers it now. <code>CHECKPOINT</code> refuses while any transaction is in flight, including one on the connection that issues it; see <a href="configuration.html#checkpoints-backup-and-restore">deployment</a>.</p>
+<h2 id="introspection">Introspection</h2>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">SHOW</span> TABLES;                          <span class="c">-- tables visible through search_path</span>
+<span class="k">SHOW</span> COLUMNS <span class="k">FROM</span> customers;          <span class="c">-- column, type</span>
+<span class="k">DESCRIBE</span> customers;                   <span class="c">-- same as SHOW COLUMNS</span>
+
+<span class="k">SELECT</span> table_schema, table_name <span class="k">FROM</span> information_schema.tables <span class="k">ORDER</span> <span class="k">BY</span> <span class="s">1</span>, <span class="s">2</span>;
+<span class="k">SELECT</span> column_name, data_type, is_nullable
+<span class="k">FROM</span>   information_schema.columns <span class="k">WHERE</span> table_name = <span class="s">'orders'</span>;
+<span class="k">SELECT</span> * <span class="k">FROM</span> information_schema.table_constraints <span class="k">WHERE</span> table_name = <span class="s">'orders'</span>;
+<span class="k">SELECT</span> * <span class="k">FROM</span> information_schema.key_column_usage;
+<span class="k">SELECT</span> * <span class="k">FROM</span> information_schema.statistics;          <span class="c">-- indexes</span>
+<span class="k">SELECT</span> * <span class="k">FROM</span> information_schema.views;
+<span class="k">SELECT</span> * <span class="k">FROM</span> information_schema.schemata;
+<span class="k">SELECT</span> * <span class="k">FROM</span> information_schema.table_privileges;
+<span class="k">SELECT</span> * <span class="k">FROM</span> information_schema.applicable_roles;
+<span class="k">SELECT</span> * <span class="k">FROM</span> information_schema.enabled_roles;
+
+<span class="k">SELECT</span> * <span class="k">FROM</span> nusadb_databases;       <span class="c">-- every database in this server</span>
+<span class="k">SELECT</span> * <span class="k">FROM</span> nusadb_triggers;        <span class="c">-- likewise nusadb_roles, nusadb_policies, nusadb_procedures,</span>
+<span class="c">                                      -- nusadb_functions, nusadb_matviews</span>
+
+<span class="k">SELECT</span> version(), current_user, current_database(), current_schema();
+<span class="k">SELECT</span> nusadb_typeof(<span class="s">1.5</span>), nusadb_typeof(now());</pre></div>
+<p><code>SHOW COLUMNS</code> returns <code>column</code>, <code>type</code> and <code>nullable</code>. The <code>nusadb_*</code> catalogs are plain tables: <code>nusadb_roles (name, superuser, login, createdb, createrole, inherit)</code>, <code>nusadb_triggers (name, table, timing, events, for_each, when, action, enabled)</code>, <code>nusadb_policies (table, name, command, roles, using, check, permissive)</code>, <code>nusadb_procedures (name, param_count, out_params, body)</code>, <code>nusadb_functions (name, param_count, param_names, body)</code>, <code>nusadb_matviews (name, def)</code>, <code>nusadb_databases (name)</code>. Only a superuser may read a <code>nusadb_*</code> catalog; every other role uses <code>information_schema</code>. A catalog that has never been written to may not exist yet, in which case selecting from it reports <code>42P01</code>.</p>
+<p>In <code>nusadb-cli</code>, <code>\dt</code> runs <code>SHOW TABLES</code>, <code>\d name</code> runs <code>SHOW COLUMNS FROM name</code>, and <code>\l</code> lists databases.</p>
+<h2 id="functions">Functions</h2>
+<p>Every name below is callable today. Signatures follow the usual conventions; where NusaDB's differs it is noted.</p>
+<h3 id="string">String</h3>
+<p><code>length</code>, <code>char_length</code>, <code>character_length</code>, <code>octet_length</code>, <code>bit_length</code>, <code>upper</code>, <code>lower</code>, <code>initcap</code>, <code>substr</code>, <code>substring</code>, <code>left</code>, <code>right</code>, <code>replace</code>, <code>translate</code>, <code>lpad</code>, <code>rpad</code>, <code>ltrim</code>, <code>rtrim</code>, <code>btrim</code>, <code>trim</code>, <code>repeat</code>, <code>reverse</code>, <code>concat</code>, <code>concat_ws</code>, <code>format</code>, <code>split_part</code>, <code>strpos</code>, <code>starts_with</code>, <code>ascii</code>, <code>chr</code>, <code>quote_literal</code>, <code>quote_nullable</code>, <code>quote_ident</code>, <code>parse_ident</code>, <code>encode</code>, <code>decode</code>, <code>convert_to</code>, <code>convert_from</code>, <code>get_byte</code>, <code>set_byte</code>, plus the syntax forms <code>POSITION(x IN s)</code>, <code>OVERLAY(s PLACING r FROM n [FOR l])</code>, <code>SUBSTRING(s FROM n FOR l)</code>, <code>TRIM([LEADING | TRAILING | BOTH] c FROM s)</code>.</p>
+<p>Regular expressions: <code>regexp_replace</code>, <code>regexp_match</code>, <code>regexp_matches</code>, <code>regexp_like</code>, <code>regexp_count</code>, <code>regexp_instr</code>, <code>regexp_substr</code>, <code>regexp_split_to_array</code>, <code>regexp_split_to_table</code>.</p>
+<p><code>encode</code> / <code>decode</code> accept <code>base64</code>, <code>hex</code> and <code>escape</code>. <code>convert_to</code> / <code>convert_from</code> accept <code>UTF8</code>.</p>
+<h3 id="numeric">Numeric</h3>
+<p><code>abs</code>, <code>round</code>, <code>trunc</code>, <code>ceil</code>, <code>ceiling</code>, <code>floor</code>, <code>sign</code>, <code>mod</code>, <code>div</code>, <code>power</code>, <code>pow</code>, <code>sqrt</code>, <code>cbrt</code>, <code>exp</code>, <code>ln</code>, <code>log</code> (<code>log(x)</code> is base 10, <code>log(b, x)</code> is base <code>b</code>), <code>log10</code>, <code>sin</code>, <code>cos</code>, <code>tan</code>, <code>cot</code>, <code>asin</code>, <code>acos</code>, <code>atan</code>, <code>atan2</code>, <code>sinh</code>, <code>cosh</code>, <code>tanh</code>, <code>asinh</code>, <code>acosh</code>, <code>atanh</code>, <code>degrees</code>, <code>radians</code>, <code>pi</code>, <code>gcd</code>, <code>lcm</code>, <code>factorial</code>, <code>bit_count</code>, <code>to_hex</code>, <code>to_number</code>, <code>width_bucket</code>, <code>scale</code>, <code>min_scale</code>, <code>trim_scale</code>, <code>isfinite</code>, <code>random</code>, <code>setseed</code>.</p>
+<h3 id="conditional">Conditional</h3>
+<p><code>coalesce</code>, <code>nullif</code>, <code>greatest</code>, <code>least</code>, <code>nvl</code>, <code>ifnull</code>, <code>num_nulls</code>, <code>num_nonnulls</code>, <code>CASE</code>, <code>CAST(x AS type)</code>, <code>x::type</code>, <code>TRY_CAST(x AS type)</code> (NULL instead of an error).</p>
+<h3 id="date-and-time">Date and time</h3>
+<p><code>now</code>, <code>transaction_timestamp</code>, <code>statement_timestamp</code>, <code>current_timestamp</code>, <code>current_date</code>, <code>current_time</code>, <code>localtimestamp</code>, <code>date_trunc</code>, <code>date_part</code>, <code>EXTRACT(field FROM x)</code>, <code>date_bin</code>, <code>age</code>, <code>to_char</code>, <code>to_date</code>, <code>to_timestamp</code>, <code>make_date</code>, <code>make_time</code>, <code>make_timestamp</code>, <code>make_timestamptz</code>, <code>make_interval</code>, <code>justify_days</code>, <code>justify_hours</code>, <code>justify_interval</code>, <code>x AT TIME ZONE zone</code>.</p>
+<p><code>EXTRACT</code> fields: <code>year</code>, <code>quarter</code>, <code>month</code>, <code>week</code>, <code>day</code>, <code>hour</code>, <code>minute</code>, <code>second</code>, <code>dow</code>, <code>isodow</code>, <code>doy</code>, <code>isoyear</code>, <code>epoch</code>, <code>decade</code>, <code>century</code>, <code>millennium</code>, <code>microseconds</code>, <code>milliseconds</code>, <code>julian</code>, <code>timezone</code>, <code>timezone_hour</code>, <code>timezone_minute</code>. <code>date_trunc</code> accepts the units from <code>microseconds</code> up to <code>millennium</code>. <code>now()</code> is fixed for the whole statement.</p>
+<h3 id="json">JSON</h3>
+<p>Scalar: <code>json_typeof</code>, <code>json_array_length</code>, <code>to_json</code>, <code>to_jsonb</code>, <code>row_to_json</code>, <code>json_build_object</code>, <code>json_build_array</code>, <code>json_object</code>, <code>json_set</code>, <code>jsonb_set</code>, <code>jsonb_set_lax</code>, <code>json_insert</code>, <code>json_strip_nulls</code>, <code>json_pretty</code>, <code>json_extract_path</code>, <code>json_extract_path_text</code>, <code>json_path_exists</code>, <code>json_path_match</code>, <code>json_path_query_first</code>, <code>json_path_query_array</code>, <code>jsonb_exists</code>. Every <code>json_*</code> name has a <code>jsonb_*</code> twin.</p>
+<p>Set-returning: <code>json_array_elements</code>, <code>json_array_elements_text</code>, <code>json_each</code>, <code>json_each_text</code>, <code>json_object_keys</code>, <code>json_path_query</code> (and their <code>jsonb_*</code> twins).</p>
+<p>Aggregates: <code>json_agg</code>, <code>jsonb_agg</code>, <code>json_object_agg</code>, <code>jsonb_object_agg</code>.</p>
+<h3 id="arrays">Arrays</h3>
+<p><code>cardinality</code>, <code>array_length</code>, <code>array_lower</code>, <code>array_upper</code>, <code>array_dims</code>, <code>array_ndims</code>, <code>array_fill</code>, <code>array_append</code>, <code>array_prepend</code>, <code>array_cat</code>, <code>array_position</code>, <code>array_positions</code>, <code>array_remove</code>, <code>array_replace</code>, <code>array_to_string</code>, <code>string_to_array</code>, <code>string_to_table</code>, <code>trim_array</code>, <code>unnest</code>, <code>generate_series</code>, and the aggregate <code>array_agg</code>.</p>
+<h3 id="ranges">Ranges</h3>
+<p><code>int4range</code>, <code>int8range</code>, <code>numrange</code>, <code>daterange</code>, <code>tsrange</code>, <code>tstzrange</code> (each takes <code>(low, high [, bounds])</code> with bounds <code>'[)'</code>, <code>'(]'</code>, <code>'[]'</code>, <code>'()'</code>), <code>lower</code>, <code>upper</code>, <code>lower_inc</code>, <code>upper_inc</code>, <code>lower_inf</code>, <code>upper_inf</code>, <code>isempty</code>, <code>range_merge</code>.</p>
+<h3 id="network">Network</h3>
+<p><code>host</code>, <code>masklen</code>, <code>family</code>, <code>network</code>, <code>broadcast</code>, <code>netmask</code>, <code>hostmask</code>, <code>set_masklen</code>, <code>abbrev</code>, <code>inet_merge</code>, <code>inet_same_family</code>, <code>macaddr8_set7bit</code>.</p>
+<h3 id="bit-strings-and-bytes">Bit strings and bytes</h3>
+<p><code>get_bit</code>, <code>set_bit</code>, <code>get_byte</code>, <code>set_byte</code>, <code>bit_length</code>, <code>bit_count</code>.</p>
+<h3 id="geometry">Geometry</h3>
+<p><code>point</code>, <code>box</code>, <code>area</code>, <code>center</code>, <code>height</code>, <code>width</code>, <code>radius</code>, <code>diameter</code>, <code>npoints</code>, <code>isopen</code>, <code>isclosed</code>.</p>
+<h3 id="xml">XML</h3>
+<p><code>xmlcomment</code>, <code>xmlconcat</code>, <code>xml_is_well_formed</code>, <code>xml_is_well_formed_document</code>, <code>xml_is_well_formed_content</code>.</p>
+<h3 id="vectors">Vectors</h3>
+<p><code>l1_distance</code>, <code>l2_distance</code>, <code>cosine_distance</code>, <code>inner_product</code>, <code>vector_dims</code>, <code>vector_norm</code>.</p>
+<h3 id="full-text-search">Full-text search</h3>
+<p><code>to_tsvector</code>, <code>to_tsquery</code>, <code>plainto_tsquery</code>, <code>ts_rank</code>, <code>ts_rank_cd</code>, <code>setweight</code>, <code>strip</code>, <code>numnode</code>, <code>rrf_score</code>.</p>
+<h3 id="hashing-encryption-identifiers">Hashing, encryption, identifiers</h3>
+<p><code>md5</code> (hex text), <code>sha224</code>, <code>sha256</code>, <code>sha384</code>, <code>sha512</code> (binary digests; wrap in <code>encode(..., 'hex')</code> for text), <code>encrypt(value, key)</code> and <code>decrypt(value, key)</code> (deterministic AES-256-GCM-SIV, hex ciphertext), <code>gen_random_uuid</code>, <code>uuid_generate_v4</code>.</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">SELECT</span> encode(sha256(<span class="s">'secret'</span>), <span class="s">'hex'</span>) <span class="k">AS</span> digest,
+       decrypt(encrypt(<span class="s">'card number'</span>, <span class="s">'k3y'</span>), <span class="s">'k3y'</span>) <span class="k">AS</span> round_trip;</pre></div>
+<h3 id="system">System</h3>
+<p><code>version</code>, <code>current_user</code>, <code>session_user</code>, <code>user</code>, <code>current_database</code>, <code>current_catalog</code>, <code>current_schema</code>, <code>current_setting(name)</code>, <code>nusadb_typeof(expr)</code>.</p>
+<h3 id="sequences">Sequences</h3>
+<p><code>nextval(name)</code>, <code>currval(name)</code>, <code>setval(name, value [, is_called])</code>.</p>
+<h3 id="aggregates">Aggregates</h3>
+<p><code>count</code>, <code>sum</code>, <code>avg</code>, <code>min</code>, <code>max</code>, <code>string_agg</code>, <code>group_concat</code>, <code>array_agg</code>, <code>json_agg</code>, <code>jsonb_agg</code>, <code>json_object_agg</code>, <code>jsonb_object_agg</code>, <code>bool_and</code>, <code>every</code>, <code>bool_or</code>, <code>bit_and</code>, <code>bit_or</code>, <code>bit_xor</code>, <code>stddev</code>, <code>stddev_samp</code>, <code>stddev_pop</code>, <code>variance</code>, <code>var_samp</code>, <code>var_pop</code>, <code>corr</code>, <code>covar_pop</code>, <code>covar_samp</code>, <code>regr_count</code>, <code>regr_avgx</code>, <code>regr_avgy</code>, <code>regr_sxx</code>, <code>regr_syy</code>, <code>regr_sxy</code>, <code>regr_slope</code>, <code>regr_intercept</code>, <code>regr_r2</code>.</p>
+<p>With <code>WITHIN GROUP (ORDER BY ...)</code>: <code>percentile_cont</code>, <code>percentile_disc</code>, <code>mode</code>, and the hypothetical-set forms <code>rank</code>, <code>dense_rank</code>, <code>percent_rank</code>, <code>cume_dist</code>.</p>
+<p>Every aggregate accepts <code>DISTINCT</code>, <code>FILTER (WHERE ...)</code> and an inner <code>ORDER BY</code>.</p>
+<h2 id="operators">Operators</h2>
+<div class="table-scroll"><table><thead><tr><th>Kind</th><th>Operators</th></tr></thead><tbody><tr><td>Comparison</td><td><code>=</code> <code>&lt;&gt;</code> <code>!=</code> <code>&lt;</code> <code>&lt;=</code> <code>&gt;</code> <code>&gt;=</code> <code>BETWEEN</code> <code>IN</code> <code>IS [NOT] NULL</code> <code>IS [NOT] DISTINCT FROM</code> <code>IS [NOT] TRUE / FALSE / UNKNOWN</code></td></tr><tr><td>Logic</td><td><code>AND</code> <code>OR</code> <code>NOT</code></td></tr><tr><td>Arithmetic</td><td><code>+</code> <code>-</code> <code>*</code> <code>/</code> <code>%</code> <code>^</code> and integer <code>&amp;</code> <code>|</code> <code>&lt;&lt;</code> <code>&gt;&gt;</code> <code>~</code></td></tr><tr><td>Text</td><td><code>||</code> <code>LIKE</code> <code>ILIKE</code> <code>SIMILAR TO</code> <code>~</code> <code>~*</code> <code>!~</code> <code>!~*</code></td></tr><tr><td>JSON</td><td><code>-&gt;</code> <code>-&gt;&gt;</code> <code>#&gt;</code> <code>#&gt;&gt;</code> <code>@&gt;</code> <code>&lt;@</code> (<code>?</code> via <code>jsonb_exists</code>)</td></tr><tr><td>Array</td><td><code>@&gt;</code> <code>&lt;@</code> <code>&amp;&amp;</code> <code>||</code> <code>= ANY(...)</code> <code>= ALL(...)</code> subscript <code>a[1]</code></td></tr><tr><td>Range</td><td><code>@&gt;</code> <code>&lt;@</code> <code>&amp;&amp;</code> <code>+</code> <code>*</code> <code>-</code> <code>&lt;&lt;</code> <code>&gt;&gt;</code> <code>-|-</code></td></tr><tr><td>Network</td><td><code>&lt;&lt;</code> <code>&lt;&lt;=</code> <code>&gt;&gt;</code> <code>&gt;&gt;=</code> <code>&amp;&amp;</code> <code>+</code> <code>-</code></td></tr><tr><td>Vector</td><td><code>&lt;-&gt;</code> <code>&lt;=&gt;</code> <code>&lt;#&gt;</code> <code>&lt;+&gt;</code></td></tr><tr><td>Full text</td><td><code>@@</code></td></tr><tr><td>Geometry</td><td><code>@&gt;</code> <code>&lt;@</code> <code>&amp;&amp;</code></td></tr></tbody></table></div>
+<h2 id="access-control">Access control</h2>
+<p>Who may connect, and with which password, is decided by the server's <code>--auth-user</code> list (see <a href="configuration.html">deployment</a>); SQL roles decide what a connected user may do. Create a role with the same name as each <code>--auth-user</code> entry, then grant it privileges. A user that authenticates but has no role in the catalog can create its own tables and nothing else: reading or changing another role's table needs a grant either way. <code>PASSWORD</code> in <code>CREATE ROLE</code> is refused, because a password set there would never be checked at login.</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">CREATE</span> <span class="k">ROLE</span> analyst <span class="k">LOGIN</span>;
+<span class="k">CREATE</span> <span class="k">USER</span> app;                            <span class="c">-- USER is ROLE with LOGIN on</span>
+<span class="k">CREATE</span> <span class="k">ROLE</span> readers;                        <span class="c">-- a group: NOLOGIN by default</span>
+<span class="k">ALTER</span> <span class="k">ROLE</span> analyst <span class="k">NOLOGIN</span>;
+<span class="k">ALTER</span> <span class="k">ROLE</span> analyst <span class="k">LOGIN</span>;
+<span class="k">GRANT</span> readers <span class="k">TO</span> analyst;
+<span class="k">REVOKE</span> readers <span class="k">FROM</span> analyst;
 <span class="k">GRANT</span> readers <span class="k">TO</span> analyst;
 
 <span class="k">GRANT</span> <span class="k">SELECT</span> <span class="k">ON</span> customers <span class="k">TO</span> readers;
 <span class="k">GRANT</span> <span class="k">SELECT</span> (email, country) <span class="k">ON</span> customers <span class="k">TO</span> analyst;   <span class="c">-- column-level</span>
-<span class="k">ALTER TABLE</span> orders <span class="k">ENABLE ROW LEVEL SECURITY</span>;
-<span class="k">CREATE POLICY</span> own_rows <span class="k">ON</span> orders
-  <span class="k">USING</span> (customer = current_setting(<span class="s">'app.customer'</span>)::<span class="k">BIGINT</span>);</pre></div>
+<span class="k">GRANT</span> <span class="k">INSERT</span>, <span class="k">UPDATE</span> <span class="k">ON</span> orders <span class="k">TO</span> analyst <span class="k">WITH</span> <span class="k">GRANT</span> <span class="k">OPTION</span>;
+<span class="k">GRANT</span> <span class="k">ALL</span> <span class="k">ON</span> orders <span class="k">TO</span> app;
+<span class="k">REVOKE</span> <span class="k">INSERT</span> <span class="k">ON</span> orders <span class="k">FROM</span> analyst;
 
-<h2 id="behaviours">Where NusaDB chooses differently</h2>
-<p>These are decisions, not gaps, and each one has a reason.</p>
+<span class="k">SET</span> <span class="k">ROLE</span> analyst;                           <span class="c">-- act as that role for the rest of the session</span>
+<span class="k">SELECT</span> email <span class="k">FROM</span> customers;                <span class="c">-- allowed through readers</span>
+<span class="k">INSERT</span> <span class="k">INTO</span> orders (customer, total) <span class="k">VALUES</span> (<span class="s">1</span>, <span class="s">5</span>);
+<span class="c">-- ERROR 42501: permission denied: INSERT on column `customer` of table `public.orders`</span>
+<span class="k">RESET</span> <span class="k">ROLE</span>;</pre></div>
+<p>Privileges: <code>SELECT</code>, <code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>, <code>TRUNCATE</code>, <code>REFERENCES</code>, <code>TRIGGER</code>, <code>ALL</code>. <code>SELECT</code>, <code>INSERT</code>, <code>UPDATE</code> and <code>REFERENCES</code> may name columns in parentheses. Role attributes: <code>LOGIN</code> / <code>NOLOGIN</code> and <code>SUPERUSER</code> / <code>NOSUPERUSER</code>; the attribute is recorded in <code>nusadb_roles</code>, and grants are what restrict a role. A role that lacks a privilege is refused with <code>42501</code>, and reading a column outside its column grant is refused the same way even through <code>SELECT *</code>. The bootstrap superuser <code>nusadb-root</code> bypasses every check.</p>
+<p>Row-level security restricts which rows a role sees or may write:</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">GRANT</span> <span class="k">SELECT</span>, <span class="k">UPDATE</span> <span class="k">ON</span> orders <span class="k">TO</span> analyst;
+<span class="k">ALTER</span> <span class="k">TABLE</span> orders <span class="k">ENABLE</span> <span class="k">ROW</span> <span class="k">LEVEL</span> <span class="k">SECURITY</span>;
 
-<h3 id="collation">Text sorts by byte value</h3>
-<p>
-  Comparison and ordering are bytewise, equivalent to a <code>C</code> collation;
-  <code>COLLATE "C"</code> and <code>"POSIX"</code> are accepted and locale collations are refused.
-  Byte order is deterministic and does not change when a system library is upgraded, which is what
-  keeps an index valid across upgrades. The visible effect is that uppercase sorts before lowercase.
-</p>
+<span class="k">CREATE</span> <span class="k">POLICY</span> own_rows <span class="k">ON</span> orders
+  <span class="k">FOR</span> <span class="k">ALL</span> <span class="k">TO</span> analyst
+  <span class="k">USING</span> (customer = current_setting(<span class="s">'app.customer'</span>)::<span class="k">BIGINT</span>)
+  <span class="k">WITH</span> <span class="k">CHECK</span> (customer = current_setting(<span class="s">'app.customer'</span>)::<span class="k">BIGINT</span>);
 
-<h3 id="coercion">Coercion is explicit</h3>
-<p>
-  The engine does not insert implicit conversions between unrelated types. Cast with
-  <code>::TYPE</code> when mixing them, and you always know which conversion happened.
-</p>
+<span class="k">CREATE</span> <span class="k">POLICY</span> no_refunds <span class="k">ON</span> orders <span class="k">AS</span> <span class="k">RESTRICTIVE</span> <span class="k">FOR</span> <span class="k">UPDATE</span> <span class="k">USING</span> (total &gt;= <span class="s">0</span>);
 
-<h3 id="numeric">NUMERIC division has a fixed scale</h3>
-<p>
-  Division produces a fixed scale rather than deriving one from the operands. The value is the same;
-  only how many digits are kept differs. Round explicitly when a scale matters.
-</p>
+<span class="k">ALTER</span> <span class="k">POLICY</span> own_rows <span class="k">ON</span> orders <span class="k">USING</span> (customer = current_setting(<span class="s">'app.customer'</span>)::<span class="k">BIGINT</span>);
+<span class="k">DROP</span> <span class="k">POLICY</span> no_refunds <span class="k">ON</span> orders;
 
-<h3 id="json-store">JSON is stored parsed</h3>
-<p>
-  <code>JSON</code> and <code>JSONB</code> both store a parsed value, so key order and insignificant
-  whitespace are not preserved. Keep the original text in a <code>TEXT</code> column when byte
-  fidelity matters, such as a signed payload.
-</p>
-
-<h3 id="matview">Materialized views are snapshots</h3>
-<p>
-  A materialized view holds the result of its last <code>REFRESH</code>. Incremental maintenance is
-  opt-in with <code>WITH (incremental = true)</code>, and asking for it on a body that cannot be
-  maintained incrementally is an error rather than a silent downgrade.
-</p>
-
-<h3 id="workmem">A query over its memory budget fails rather than spilling</h3>
-<p>
-  With <code>work_mem</code> set, a stage that materialises more than the budget fails with an error
-  naming the limit, the bytes involved and how to raise it, and the server stays responsive. That
-  keeps one large query from slowing every other query, at the cost of not finishing it.
-</p>
-
-<h2 id="session">Session settings</h2>
+<span class="k">SET</span> app.customer = <span class="s">'1'</span>;
+<span class="k">SET</span> <span class="k">ROLE</span> analyst;
+<span class="k">SELECT</span> id, customer <span class="k">FROM</span> orders;       <span class="c">-- only customer 1's rows</span>
+<span class="k">RESET</span> <span class="k">ROLE</span>;</pre></div>
+<p><code>USING</code> filters rows read; <code>WITH CHECK</code> validates rows written (a write that fails it is <code>42501</code>). Policies are <code>PERMISSIVE</code> by default (any one may allow a row) or <code>RESTRICTIVE</code> (all must allow). Ownership, grants, role membership and policies are enforced inside the engine; a superuser bypasses them.</p>
+<h2 id="session-settings">Session settings</h2>
 <div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
 <pre><span class="k">SET</span> search_path = reporting, public;
-<span class="k">SET</span> work_mem = <span class="s">67108864</span>;
-<span class="k">SET</span> statement_timeout = <span class="s">'30s'</span>;
-<span class="k">SET</span> max_autocommit_retries = <span class="s">50</span>;      <span class="c">-- 0 turns the retry off</span>
-<span class="k">SET</span> myapp.tenant = <span class="s">'7'</span>;             <span class="c">-- application variables need a class prefix</span>
+<span class="k">SET</span> work_mem = <span class="s">'64MB'</span>;                 <span class="c">-- a bare number is kilobytes</span>
+<span class="k">SET</span> statement_timeout = <span class="s">'30s'</span>;         <span class="c">-- a bare number is milliseconds; 0 disables</span>
+<span class="k">SET</span> max_autocommit_retries = <span class="s">50</span>;       <span class="c">-- 0 turns the server-side retry off; capped at 100</span>
+<span class="k">SET</span> hnsw_ef_search = <span class="s">100</span>;
+<span class="k">SET</span> default_transaction_isolation = <span class="s">'serializable'</span>;
+<span class="k">SET</span> myapp.tenant = <span class="s">'7'</span>;                <span class="c">-- application variables need a class prefix</span>
+<span class="k">SELECT</span> current_setting(<span class="s">'myapp.tenant'</span>);
 <span class="k">SHOW</span> search_path;
-<span class="k">RESET</span> ALL;</pre></div>
-<p>
-  An unrecognised parameter name is an error rather than a silent no-op, and a read-only parameter
-  reports that it cannot be changed.
-</p>
-
-<h2 id="notsupported">Not accepted in this release</h2>
-<p>
-  Recognised and refused with a clear message rather than half-implemented: advisory locks,
-  <code>PREPARE</code>/<code>EXECUTE</code> as statements over a connection (use the extended query
-  protocol), <code>SET TIME ZONE</code>, index methods other than B-tree and HNSW, and locale
-  collations.
-</p>
+<span class="k">RESET</span> search_path;
+<span class="k">RESET</span> <span class="k">ALL</span>;</pre></div>
+<div class="table-scroll"><table><thead><tr><th>Parameter</th><th>Effect</th></tr></thead><tbody><tr><td><code>search_path</code></td><td>schema lookup order; <code>public</code> is always the fallback</td></tr><tr><td><code>work_mem</code></td><td>per-query memory budget for a sort, aggregate or join stage</td></tr><tr><td><code>statement_timeout</code></td><td>cancels a statement that runs longer (<code>57014</code>)</td></tr><tr><td><code>max_autocommit_retries</code></td><td>how many times a single auto-commit statement is retried on <code>40001</code></td></tr><tr><td><code>hnsw_ef_search</code></td><td>candidate list size for vector index search; higher is more accurate and slower</td></tr><tr><td><code>default_transaction_isolation</code></td><td>isolation level for the next transactions in this session</td></tr><tr><td><code>client_encoding</code>, <code>datestyle</code>, <code>timezone</code>, <code>standard_conforming_strings</code></td><td>accepted and echoed back; the engine is UTF-8, ISO dates, UTC</td></tr><tr><td><code>server_version</code>, <code>server_encoding</code>, <code>integer_datetimes</code></td><td>read-only (<code>55P02</code> on <code>SET</code>)</td></tr><tr><td><code>&lt;class&gt;.&lt;name&gt;</code></td><td>application-defined; any dotted name</td></tr></tbody></table></div>
+<p>An unrecognised parameter name is an error (<code>42704</code>) rather than a silent no-op. <code>SET LOCAL</code>, <code>SET TIME ZONE</code> and <code>SET NAMES</code> are not accepted.</p>
+<h2 id="error-codes">Error codes</h2>
+<p>Every error carries a five-character SQLSTATE. A driver or application should branch on these, not on the message text.</p>
+<div class="table-scroll"><table><thead><tr><th>Code</th><th>Meaning</th><th>What to do</th></tr></thead><tbody><tr><td><code>0A000</code></td><td>feature not supported</td><td>the statement is recognised but not built; see <a href="#not-accepted">Not accepted</a></td></tr><tr><td><code>22001</code></td><td>string too long for <code>VARCHAR(n)</code></td><td>shorten the value or widen the column</td></tr><tr><td><code>22003</code></td><td>numeric value out of range</td><td>integer overflow or a value outside a function's domain</td></tr><tr><td><code>22007</code></td><td>invalid date/time format</td><td>fix the literal</td></tr><tr><td><code>22012</code></td><td>division by zero</td><td></td></tr><tr><td><code>22023</code></td><td>invalid parameter value</td><td>for example a bad <code>SET</code> value</td></tr><tr><td><code>22P02</code></td><td>invalid text representation</td><td>the text does not parse as the target type</td></tr><tr><td><code>23502</code></td><td>not-null violation</td><td></td></tr><tr><td><code>23503</code></td><td>foreign-key violation</td><td></td></tr><tr><td><code>23505</code></td><td>unique violation</td><td></td></tr><tr><td><code>23514</code></td><td>check violation</td><td></td></tr><tr><td><code>25001</code></td><td>active transaction</td><td><code>SET TRANSACTION</code> after the first query</td></tr><tr><td><code>25P01</code></td><td>no active transaction</td><td><code>SAVEPOINT</code> outside <code>BEGIN</code></td></tr><tr><td><code>25P02</code></td><td>transaction aborted</td><td><code>ROLLBACK</code>, then start again</td></tr><tr><td><code>26000</code></td><td>unknown prepared statement</td><td><code>PREPARE</code> it again</td></tr><tr><td><code>2BP01</code></td><td>dependent objects exist</td><td>drop them, or use <code>CASCADE</code></td></tr><tr><td><code>34000</code></td><td>unknown cursor</td><td></td></tr><tr><td><code>3F000</code></td><td>schema does not exist</td><td></td></tr><tr><td><code>40001</code></td><td>serialization failure</td><td>retry the whole transaction</td></tr><tr><td><code>40P01</code></td><td>deadlock detected</td><td>retry the whole transaction</td></tr><tr><td><code>42501</code></td><td>permission denied</td><td>includes a row rejected by a policy</td></tr><tr><td><code>42601</code></td><td>syntax error</td><td></td></tr><tr><td><code>42701</code> / <code>42703</code></td><td>duplicate / undefined column</td><td></td></tr><tr><td><code>42702</code></td><td>ambiguous column</td><td>qualify it with the table name</td></tr><tr><td><code>42704</code></td><td>undefined object</td><td>unknown parameter, sequence, index, trigger</td></tr><tr><td><code>42710</code> / <code>42723</code></td><td>object / function already exists</td><td></td></tr><tr><td><code>42804</code></td><td>datatype mismatch</td><td>cast explicitly</td></tr><tr><td><code>42846</code></td><td>cannot coerce</td><td>cast explicitly</td></tr><tr><td><code>42883</code></td><td>undefined function, or no matching signature</td><td></td></tr><tr><td><code>42P01</code> / <code>42P07</code></td><td>undefined / duplicate table</td><td></td></tr><tr><td><code>53300</code></td><td>too many connections</td><td>only with <code>--reject-excess-connections</code>; back off and retry</td></tr><tr><td><code>54000</code></td><td>program limit exceeded</td><td>the request must get smaller</td></tr><tr><td><code>54001</code></td><td>statement too complex</td><td>trigger or procedure recursion limit</td></tr><tr><td><code>55P02</code></td><td>parameter cannot be changed</td><td><code>server_version</code> and the other read-only settings</td></tr><tr><td><code>57014</code></td><td>query cancelled</td><td><code>statement_timeout</code> or a client cancel</td></tr><tr><td><code>P0001</code></td><td>raised by a procedure's own <code>RAISE</code></td><td></td></tr><tr><td><code>XX000</code></td><td>internal error, or a memory ceiling was reached</td><td>the message names the limit and the flag that raises it</td></tr></tbody></table></div>
+<h2 id="behaviour-worth-knowing">Behaviour worth knowing</h2>
+<p>These are deliberate choices. Each one is here because it can surprise you.</p>
+<h3 id="text-ordering-and-collation">Text ordering and collation</h3>
+<p>Comparison and ordering are bytewise, equivalent to a <code>C</code> collation. <code>COLLATE "C"</code> and <code>"POSIX"</code> are accepted; locale collations are refused. Byte order is deterministic and does not change when a system library is upgraded, which is what makes an index safe across upgrades. The visible effect is that uppercase sorts before lowercase.</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">SELECT</span> <span class="s">'a'</span> &lt; <span class="s">'B'</span> <span class="k">AS</span> byte_order;   <span class="c">-- false: 'B' (0x42) precedes 'a' (0x61)</span></pre></div>
+<h3 id="fixed-width-characters-charn">Fixed-width characters (<code>CHAR(n)</code>)</h3>
+<p><code>CHAR(n)</code> is a fixed-width type. A value is stored with its trailing spaces trimmed, so comparison and <code>||</code> treat <code>'ab'</code> and <code>'ab   '</code> as equal and <code>length</code> counts only the real characters. A <code>CHAR(n)</code> column read out as a result on its own is blank-padded back to <code>n</code> characters, and <code>octet_length</code> reports that full width.</p>
+<h3 id="numeric-division-precision"><code>NUMERIC</code> division precision</h3>
+<p>Division produces a fixed scale rather than deriving one from the operands. The value is the same; only the number of digits kept differs. Round explicitly when a specific scale matters.</p>
+<h3 id="how-json-is-stored">How <code>JSON</code> is stored</h3>
+<p><code>JSON</code> and <code>JSONB</code> both store a parsed value, so key order and insignificant whitespace from the input text are not preserved. Keep the original text in a <code>TEXT</code> column when byte fidelity matters, such as a signed payload.</p>
+<h3 id="assigning-between-timestamp-and-timestamptz">Assigning between <code>TIMESTAMP</code> and <code>TIMESTAMPTZ</code></h3>
+<p>A value of either type can be assigned to a column of the other and the instant passes through unchanged. Equality between the two types is still refused: this widened assignment, not comparison.</p>
+<h3 id="type-coercion-is-explicit">Type coercion is explicit</h3>
+<p>The engine does not insert implicit coercions between unrelated types. Cast explicitly with <code>::TYPE</code> when mixing them.</p>
+<h3 id="serial-columns-are-integer"><code>SERIAL</code> columns are <code>integer</code></h3>
+<p><code>SERIAL</code>, <code>BIGSERIAL</code> and <code>SMALLSERIAL</code> all report their type as <code>integer</code>. Declare <code>BIGINT GENERATED ALWAYS AS IDENTITY</code> when the key must be a <code>BIGINT</code>, for example because it is compared with a <code>BIGINT</code> column in <code>IN (subquery)</code>, which requires both sides to have the same type.</p>
+<h3 id="identifiers-fold-to-lower-case">Identifiers fold to lower case</h3>
+<p><code>Users</code> and <code>users</code> name the same table; <code>"Users"</code> (double-quoted) keeps its case and is a different name. Identifiers are ASCII letters, digits and <code>_</code>.</p>
+<h3 id="materialized-views-are-snapshots">Materialized views are snapshots</h3>
+<p>A materialized view holds the result from the last <code>REFRESH</code>. Incremental maintenance is opt-in with <code>WITH (incremental = true)</code>, and asking for it on a body that cannot be maintained incrementally is an error rather than a silent downgrade.</p>
+<h3 id="serialization-conflicts-and-the-auto-commit-retry">Serialization conflicts and the auto-commit retry</h3>
+<p>Concurrency control is optimistic and locks do not wait: two sessions writing the same row make one fail with SQLSTATE <code>40001</code> rather than queue.</p>
+<p>A single statement outside a transaction is retried by the server, because it committed nothing and showed the application no intermediate result. Inside <code>BEGIN ... COMMIT</code> it is not, because a statement there may follow others whose results the application already acted on.</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">SET</span> max_autocommit_retries = <span class="s">50</span>;   <span class="c">-- 0 turns the retry off</span></pre></div>
+<p>The budget is a bound, not a promise: a conflict that outlives it is reported unchanged, so an application's own retry loop still sees its <code>40001</code>. A retry re-runs the statement, so <code>now()</code> and <code>random()</code> produce fresh values and a sequence consumed by a failed attempt leaves a gap. Pair the budget with <code>statement_timeout</code> if you want an upper bound on how long one statement may hold a connection.</p>
+<h3 id="memory-budgets-spill-or-fail-never-silently-swap">Memory budgets: spill or fail, never silently swap</h3>
+<p>A sort or hash join whose input exceeds the work-memory budget streams the overflow to the spill directory when one is configured (<code>--spill-dir</code>, or automatically on a Linux host where the budget is detected). Without a spill directory, a stage over <code>--work-mem</code> fails with an error naming the limit, the bytes involved and how to raise it, and the server stays responsive. Aggregation, <code>DISTINCT</code> and window functions do not spill yet; they fail at the budget.</p>
+<h3 id="capacity-is-bounded-by-memory">Capacity is bounded by memory</h3>
+<p>Table pages live in memory and are not evicted to disk, so a database's working set must fit inside the resident ceiling. See <a href="configuration.html">deployment</a> before loading a large dataset.</p>
+<h2 id="not-accepted">Not accepted</h2>
+<p>Recognised and refused with <code>0A000</code> and a clear message rather than half-implemented:</p>
+<ul><li><code>PREPARE</code> / <code>EXECUTE</code> / <code>DEALLOCATE</code> as SQL over a connection (drivers prepare through the protocol);</li><li>table partitioning (<code>PARTITION BY</code> on <code>CREATE TABLE</code>);</li><li>reading one field out of a composite value;</li><li>dollar-quoted string literals outside a routine body;</li><li><code>LOCK TABLE</code> modes other than <code>ACCESS SHARE</code> and <code>ACCESS EXCLUSIVE</code>;</li><li><code>INSTEAD OF</code> triggers;</li><li><code>SET TIME ZONE</code>, <code>SET LOCAL</code>, <code>SET NAMES</code>;</li><li>index methods other than B-tree and HNSW;</li><li>locale collations (only <code>"C"</code> / <code>"POSIX"</code>);</li><li><code>COPY</code> to or from a file or program (only <code>STDIN</code> / <code>STDOUT</code>), and <code>COPY ... BINARY</code>;</li><li><code>BEGIN READ ONLY</code> / <code>SET TRANSACTION READ ONLY</code> over a connection;</li><li>full-text configurations other than <code>simple</code> and <code>english</code>, phrase search, prefix matching;</li><li><code>IGNORE NULLS</code> / <code>RESPECT NULLS</code> on window functions;</li><li>multi-dimensional arrays;</li><li>a <code>DEFAULT</code> or <code>COLLATE</code> on a domain;</li><li><code>LANGUAGE</code> other than <code>SQL</code> for functions and procedures.</li></ul>
 
 <div class="nextprev">
 <a href="getting-started.html"><small>Previous</small>Getting started</a>

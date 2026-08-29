@@ -55,101 +55,41 @@
     <main class="prose" id="main">
       <p class="crumb"><a href="./">Documentation</a> / Limits and capacity</p>
       <h1>Limits and capacity</h1>
-      <p class="summary">The constraints on this page change how you size and operate a deployment. They are stated plainly because finding them during a data load is far more expensive than reading them first.</p>
+      <p class="summary">The constraints that change how you size and operate a deployment, stated plainly because finding them during a data load is far more expensive than reading them first.</p>
 
-<div class="note caution">
-  <b>Read this before loading a large dataset</b>
-  <p>A dataset larger than the resident ceiling does not load slowly. It does not load at
-  all. The section below explains the ceiling and how to raise it.</p>
-</div>
-
-<h2 id="memory">Working data is bounded by memory</h2>
-<p>Table data lives in memory. Rows are held in an in-memory page store and made durable through
-the write-ahead log, and pages are <strong>not evicted to disk</strong>. Once the resident store
-reaches its ceiling, further row inserts are refused with an error naming the limit and the
-bytes resident. That ceiling comes from <code>--max-resident-bytes</code>, or is derived from
-the detected memory budget when the flag is unset.</p>
-<div class="code out"><div class="code-bar"><span>output</span><button class="copy" type="button"><em>Copy</em></button></div>
-<pre>ERROR XX000: out of memory: the in-memory store reached its resident-memory
-limit of 858993440 bytes (859001088 bytes resident); free rows
-(DELETE/TRUNCATE), raise the limit, or use a larger host</pre></div>
-<p>The refusal is loud and explicit, so this is a capacity limit rather than a correctness
-problem. What matters when planning is that <strong>a database's working data must fit inside the
-resident ceiling</strong>, and on a memory-constrained host that ceiling is a fraction of RAM.</p>
-<p>Two details commonly surprise people:</p>
-<ul>
-  <li>Updates and index builds are not gated by this ceiling, so an update-heavy workload already
-  at the limit can still grow past it.</li>
-  <li>Deleting rows frees pages for reuse but does not lower the resident meter, because page
-  memory is recycled rather than returned. Restarting does not lower it either: recovery replays
-  the log in order and rebuilds the same high-water mark.</li>
-</ul>
-<p>Once the ceiling has been reached the remedies are raising it, moving to a larger host, or
-reloading the live rows into a fresh data directory, which lands residency at the level of live
-data.</p>
-
-<h2 id="log-growth">The log grows with write history</h2>
-<p>The write-ahead log is the durable copy of the data, and no checkpoint truncates it yet. The
-data directory therefore grows with everything that has ever been written, not with how much data
-is currently live. A steady write workload adds to it indefinitely, and deleting rows does not
-shrink it.</p>
-<p>Budget disk against write volume over time rather than against table size, and watch the data
-directory as an operational signal.</p>
-
-<h2 id="restart">Restart time grows with the log</h2>
-<p>Recovery replays that history, so start-up time grows with the size of the log rather than the
-size of the data. On a database that has been written to for a long time without being reloaded,
-this is the number that decides how long a restart takes. If a short restart window matters,
-reloading into a fresh data directory resets both the log and the resident high-water mark.</p>
-
-<div class="note">
-  <b>These three are one design, not three bugs</b>
-  <p>Pages live in memory, the log is the durable copy, and nothing truncates the log. Checkpointing
-  is what connects them: it is what would let the log be truncated, bound restart time, and give
-  page eviction somewhere to write to. It is the most significant piece of work outstanding before
-  1.0.</p>
-</div>
-
-<h2 id="backup">There is no built-in backup or replication</h2>
-<p>NusaDB ships no backup, restore, or replication tooling. What you can do today is stop the
-server and copy the data directory, or export the data over a connection with <code>COPY</code> and
-reload it elsewhere. There is no point-in-time recovery, no streaming replica, and no built-in
-scheduled backup.</p>
-<p>This is the largest gap between NusaDB and a database you would run a business on unattended,
-and it is worth weighing before choosing it for data you cannot reproduce.</p>
-
+<div class="note caution"><b>Read this before loading a large dataset.</b><p>A dataset larger than the resident ceiling does not load slowly. It does not load at all. The first section explains the ceiling and how to raise it.</p></div>
+<h2 id="working-data-is-bounded-by-memory">Working data is bounded by memory</h2>
+<p>Table data lives in memory. Rows are held in an in-memory page store and made durable through the write-ahead log, and pages are not evicted to disk. Once a database's resident store reaches its ceiling, further row inserts are refused with an error naming the limit and the bytes resident. The ceiling comes from <code>--max-resident-bytes</code>, or is derived from the detected memory budget when the flag is unset.</p>
+<div class="code"><div class="code-bar"><span>output</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="o">ERROR XX000: out of memory: the in-memory store reached its resident-memory</span>
+<span class="o">limit of 858993440 bytes (859001088 bytes resident); free rows</span>
+<span class="o">(DELETE/TRUNCATE), raise the limit, or use a larger host</span></pre></div>
+<p>The refusal is loud and explicit, so this is a capacity limit rather than a correctness problem. What matters when planning is that a database's working data must fit inside the resident ceiling, and on a memory-constrained host that ceiling is a fraction of RAM: with the default derivation, about a fifth of the budget. Measured, an 859 MB ceiling inside a 4 GB container held roughly 2 to 3 million rows of about 220 bytes each. Size against that number, not against total RAM.</p>
+<p>Three details commonly surprise people:</p>
+<ul><li>Updates and index builds are not gated by this ceiling, so an update-heavy workload already at the limit can still grow past it.</li><li>Deleting rows frees pages for reuse but does not lower the resident meter within a running process, because page memory is recycled rather than returned.</li><li>A restart after a checkpoint does lower it: recovery rebuilds the store from the checkpoint image, which holds only live rows. A database that has never checkpointed replays its whole log and comes back at the old mark.</li></ul>
+<p>Once the ceiling has been reached the remedies are raising it, moving to a larger host, or reloading the live rows into a fresh data directory.</p>
+<h2 id="the-log-grows-until-a-checkpoint">The log grows until a checkpoint</h2>
+<p>The write-ahead log is the durable copy of the data. A checkpoint folds the in-memory state into an image beside the log and truncates the log, so the data directory holds live data plus the write history since the last checkpoint. A checkpoint is taken automatically when a database is opened with a log past a few megabytes, and on demand with the <code>CHECKPOINT</code> statement.</p>
+<p>Nothing checkpoints automatically while the server runs, so a long-lived server keeps appending. Issue <code>CHECKPOINT</code> from a cron job over an otherwise idle connection to bound the log; it refuses while any transaction is open, including one on the connection issuing it. See <a href="configuration.html#checkpoints-backup-and-restore">configuration</a>.</p>
+<h2 id="restart-time-tracks-the-log-tail">Restart time tracks the log tail</h2>
+<p>Recovery loads the last checkpoint image and replays only the log after it, so start-up time grows with the writes since the last checkpoint, not with the size of the data or its whole history. A server that has run for a long time without a checkpoint replays a long tail. If a short restart window matters, checkpoint regularly.</p>
+<h2 id="there-is-no-built-in-backup-or-replication">There is no built-in backup or replication</h2>
+<p>NusaDB ships no backup, restore, or replication tooling. What you can do today is stop the server (or take a filesystem snapshot) and copy the data directory, or export the data over a connection with <code>COPY</code> and reload it elsewhere. There is no point-in-time recovery, no streaming replica, and no built-in scheduled backup.</p>
+<p>This is the largest gap between NusaDB and a database you would run a business on unattended, and it is worth weighing before choosing it for data you cannot reproduce.</p>
 <h2 id="single-node">Single node</h2>
-<p>The engine runs on one machine. There is no clustering, no replication, and therefore no
-automatic failover: the availability of the deployment is the availability of that host and its
-disk.</p>
-
-<h2 id="query-limits">Query and memory behaviour</h2>
-<p>The executor materialises each stage rather than streaming it. With <code>--work-mem</code>
-set, a stage that exceeds the budget fails with an error naming the limit and the server stays
-responsive; without it, a large enough query can exhaust host memory. Setting a work-memory budget
-is the safer configuration, at the cost of failing queries that would otherwise have finished
-slowly.</p>
-<p>A spill directory flag exists and covers some operators; sorting, <code>DISTINCT</code>,
-grouping and window functions do not yet stream their output to it, so those still fail at the
-budget rather than spilling.</p>
-
-<h2 id="vectors">Vector index build cost</h2>
-<p>Vector search is available with a <code>VECTOR(n)</code> type, the four distance operators, and
-an HNSW index whose recall reaches exact-search results at a high enough
-<code>hnsw_ef_search</code>. Building the index is expensive, substantially more so than a specialised vector
-extension, and the graph is rebuilt rather than checkpointed. Plan index builds as
-scheduled work rather than something to do during a load.</p>
-
-<h2 id="not-built">Not in this release</h2>
-<div class="table-scroll"><table><thead><tr><th>Area</th><th>Status</th></tr></thead><tbody><tr><td>Backup, restore, point-in-time recovery</td><td>Not built. Stop-and-copy or export with <code>COPY</code>.</td></tr><tr><td>Replication and clustering</td><td>Not built. Single node only.</td></tr><tr><td>Checkpointing and log truncation</td><td>Not built. See above.</td></tr><tr><td>Page eviction to disk</td><td>Not built. Data is bounded by memory.</td></tr><tr><td>Temporary tables</td><td>Refused with a clear error.</td></tr><tr><td>Cursors, <code>PREPARE</code>/<code>EXECUTE</code> statements</td><td>Refused.</td></tr><tr><td>Session time zone</td><td>Fixed at UTC.</td></tr><tr><td>Locale collations</td><td>Refused; byte ordering only.</td></tr><tr><td>Index methods beyond B-tree and HNSW</td><td>Refused.</td></tr><tr><td>Latency and storage metrics</td><td>Four counters only.</td></tr></tbody></table></div>
-
-<h2 id="fit">Where NusaDB fits today</h2>
-<p>It is a reasonable choice when the working set fits comfortably in the memory you are willing to
-give it, when a single node is acceptable, and when you can reproduce the data or arrange your own
-export schedule. It is not the right choice yet for data that must survive unattended, for datasets
-that outgrow memory, or where a restart must be quick regardless of write history.</p>
-<p>Everything on this page is a property of the current release rather than a permanent limitation.
-Check the release notes when a new version appears.</p>
+<p>The engine runs on one machine. There is no clustering, no replication, and therefore no automatic failover: the availability of the deployment is the availability of that host and its disk.</p>
+<h2 id="query-memory-spill-or-fail-never-swap">Query memory: spill or fail, never swap</h2>
+<p>The executor materialises each stage. With <code>--work-mem</code> set, a sort or hash join whose input exceeds the budget streams the overflow to <code>--spill-dir</code> when one is configured (a Linux host with a detected memory budget gets one by default); without a spill directory the stage fails with an error naming the limit and the flag, and the server stays responsive. Aggregation, <code>DISTINCT</code> and window functions do not spill yet; they fail at the budget. Without any budget, a large enough query can exhaust host memory, so setting one is the safer configuration.</p>
+<p>Two more per-client bounds exist: <code>--max-txn-write-bytes</code> caps one transaction's uncommitted writes and <code>--copy-max-bytes</code> caps one bulk load. Both derive from the memory budget and both fail the offending client with a clear error rather than the whole server.</p>
+<h2 id="vector-index-build-cost">Vector index build cost</h2>
+<p>Vector search is available with a <code>VECTOR(n)</code> type, four distance operators, and an HNSW index whose recall reaches exact-search results at a high enough <code>hnsw_ef_search</code>. Building the index is expensive, substantially more so than a specialised vector extension, and the graph is rebuilt on recovery rather than checkpointed. Plan index builds as scheduled work rather than something to do during a load.</p>
+<h2 id="the-shell-cannot-create-multi-statement-routines">The shell cannot create multi-statement routines</h2>
+<p><code>nusadb-cli</code> splits a batch on every <code>;</code>, including one inside a <code>$$</code> body, so a procedure whose body holds several statements cannot be created from the shell. Every driver sends the statement whole.</p>
+<h2 id="not-in-this-release">Not in this release</h2>
+<div class="table-scroll"><table><thead><tr><th>Area</th><th>Status</th></tr></thead><tbody><tr><td>Backup, restore, point-in-time recovery</td><td>Not built. Stop-and-copy, or export with <code>COPY</code>.</td></tr><tr><td>Replication and clustering</td><td>Not built. Single node only.</td></tr><tr><td>Automatic checkpoint while running</td><td>Not built. Checkpoint at open, and <code>CHECKPOINT</code> on demand.</td></tr><tr><td>Page eviction to disk</td><td>Not built. Data is bounded by memory.</td></tr><tr><td><code>PREPARE</code> / <code>EXECUTE</code> as SQL over a connection</td><td>Refused. Drivers prepare through the protocol.</td></tr><tr><td>Spill for aggregation, <code>DISTINCT</code>, window functions</td><td>Not built. They fail at the budget.</td></tr><tr><td>Table partitioning</td><td>Refused with a clear error.</td></tr><tr><td><code>INSTEAD OF</code> triggers, field access on composite values</td><td>Refused.</td></tr><tr><td>Session time zone</td><td>Fixed at UTC; <code>SET TIME ZONE</code> is refused.</td></tr><tr><td>Locale collations</td><td>Refused; byte ordering only.</td></tr><tr><td>Index methods beyond B-tree and HNSW</td><td>Refused.</td></tr><tr><td>Full-text configurations beyond <code>simple</code> and <code>english</code>, phrase search</td><td>Refused.</td></tr><tr><td>Password changes without a restart</td><td>Passwords live in <code>--auth-user</code>; change one by restarting.</td></tr><tr><td>Latency and storage metrics</td><td>Four counters only.</td></tr><tr><td>Java and .NET drivers on a package registry</td><td>In the source tree, not yet published.</td></tr></tbody></table></div>
+<h2 id="where-nusadb-fits-today">Where NusaDB fits today</h2>
+<p>It is a reasonable choice when the working set fits comfortably in the memory you are willing to give it, when a single node is acceptable, and when you can reproduce the data or arrange your own export schedule. It is not the right choice yet for data that must survive unattended, for datasets that outgrow memory, or where a restart must be quick regardless of how long ago the last checkpoint ran.</p>
+<p>Everything on this page is a property of the current release rather than a permanent limitation. Check the release notes when a new version appears.</p>
 
 <div class="nextprev">
 <a href="configuration.html"><small>Previous</small>Configuration</a>

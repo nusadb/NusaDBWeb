@@ -55,11 +55,12 @@
     <main class="prose" id="main">
       <p class="crumb"><a href="./">Documentation</a> / Getting started</p>
       <h1>Getting started</h1>
-      <p class="summary">Run a server, connect to it, and load some data. Two installation routes are covered: the published container image, and a build from source.</p>
+      <p class="summary">Install, connect, run a worked example, learn the shell and the drivers, add a user, and recognise the first errors.</p>
 
-<h2 id="container">Run the container image</h2>
-<p>The image carries both the server and the shell, so nothing needs building. Give it a volume:
-the data directory holds the write-ahead log, which is the durable copy of your data.</p>
+<p>From nothing to a queried table. Two installation routes are covered: the published container image, and a build from source. Everything after that is the same either way.</p>
+<h2 id="install">Install</h2>
+<h3 id="container">Container</h3>
+<p>The image carries both the server and the shell. Give it a volume: the data directory holds the write-ahead log, which is the durable copy of your data.</p>
 <div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
 <pre>docker run -d --name nusadb \
   -p 5678:5678 \
@@ -67,19 +68,10 @@ the data directory holds the write-ahead log, which is the durable copy of your 
   -e NUSADB_USER=app \
   -e NUSADB_PASSWORD=change-me \
   nusadb/nusadb</pre></div>
-<p>Setting <code>NUSADB_USER</code> together with <code>NUSADB_PASSWORD</code> turns on
-SCRAM-SHA-256 for that user. Setting only one of the pair is an error, so a half-configured
-container fails at start-up instead of quietly accepting everyone.</p>
-<div class="note caution">
-  <b>Without credentials the server trusts every client</b>
-  <p>A server started with no <code>--auth-user</code> and no environment pair runs
-  trust-on-startup: any client is accepted without a password, and the startup log says so.
-  That is fine for a laptop and wrong for anything reachable by others.</p>
-</div>
-
-<h2 id="source">Build from source</h2>
-<p>A Rust toolchain is the only prerequisite; the pinned version lives in
-<code>rust-toolchain.toml</code> and is installed automatically by <code>rustup</code>.</p>
+<p>Setting <code>NUSADB_USER</code> together with <code>NUSADB_PASSWORD</code> turns on SCRAM-SHA-256 for that user. Setting only one of the pair is an error, so a half-configured container fails at start-up instead of quietly accepting everyone.</p>
+<div class="note caution"><b>Without credentials the server trusts every client.</b><p>A server started with no <code>--auth-user</code> and no environment pair accepts any client without a password and says so in its startup log. That is fine on a laptop and wrong for anything reachable by others.</p></div>
+<h3 id="from-source">From source</h3>
+<p>A Rust toolchain is the only prerequisite; the pinned version lives in <code>rust-toolchain.toml</code> and <code>rustup</code> installs it automatically. The first build takes several minutes.</p>
 <div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
 <pre>git clone https://github.com/nusadb/nusadb.git
 cd nusadb
@@ -87,102 +79,227 @@ cargo build --release
 
 ./target/release/nusadb-server \
   --listen 127.0.0.1:5678 \
-  --data-dir ./data</pre></div>
-<p>The data directory is created if it does not exist. <code>RUST_LOG</code> controls log
-verbosity, for example <code>RUST_LOG=info</code>.</p>
-
+  --data-dir ./data \
+  --auth-user app:change-me</pre></div>
+<p>The data directory is created if it does not exist. <code>RUST_LOG=info</code> turns on informational logging. On Windows the binaries are <code>target\release\nusadb-server.exe</code> and <code>nusadb-cli.exe</code>.</p>
 <h2 id="connect">Connect</h2>
-<p>The defaults are host <code>127.0.0.1:5678</code>, database <code>nusadb</code>, and the
-bootstrap superuser <code>nusadb-root</code>. A trust-on-startup server ignores the password; a
-server configured with credentials requires it.</p>
+<p>Defaults are host <code>127.0.0.1:5678</code>, database <code>nusadb</code>, and user <code>nusadb-root</code>, the bootstrap superuser. With authentication on, the user must be one listed in <code>--auth-user</code>, and the password is read from <code>NUSADB_PASSWORD</code> (preferred, so it stays out of the shell history) or <code>-W</code>.</p>
 <div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
-<pre>nusadb-cli --host 127.0.0.1:5678 --user nusadb-root --database nusadb
+<pre>nusadb-cli                                                  # trust-on-startup server, as nusadb-root
+NUSADB_PASSWORD=change-me nusadb-cli --user app             # authenticated
 
-# inside the container
-docker exec -it nusadb nusadb-cli --user app --database nusadb</pre></div>
-<div class="note">
-  <b>Two names changed recently</b>
-  <p>
-    The shell is <code>nusadb-cli</code> and the bootstrap superuser is
-    <code>nusadb-root</code>, matching the crate and the rest of the <code>nusadb</code>
-    naming. Container images published before that change carry the older
-    <code>nusa-cli</code> and <code>nusa-root</code>, so on an older image use those instead.
-  </p>
-</div>
-
-<div class="note">
-  <b>Clients for other databases will not connect</b>
-  <p>NusaDB speaks its own protocol. A tool built for a different engine gets no answer to its
-  handshake, which looks like a dead socket from its side. Use <code>nusadb-cli</code>, one of the
-  official drivers, or write a client against the specification. See
-  <a href="clients.html">clients and protocol</a>.</p>
-</div>
-
-<h2 id="first-table">Create something</h2>
+<span class="c"># inside the container, which already has NUSADB_PASSWORD in its environment</span>
+docker exec -it nusadb nusadb-cli --user app</pre></div>
+<div class="code"><div class="code-bar"><span>output</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="o">nusadb-cli (NusaDB), type \q to quit</span>
+<span class="o">connected to 127.0.0.1:5678 as app</span>
+<span class="o">SELECT version();</span>
+<span class="o">version</span>
+<span class="o">------------</span>
+<span class="o">NusaDB 0.1.0</span>
+<span class="o">SELECT 1</span></pre></div>
+<div class="note caution"><b>Clients for other databases cannot connect.</b><p>NusaDB implements its own wire protocol. A tool built for a different engine gets no answer to its handshake, which from its side looks like a dead socket. That is deliberate. Use <code>nusadb-cli</code>, one of the <a href="#connecting-from-a-program">drivers</a>, or write a client against the <a href="https://github.com/nusadb/nusadb/blob/master/docs/wire-protocol.md" target="_blank" rel="noopener">protocol specification</a>. The SQL <em>dialect</em> is a separate matter: queries written for other engines largely run as-is once they arrive over a NusaDB connection.</p></div>
+<h2 id="a-worked-example">A worked example</h2>
+<p>Paste this in order. It creates two tables, loads a few rows, and answers a question with them.</p>
 <div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
-<pre><span class="k">CREATE TABLE</span> customers (
-  id      <span class="k">BIGINT</span> <span class="k">PRIMARY KEY</span>,
-  email   <span class="k">TEXT</span> <span class="k">NOT NULL</span> <span class="k">UNIQUE</span>,
-  country <span class="k">TEXT</span>,
+<pre><span class="k">CREATE</span> <span class="k">TABLE</span> customers (
+  id      <span class="k">BIGINT</span> <span class="k">GENERATED</span> <span class="k">ALWAYS</span> <span class="k">AS</span> <span class="k">IDENTITY</span> <span class="k">PRIMARY</span> <span class="k">KEY</span>,
+  email   <span class="k">TEXT</span> <span class="k">NOT</span> <span class="k">NULL</span> <span class="k">UNIQUE</span>,
+  country <span class="k">TEXT</span> <span class="k">NOT</span> <span class="k">NULL</span>,
   joined  <span class="k">TIMESTAMPTZ</span> <span class="k">DEFAULT</span> now()
 );
 
-<span class="k">CREATE INDEX</span> customers_country <span class="k">ON</span> customers (country);
+<span class="k">CREATE</span> <span class="k">TABLE</span> orders (
+  id       <span class="k">BIGINT</span> <span class="k">GENERATED</span> <span class="k">ALWAYS</span> <span class="k">AS</span> <span class="k">IDENTITY</span> <span class="k">PRIMARY</span> <span class="k">KEY</span>,
+  customer <span class="k">BIGINT</span> <span class="k">NOT</span> <span class="k">NULL</span> <span class="k">REFERENCES</span> customers (id) <span class="k">ON</span> <span class="k">DELETE</span> <span class="k">CASCADE</span>,
+  total    <span class="k">NUMERIC</span>(<span class="s">12</span>,<span class="s">2</span>) <span class="k">NOT</span> <span class="k">NULL</span> <span class="k">CHECK</span> (total &gt;= <span class="s">0</span>),
+  placed   <span class="k">TIMESTAMPTZ</span> <span class="k">DEFAULT</span> now()
+);
 
-<span class="k">INSERT INTO</span> customers (id, email, country)
-<span class="k">VALUES</span> (<span class="s">1</span>, <span class="s">'ana@example.com'</span>, <span class="s">'ID'</span>),
-       (<span class="s">2</span>, <span class="s">'budi@example.com'</span>, <span class="s">'ID'</span>)
-<span class="k">RETURNING</span> id, joined;</pre></div>
-
-<h2 id="databases">Databases and schemas</h2>
-<p>NusaDB holds several databases, each with its own directory under
-<code>&lt;data-dir&gt;/base/</code>, and several schemas within a database. Each connection
-targets one database.</p>
+<span class="k">CREATE</span> <span class="k">INDEX</span> orders_customer <span class="k">ON</span> orders (customer);</pre></div>
+<p>Insert, and let the server hand back what it generated:</p>
 <div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
-<pre><span class="k">CREATE DATABASE</span> app;              <span class="c">-- a separate physical database</span>
-<span class="k">CREATE SCHEMA</span> tenant;               <span class="c">-- a namespace inside this database</span>
-<span class="k">CREATE TABLE</span> tenant.t (id <span class="k">INT</span>);
-<span class="k">SELECT</span> * <span class="k">FROM</span> tenant.t;           <span class="c">-- resolved through search_path, then public</span></pre></div>
-<p>Connect to another database by name; a session cannot query across databases.</p>
+<pre><span class="k">INSERT</span> <span class="k">INTO</span> customers (email, country) <span class="k">VALUES</span>
+  (<span class="s">'ana@example.com'</span>,   <span class="s">'ID'</span>),
+  (<span class="s">'budi@example.com'</span>,  <span class="s">'ID'</span>),
+  (<span class="s">'carla@example.com'</span>, <span class="s">'SG'</span>)
+<span class="k">RETURNING</span> id, email;
+<span class="c">--  id |       email</span>
+<span class="c">-- ----+--------------------</span>
+<span class="c">--   1 | ana@example.com</span>
+<span class="c">--   2 | budi@example.com</span>
+<span class="c">--   3 | carla@example.com</span>
+
+<span class="k">INSERT</span> <span class="k">INTO</span> orders (customer, total) <span class="k">VALUES</span>
+  (<span class="s">1</span>, <span class="s">120.00</span>), (<span class="s">1</span>, <span class="s">80.50</span>), (<span class="s">2</span>, <span class="s">45.00</span>), (<span class="s">3</span>, <span class="s">900.00</span>);</pre></div>
+<p>Ask a question:</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">SELECT</span> c.country,
+       count(*)                                   <span class="k">AS</span> orders,
+       sum(o.total)                               <span class="k">AS</span> revenue,
+       round(avg(o.total), <span class="s">2</span>)                     <span class="k">AS</span> average,
+       rank() <span class="k">OVER</span> (<span class="k">ORDER</span> <span class="k">BY</span> sum(o.total) <span class="k">DESC</span>)   <span class="k">AS</span> by_revenue
+<span class="k">FROM</span>   customers c
+<span class="k">JOIN</span>   orders    o <span class="k">ON</span> o.customer = c.id
+<span class="k">WHERE</span>  o.placed &gt;= now() - <span class="k">INTERVAL</span> <span class="s">'30 days'</span>
+<span class="k">GROUP</span>  <span class="k">BY</span> c.country
+<span class="k">ORDER</span>  <span class="k">BY</span> revenue <span class="k">DESC</span>;
+<span class="c">--  country | orders | revenue | average | by_revenue</span>
+<span class="c">-- ---------+--------+---------+---------+------------</span>
+<span class="c">--  SG      |      1 |  900.00 |  900.00 |          1</span>
+<span class="c">--  ID      |      3 |  245.50 |   81.83 |          2</span></pre></div>
+<p>Change rows safely, and keep part of the work:</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">BEGIN</span>;
+  <span class="k">UPDATE</span> orders <span class="k">SET</span> total = total * <span class="s">1.1</span> <span class="k">WHERE</span> customer = <span class="s">1</span> <span class="k">RETURNING</span> id, total;
+  <span class="k">SAVEPOINT</span> before_delete;
+  <span class="k">DELETE</span> <span class="k">FROM</span> orders <span class="k">WHERE</span> total &lt; <span class="s">50</span>;
+  <span class="k">ROLLBACK</span> <span class="k">TO</span> <span class="k">SAVEPOINT</span> before_delete;    <span class="c">-- keep the update, undo the delete</span>
+<span class="k">COMMIT</span>;</pre></div>
+<p>Constraints are enforced, and the error says which one:</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">INSERT</span> <span class="k">INTO</span> orders (customer, total) <span class="k">VALUES</span> (<span class="s">999</span>, <span class="s">10</span>);
+<span class="c">-- ERROR 23503: constraint violation: insert or update on "orders" violates foreign key</span>
+<span class="c">--              "orders_fkey1": no matching row in "customers"</span>
+
+<span class="k">INSERT</span> <span class="k">INTO</span> customers (email, country) <span class="k">VALUES</span> (<span class="s">'ana@example.com'</span>, <span class="s">'ID'</span>);
+<span class="c">-- ERROR 23505: constraint violation: duplicate key violates unique constraint</span>
+<span class="c">--              "customers_email_key" on (email)</span>
+
+<span class="k">INSERT</span> <span class="k">INTO</span> orders (customer, total) <span class="k">VALUES</span> (<span class="s">1</span>, -<span class="s">5</span>);
+<span class="c">-- ERROR 23514: constraint violation: new row for "orders" violates check constraint "orders_check1"</span></pre></div>
+<p>See how the planner will run a query:</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">EXPLAIN</span> <span class="k">SELECT</span> email <span class="k">FROM</span> customers <span class="k">WHERE</span> id = <span class="s">2</span>;
+<span class="c">--  Project (1 column(s))</span>
+<span class="c">--    Filter</span>
+<span class="c">--      IndexScan: customers using customers_pkey</span></pre></div>
+<h2 id="the-shell-nusadb-cli">The shell, <code>nusadb-cli</code></h2>
+<div class="code"><div class="code-bar"><span>output</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="o">nusadb-cli [OPTIONS]</span>
+<span class="o">      --host &lt;HOST&gt;          Server to connect to            [default: 127.0.0.1:5678]</span>
+<span class="o">  -u, --user &lt;USER&gt;          User to connect as              [default: nusadb-root]</span>
+<span class="o">  -d, --database &lt;DATABASE&gt;  Database to open                [default: nusadb]</span>
+<span class="o">  -W, --password &lt;PASSWORD&gt;  Password; prefer NUSADB_PASSWORD in the environment</span>
+<span class="o">  -c, --command &lt;COMMAND&gt;    Run one batch of SQL (statements separated by ;) and exit</span>
+<span class="o">  -f, --file &lt;FILE&gt;          Run the SQL in a file and exit</span>
+<span class="o">  -F, --format &lt;FORMAT&gt;      aligned (default), expanded, csv, or json</span>
+<span class="o">      --tls                  Connect using TLS; requires --tls-ca</span>
+<span class="o">      --tls-ca &lt;PATH&gt;        PEM certificate to trust (a private CA or self-signed cert); implies --tls</span>
+<span class="o">      --tls-domain &lt;NAME&gt;    Server name to verify the certificate against (default: the host)</span></pre></div>
+<p>Interactively, a statement runs when a line ends with <code>;</code>, so a statement may span lines. Command history is kept in <code>~/.nusadb_history</code>. Meta-commands, typed alone on a line:</p>
+<div class="table-scroll"><table><thead><tr><th>Command</th><th>Does</th></tr></thead><tbody><tr><td><code>\dt</code> or <code>\d</code></td><td>list tables (<code>SHOW TABLES</code>)</td></tr><tr><td><code>\d name</code></td><td>describe a table's columns (<code>SHOW COLUMNS FROM name</code>)</td></tr><tr><td><code>\l</code></td><td>show the connected database</td></tr><tr><td><code>\?</code></td><td>help</td></tr><tr><td><code>\q</code>, <code>\quit</code>, <code>quit</code></td><td>exit</td></tr></tbody></table></div>
+<p>Output formats, with the same query:</p>
 <div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
-<pre>nusadb-cli --host 127.0.0.1:5678 --user nusadb-root --database app</pre></div>
+<pre>nusadb-cli -F csv  -c "SELECT id, email FROM customers ORDER BY id LIMIT 2"
+<span class="c"># id,email</span>
+<span class="c"># 1,ana@example.com</span>
+<span class="c"># 2,budi@example.com</span>
 
-<h2 id="bulk">Load and export in bulk</h2>
-<p><code>COPY</code> streams rows in one exchange instead of a round trip per row. In the shell
-forms the data travels on the command's own standard input and output.</p>
+nusadb-cli -F json -c "SELECT id, email FROM customers ORDER BY id LIMIT 2"
+<span class="c"># [{"id":"1","email":"ana@example.com"},{"id":"2","email":"budi@example.com"}]</span>
+
+nusadb-cli -F expanded -c "SELECT id, email FROM customers ORDER BY id LIMIT 1"
+<span class="c"># -[ RECORD 1 ]-</span>
+<span class="c"># id    | 1</span>
+<span class="c"># email | ana@example.com</span></pre></div>
+<p>Values in the JSON format are strings, because the shell prints the protocol's text form. The command tag (<code>SELECT 2</code>, <code>INSERT 1</code>) is printed after aligned and expanded results and omitted for CSV and JSON so the output can be fed to another program.</p>
+<p>Two things the shell does not do: it has no parameter binding (write the value into the SQL), and it splits a batch on every <code>;</code>, including one inside a <code>$$ ... $$</code> routine body. To create a procedure whose body has several statements, send it from a driver; see the <a href="sql.html#procedures-and-call">SQL reference</a>.</p>
+<h2 id="databases-and-schemas">Databases and schemas</h2>
+<p>NusaDB holds several databases, each with its own directory under <code>&lt;data-dir&gt;/base/</code>, and several schemas within a database. One connection targets one database; a query cannot cross databases.</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">CREATE</span> <span class="k">DATABASE</span> app;              <span class="c">-- a separate physical database</span>
+<span class="k">CREATE</span> <span class="k">SCHEMA</span> tenant;             <span class="c">-- a namespace inside this database</span>
+<span class="k">CREATE</span> <span class="k">TABLE</span> tenant.t (id <span class="k">INT</span>);
+<span class="k">SELECT</span> * <span class="k">FROM</span> tenant.t;           <span class="c">-- resolved through search_path, then public</span>
+
+<span class="k">SET</span> search_path = tenant, public;
+<span class="k">SELECT</span> * <span class="k">FROM</span> nusadb_databases;   <span class="c">-- what exists (superuser)</span></pre></div>
 <div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
-<pre># tab-delimited, \N for NULL (the server's text format)
-nusadb-cli -c "COPY customers FROM STDIN" < rows.tsv
+<pre>nusadb-cli --database app</pre></div>
+<h2 id="loading-and-exporting-data">Loading and exporting data</h2>
+<p><code>COPY</code> moves rows in one streaming exchange rather than a round trip per row. In the shell forms the data travels on the command's own standard input and output, so it composes with ordinary pipelines.</p>
+<div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="c"># Load: tab-delimited, \N for NULL (the server's text format)</span>
+nusadb-cli -c "COPY customers FROM STDIN" &lt; rows.tsv
 
-# CSV with a header line
-nusadb-cli -c "COPY customers FROM STDIN WITH (FORMAT csv, HEADER)" < rows.csv
+<span class="c"># CSV with a header line, into named columns</span>
+nusadb-cli -c "COPY customers (email, country) FROM STDIN WITH (FORMAT csv, HEADER)" &lt; rows.csv
 
-# export the same way
-nusadb-cli -c "COPY customers TO STDOUT" > rows.tsv</pre></div>
-<p>During an export the row count goes to standard error, so it never lands in the exported file.
-One redirect feeds one load: a batch containing two <code>COPY … FROM STDIN</code> statements
-refuses the second rather than reporting that it loaded nothing. Typing
-<code>COPY … FROM STDIN</code> at the interactive prompt is refused too, because there the
-keyboard is already the session's input.</p>
-
-<h2 id="batch">Running statements from scripts</h2>
-<p>Both batch forms behave the same way: <code>-c</code> takes a statement and
-<code>-f</code> takes a file. A server error is printed to standard error and the
-remaining statements still run. The process then exits
-non-zero, so a shell script that loads data in stages stops at the failed stage instead of
-continuing as though it had worked.</p>
+<span class="c"># Export the same way</span>
+nusadb-cli -c "COPY customers TO STDOUT" &gt; rows.tsv
+nusadb-cli -c "COPY customers TO STDOUT WITH (FORMAT csv, HEADER)" &gt; rows.csv</pre></div>
+<p>The row count goes to standard error during an export, so it never lands in the exported file. One redirect feeds one load: a batch holding two <code>COPY ... FROM STDIN</code> statements refuses the second rather than reporting that it loaded nothing. Typing <code>COPY ... FROM STDIN</code> at the interactive prompt is refused too, because there the keyboard is already the session's input.</p>
+<p>After a large load, refresh the planner's statistics (a background worker also does this, on a timer):</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">ANALYZE</span> customers;
+<span class="k">ANALYZE</span>;              <span class="c">-- every table</span></pre></div>
+<p>Before loading a large dataset, read the capacity section of <a href="configuration.html">deployment</a>: table pages live in memory and a dataset larger than the resident ceiling is refused mid-load rather than loaded slowly.</p>
+<h2 id="running-sql-from-scripts">Running SQL from scripts</h2>
+<p>Both batch forms behave the same way: <code>-c</code> takes a statement list and <code>-f</code> takes a file. A server error is printed to standard error and the remaining statements still run, but the process then exits non-zero, so a script that loads data in stages stops at the failed stage instead of continuing as though it had worked.</p>
 <div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
 <pre>set -eu
 nusadb-cli -f schema.sql
-nusadb-cli -c "COPY customers FROM STDIN" < customers.tsv
-nusadb-cli -c "ANALYZE customers"    # refresh planner statistics after a load</pre></div>
+nusadb-cli -c "COPY customers FROM STDIN" &lt; customers.tsv
+nusadb-cli -c "ANALYZE customers"</pre></div>
+<p>A file saved with a byte-order mark (an editor on Windows often adds one) is accepted; the mark is dropped before parsing.</p>
+<h2 id="connecting-from-a-program">Connecting from a program</h2>
+<p>Every driver speaks the wire protocol directly, has no native dependencies, and binds parameters as <code>$1</code>, <code>$2</code>, ... The result comes back typed (an <code>INT</code> column is an integer in the host language, <code>NUMERIC</code> a decimal, <code>TIMESTAMPTZ</code> a datetime).</p>
+<div class="table-scroll"><table><thead><tr><th>Language</th><th>Install</th><th>Package</th></tr></thead><tbody><tr><td>Python</td><td><code>pip install nusadb</code></td><td>DB-API 2.0 driver, with a SQLAlchemy dialect</td></tr><tr><td>Node.js</td><td><code>npm install nusadb</code></td><td>Promise-based client with TypeScript typings</td></tr><tr><td>Go</td><td><code>go get github.com/nusadb/go</code></td><td><code>database/sql</code> driver, registered as <code>nusadb</code></td></tr><tr><td>Rust</td><td><code>cargo add nusadb</code></td><td>sync and async (Tokio) client with a connection pool; <code>tls</code> feature</td></tr><tr><td>Ruby</td><td><code>gem install nusadb</code></td><td>native client</td></tr><tr><td>PHP</td><td><code>composer require nusadb/nusadb</code></td><td>PDO-style client, pure PHP</td></tr><tr><td>Java, .NET</td><td>in the source tree</td><td>JDBC driver and ADO.NET provider; not yet on Maven Central or NuGet</td></tr></tbody></table></div>
+<p>Python:</p>
+<div class="code"><div class="code-bar"><span>python</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre>import nusadb
 
-<h2 id="next">Next</h2>
-<ul>
-  <li><a href="sql.html">SQL reference</a>. The types and statements the engine accepts.</li>
-  <li><a href="configuration.html">Configuration</a>. Flags for authentication, TLS, limits and metrics.</li>
-  <li><a href="limits.html">Limits and capacity</a>. Read this before loading a large dataset.</li>
-</ul>
+conn = nusadb.connect(host="127.0.0.1", port=5678, user="app", password="change-me",
+                      database="nusadb")
+cur = conn.cursor()
+cur.execute("INSERT INTO customers (email, country) VALUES ($1, $2) RETURNING id",
+            ["dewi@example.com", "ID"])
+print(cur.fetchone())                       # (4,)
+cur.execute("SELECT email FROM customers WHERE country = $1", ["ID"])
+for (email,) in cur:
+    print(email)
+conn.close()</pre></div>
+<p>Node.js:</p>
+<div class="code"><div class="code-bar"><span>js</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre>const { connect } = require('nusadb');
+
+const conn = await connect({ host: '127.0.0.1', port: 5678, user: 'app',
+                             password: 'change-me', database: 'nusadb' });
+const res = await conn.query('SELECT id, email FROM customers WHERE country = $1', ['ID']);
+console.log(res.rows);          // [[1, 'ana@example.com'], [2, 'budi@example.com']]
+await conn.close();</pre></div>
+<p>Go:</p>
+<div class="code"><div class="code-bar"><span>go</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre>import (
+    "database/sql"
+    _ "github.com/nusadb/go"
+)
+
+db, err := sql.Open("nusadb", "nusadb://app:change-me@127.0.0.1:5678/nusadb")
+var email string
+err = db.QueryRow("SELECT email FROM customers WHERE id = $1", 1).Scan(&amp;email)</pre></div>
+<p>Every driver reports a failed statement with its SQLSTATE; see <a href="transactions.html">transactions</a> for the retry loop that every write path needs.</p>
+<h2 id="adding-a-user">Adding a user</h2>
+<p>Two lists are involved. The server's <code>--auth-user</code> list (or <code>NUSADB_USER</code> / <code>NUSADB_PASSWORD</code>) decides who may connect and with which password; SQL roles inside the database decide what a connected user may do. Add the user to both.</p>
+<div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre>nusadb-server --data-dir ./data \
+  --auth-user nusadb-root:root-secret \
+  --auth-user app:change-me \
+  --auth-user analyst:analyst-secret</pre></div>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="c">-- connected as nusadb-root</span>
+<span class="k">CREATE</span> <span class="k">ROLE</span> analyst <span class="k">LOGIN</span>;
+<span class="k">GRANT</span> <span class="k">SELECT</span> <span class="k">ON</span> customers, orders <span class="k">TO</span> analyst;</pre></div>
+<div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre>NUSADB_PASSWORD=analyst-secret nusadb-cli --user analyst -c "SELECT count(*) FROM orders"</pre></div>
+<p>A user that authenticates but has no role can create its own tables and nothing else. <code>PASSWORD</code> inside <code>CREATE ROLE</code> is refused, because a password set there would never be checked at login. Once any <code>--auth-user</code> is set, <code>nusadb-root</code> must be listed too or it cannot connect.</p>
+<h2 id="first-errors-and-what-they-mean">First errors and what they mean</h2>
+<div class="table-scroll"><table><thead><tr><th>What you see</th><th>Why</th><th>What to do</th></tr></thead><tbody><tr><td>the client hangs, then times out</td><td>a client for another database is talking to NusaDB's port</td><td>use <code>nusadb-cli</code> or a NusaDB driver</td></tr><tr><td><code>authentication failed</code></td><td>wrong password, or a user not in <code>--auth-user</code></td><td>check both; the message is the same on purpose</td></tr><tr><td><code>ERROR 42501: permission denied: SELECT on table ...</code></td><td>the role has no grant on the table</td><td><code>GRANT ... TO role</code> as the owner or <code>nusadb-root</code></td></tr><tr><td><code>ERROR 40001: ...</code></td><td>two transactions wrote the same row; locks never wait</td><td>run the whole transaction again (<a href="transactions.html">transactions</a>)</td></tr><tr><td><code>ERROR 25P02: current transaction is aborted</code></td><td>an earlier statement in the transaction failed</td><td><code>ROLLBACK</code> (or <code>ROLLBACK TO SAVEPOINT</code>) and start over</td></tr><tr><td><code>ERROR 42804: type mismatch ...</code></td><td>NusaDB does not coerce between unrelated types</td><td>cast explicitly: <code>value::BIGINT</code></td></tr><tr><td><code>ERROR 0A000: unsupported SQL construct: ...</code></td><td>recognised but not built</td><td>the message names the construct; see the reference's "Not accepted" list</td></tr><tr><td><code>ERROR XX000: out of memory: the in-memory store reached its resident-memory limit ...</code></td><td>the data no longer fits the memory ceiling</td><td>raise <code>--max-resident-bytes</code>, use a larger host, or free rows</td></tr><tr><td><code>COPY ... FROM STDIN</code> refused at the prompt</td><td>the keyboard is already the session's input</td><td>use <code>nusadb-cli -c "COPY ..." &lt; file</code></td></tr></tbody></table></div>
+<h2 id="where-to-go-next">Where to go next</h2>
+<ul><li><a href="sql.html">SQL reference</a>: every type, statement and function, with examples, and the behaviours where NusaDB chooses differently.</li><li><a href="transactions.html">Transactions</a>: isolation levels, conflicts and retries, savepoints, locks.</li><li><a href="configuration.html">Deployment</a>: every server flag, memory limits, authentication, TLS, systemd, metrics, backup. <b>Read the capacity section before loading a large dataset.</b></li><li><a href="https://github.com/nusadb/nusadb/blob/master/docs/wire-protocol.md" target="_blank" rel="noopener">Wire protocol</a>: for writing a client.</li></ul>
+<h2 id="upgrading-from-an-older-data-directory">Upgrading from an older data directory</h2>
+<p>Each database directory records which storage engine wrote it. A directory written by the removed <code>lsm</code> engine is refused at start-up rather than misread. To migrate: start the last release that still shipped that engine, export your data (<code>COPY</code> per table), start this release with a fresh <code>--data-dir</code>, and restore.</p>
 
 <div class="nextprev">
 <a href="./"><small>Previous</small>Overview</a>

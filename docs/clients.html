@@ -55,75 +55,78 @@
     <main class="prose" id="main">
       <p class="crumb"><a href="./">Documentation</a> / Clients and protocol</p>
       <h1>Clients and protocol</h1>
-      <p class="summary">NusaDB implements its own wire protocol. This page covers what that means for integration, which drivers exist, and how to connect securely.</p>
+      <p class="summary">NusaDB speaks its own wire protocol. This page covers what that means for integration, which drivers exist and how to use them, and how to connect securely.</p>
 
-<h2 id="own-protocol">Its own protocol, deliberately</h2>
-<p>NusaDB does not implement another database's wire format. A client built for a different engine
-sends a handshake the server does not recognise, gets no reply, and eventually times out. From the
-client's side that looks like a dead socket rather than a refusal. This is by design.</p>
+<h2 id="its-own-protocol-deliberately">Its own protocol, deliberately</h2>
+<p>NusaDB does not implement another database's wire format. A client built for a different engine sends a handshake the server does not recognise, gets no reply, and eventually times out. From the client's side that looks like a dead socket rather than a refusal. This is by design.</p>
 <p>Keep two things separate when planning an integration:</p>
-<ul>
-  <li><strong>The wire format</strong> is NusaDB's own. Tools for other databases cannot connect,
-  and no configuration changes that.</li>
-  <li><strong>The SQL dialect</strong> is broadly familiar. Queries written for other engines
-  usually run unchanged once they arrive over a NusaDB connection.</li>
-</ul>
+<ul><li>The wire format is NusaDB's own. Tools for other databases cannot connect, and no configuration changes that.</li><li>The SQL dialect is broadly familiar. Queries written for other engines usually run unchanged once they arrive over a NusaDB connection.</li></ul>
 <p>So porting an application means changing how it connects, not rewriting its SQL.</p>
+<h2 id="official-clients">Official clients</h2>
+<p>Every driver speaks the protocol directly with no native dependencies, binds parameters as <code>$1</code>, <code>$2</code>, ..., and returns typed values (an <code>INT</code> column arrives as the host language's integer, <code>NUMERIC</code> as a decimal, <code>TIMESTAMPTZ</code> as a datetime, <code>JSON</code> parsed).</p>
+<div class="table-scroll"><table><thead><tr><th>Client</th><th>Install</th><th>Notes</th></tr></thead><tbody><tr><td><code>nusadb-cli</code></td><td>in the container image and every release</td><td>interactive shell and batch runner</td></tr><tr><td>Python</td><td><code>pip install nusadb</code></td><td>DB-API 2.0, with a SQLAlchemy dialect</td></tr><tr><td>Node.js</td><td><code>npm install nusadb</code></td><td>Promise-based, TypeScript typings</td></tr><tr><td>Go</td><td><code>go get github.com/nusadb/go</code></td><td><code>database/sql</code> driver, registered as <code>nusadb</code></td></tr><tr><td>Rust</td><td><code>cargo add nusadb</code></td><td>sync and async (Tokio), connection pool, <code>tls</code> feature</td></tr><tr><td>Ruby</td><td><code>gem install nusadb</code></td><td>native client</td></tr><tr><td>PHP</td><td><code>composer require nusadb/nusadb</code></td><td>PDO-style API in pure PHP</td></tr><tr><td>Java (JDBC), .NET (ADO.NET)</td><td>in the source tree</td><td>not yet published to Maven Central or NuGet</td></tr></tbody></table></div>
+<div class="note caution"><b>Two names changed recently.</b><p>The shell is <code>nusadb-cli</code> and the bootstrap superuser is <code>nusadb-root</code>. Container images published before that change carry the older <code>nusa-cli</code> and <code>nusa-root</code>, so on an older image use those instead.</p></div>
+<p>Python:</p>
+<div class="code"><div class="code-bar"><span>python</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre>import nusadb
 
-<h2 id="drivers">Official clients</h2>
-<div class="table-scroll"><table><thead><tr><th>Client</th><th>Notes</th></tr></thead><tbody><tr><td><code>nusadb-cli</code></td><td>Interactive shell and batch runner; ships in the container image.</td></tr><tr><td>Rust</td><td>Synchronous and asynchronous APIs.</td></tr><tr><td>Java (JDBC)</td><td>Driver with <code>DatabaseMetaData</code> support for schema browsing tools.</td></tr><tr><td>Node.js</td><td>Promise-based client.</td></tr><tr><td>Python</td><td>DB-API client with a SQLAlchemy dialect.</td></tr><tr><td>Go</td><td><code>database/sql</code> driver.</td></tr><tr><td>Ruby</td><td>Native client.</td></tr><tr><td>PHP</td><td>PDO-style client.</td></tr><tr><td>.NET</td><td>ADO.NET provider.</td></tr></tbody></table></div>
-<div class="note">
-  <b>Two names changed recently</b>
-  <p>
-    The shell is <code>nusadb-cli</code> and the bootstrap superuser is
-    <code>nusadb-root</code>, matching the crate and the rest of the <code>nusadb</code>
-    naming. Container images published before that change carry the older
-    <code>nusa-cli</code> and <code>nusa-root</code>, so on an older image use those instead.
-  </p>
-</div>
+conn = nusadb.connect(host="127.0.0.1", port=5678, user="app", password="change-me",
+                      database="nusadb")
+cur = conn.cursor()
+cur.execute("INSERT INTO customers (email, country) VALUES ($1, $2) RETURNING id",
+            ["dewi@example.com", "ID"])
+print(cur.fetchone())                       # (4,)
+cur.execute("SELECT email FROM customers WHERE country = $1", ["ID"])
+for (email,) in cur:
+    print(email)
+conn.close()</pre></div>
+<p>Node.js:</p>
+<div class="code"><div class="code-bar"><span>js</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre>const { connect } = require('nusadb');
 
-<p>All of them carry data as the protocol's text form, which round-trips every type without loss.
-A binary result format exists on the server and is negotiated per column; drivers have not adopted
-it because text is already lossless and the gain is limited to prepared statements.</p>
+const conn = await connect({ host: '127.0.0.1', port: 5678, user: 'app',
+                             password: 'change-me', database: 'nusadb' });
+const res = await conn.query('SELECT id, email FROM customers WHERE country = $1', ['ID']);
+console.log(res.rows);          // [[1, 'ana@example.com'], [2, 'budi@example.com']]
+console.log(res.columnTypes);   // ['INT', 'TEXT']
+await conn.close();</pre></div>
+<p>Go:</p>
+<div class="code"><div class="code-bar"><span>go</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre>import (
+    "database/sql"
+    _ "github.com/nusadb/go"
+)
 
-<h2 id="connect">Connection settings</h2>
-<div class="table-scroll"><table><thead><tr><th>Setting</th><th>Default</th><th>Notes</th></tr></thead><tbody><tr><td>Host and port</td><td><code>127.0.0.1:5678</code></td><td>One connection targets one database.</td></tr><tr><td>Database</td><td><code>nusadb</code></td><td>Cross-database queries are refused.</td></tr><tr><td>User</td><td><code>nusadb-root</code></td><td>The bootstrap superuser.</td></tr><tr><td>Authentication</td><td>trust-on-startup</td><td>SCRAM-SHA-256 once any credential is configured.</td></tr><tr><td>TLS</td><td>off</td><td>Enabled on the server with a certificate and key; the same port.</td></tr></tbody></table></div>
+db, err := sql.Open("nusadb", "nusadb://app:change-me@127.0.0.1:5678/nusadb")
+var email string
+err = db.QueryRow("SELECT email FROM customers WHERE id = $1", 1).Scan(&amp;email)</pre></div>
+<p>Rust:</p>
+<div class="code"><div class="code-bar"><span>rust</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre>use nusadb::Connection;
 
-<h2 id="tls">TLS and authentication</h2>
-<p>TLS runs on the same port: the server offers it when a certificate and key are configured, and a
-plaintext client is then refused. Because there is no system trust store in play, the client is told
-what to trust.</p>
+let mut conn = Connection::connect("nusadb://app:change-me@127.0.0.1:5678/nusadb")?;
+let rows = conn.query_params("SELECT id, email FROM customers WHERE country = $1", &amp;[&amp;"ID"])?;</pre></div>
+<p>A prepared statement is what every driver does for you: the statement is parsed once and run with values for <code>$1..$n</code>, and the server caches the plan. <code>PREPARE</code> typed as SQL over a connection is refused; <code>nusadb-cli</code> has no parameter binding, so write the value into the text there.</p>
+<h2 id="errors-and-retries">Errors and retries</h2>
+<p>Every failed statement carries a five-character SQLSTATE, and the drivers expose it. Branch on the code, not on the message. Class <code>40</code> (<code>40001</code>, <code>40P01</code>) means run the whole transaction again; <code>25P02</code> means the transaction is aborted and must be rolled back first; <code>42501</code> is a missing grant. The retry loop every write path needs is on the <a href="transactions.html">transactions</a> page, and the full table of codes is in the <a href="sql.html#error-codes">SQL reference</a>.</p>
+<h2 id="connection-settings">Connection settings</h2>
+<div class="table-scroll"><table><thead><tr><th>Setting</th><th>Default</th><th>Notes</th></tr></thead><tbody><tr><td>Host and port</td><td><code>127.0.0.1:5678</code></td><td>one connection targets one database</td></tr><tr><td>Database</td><td><code>nusadb</code></td><td>cross-database queries are refused; <code>CREATE DATABASE</code> makes another</td></tr><tr><td>User</td><td><code>nusadb-root</code></td><td>the bootstrap superuser</td></tr><tr><td>Password</td><td>from <code>NUSADB_PASSWORD</code> (shell) or the driver's option</td><td>required once the server lists any <code>--auth-user</code></td></tr><tr><td>TLS</td><td>off</td><td>on the server with a certificate and key, on the same port</td></tr></tbody></table></div>
+<h2 id="tls-and-authentication">TLS and authentication</h2>
+<p>TLS runs on the same port: the server offers it when a certificate and key are configured, and a plaintext client is then refused. Because there is no system trust store in play, the client is told what to trust.</p>
 <div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
-<pre>nusadb-cli --host db.internal:5678 \
-  --user app --database nusadb \
-  --tls --tls-ca /etc/nusadb/ca.crt</pre></div>
-<div class="note caution">
-  <b>A self-signed certificate is not automatically its own trust anchor</b>
-  <p>A certificate generated with the usual one-liner is marked as a certificate authority, and
-  presenting it as a server certificate is rejected. Either create a separate CA and sign a server
-  certificate with it, or generate a leaf certificate that is not marked as a CA.</p>
-</div>
-<p>Hostname verification is applied, and a mismatch reports which names the certificate covers.
-For mutual TLS, the server takes a client CA and then requires every client to present a
-certificate signed by it.</p>
-
-<h2 id="scram">What SCRAM gives you</h2>
-<p>Passwords are never sent, in either direction: the exchange proves the client knows the password
-without transmitting it, and it also proves the server knows the stored verifier. A wrong password
-and an unknown user return the same authentication failure, so the error cannot be used to discover
-which usernames exist.</p>
-
-<h2 id="copy">Bulk transfer</h2>
-<p><code>COPY</code> moves rows in a single streaming exchange rather than a round trip per row, in
-both directions. The shell forms read from the command's standard input and write to its standard
-output, which makes them composable with ordinary Unix pipelines. See
-<a href="getting-started.html#bulk">getting started</a>.</p>
-
-<h2 id="pooling">Connections and pooling</h2>
-<p>The server handles connections on a thread pool rather than one process per connection, so a
-moderate number of idle connections is cheap. The default cap is 25 concurrent connections and
-excess connections queue rather than fail; raise <code>--max-connections</code> on a larger host.
-An external pooler is optional rather than a prerequisite.</p>
+<pre>nusadb-cli --host db.internal:5678 --user app --tls --tls-ca /etc/nusadb/ca.crt
+nusadb-cli --host 10.0.0.5:5678 --tls --tls-ca ca.crt --tls-domain db.internal</pre></div>
+<div class="note caution"><b>A self-signed certificate is not automatically its own trust anchor.</b><p>A certificate generated with the usual one-liner is marked as a certificate authority, and presenting it as a server certificate is rejected. Either create a separate CA and sign a server certificate with it, or generate a leaf certificate that is not marked as a CA.</p></div>
+<p>Hostname verification is applied, and a mismatch reports which names the certificate covers. For mutual TLS, the server takes a client CA and then requires every client to present a certificate signed by it.</p>
+<p>Authentication is SCRAM-SHA-256. Passwords are never sent, in either direction: the exchange proves the client knows the password without transmitting it, and it also proves the server knows the stored verifier. A wrong password and an unknown user return the same authentication failure, so the error cannot be used to discover which usernames exist. Who may connect is the server's <code>--auth-user</code> list; what they may do is decided by SQL roles and grants, described under <a href="configuration.html#authentication-and-users">configuration</a>.</p>
+<h2 id="notifications">Notifications</h2>
+<p><code>LISTEN channel</code> subscribes a connection; <code>NOTIFY channel, 'payload'</code> from any connection in the same database reaches every listener, at commit when issued inside a transaction. A listener receives notifications between its own statements, which is how the drivers surface them.</p>
+<h2 id="bulk-transfer">Bulk transfer</h2>
+<p><code>COPY</code> moves rows in a single streaming exchange rather than a round trip per row, in both directions. The shell forms read from the command's standard input and write to its standard output, which makes them composable with ordinary pipelines. See <a href="getting-started.html#loading-and-exporting-data">getting started</a>.</p>
+<h2 id="connections-and-pooling">Connections and pooling</h2>
+<p>The server handles connections on a thread pool rather than one process per connection, so a moderate number of idle connections is cheap. The default cap is 25 concurrent connections and excess connections queue rather than fail; <code>--reject-excess-connections</code> turns the queue into an immediate <code>53300</code> so a pool can back off. Raise <code>--max-connections</code> on a larger host. An external pooler is optional rather than a prerequisite.</p>
+<h2 id="writing-your-own-client">Writing your own client</h2>
+<p>The protocol is documented in full in the <a href="https://github.com/nusadb/nusadb/blob/master/docs/wire-protocol.md" target="_blank" rel="noopener">wire protocol reference</a>: framing, the start-up and SCRAM exchange, simple and extended queries, <code>COPY</code>, cancellation, and the text form of every type.</p>
 
 <div class="nextprev">
 <a href="transactions.html"><small>Previous</small>Transactions</a>

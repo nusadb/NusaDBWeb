@@ -55,78 +55,154 @@
     <main class="prose" id="main">
       <p class="crumb"><a href="./">Documentation</a> / Configuration</p>
       <h1>Configuration</h1>
-      <p class="summary">Every setting is a command-line flag on nusadb-server. Defaults are chosen to stay healthy on a small host; a larger machine raises them deliberately.</p>
+      <p class="summary">Every server flag, how authentication and roles fit together, memory limits and capacity, the container image, systemd, TLS, metrics, checkpoints and backup.</p>
 
-<h2 id="flags">Server flags</h2>
-<div class="table-scroll"><table><thead><tr><th>Flag</th><th>Default</th><th>Purpose</th></tr></thead><tbody><tr><td><code>--listen</code></td><td><code>0.0.0.0:5678</code></td><td>TCP address for the wire protocol.</td></tr><tr><td><code>--data-dir</code></td><td><code>./data</code></td><td>Data directory; holds the write-ahead log, which is the durable copy of the data.</td></tr><tr><td><code>--auth-user USER:PASSWORD</code></td><td>none</td><td>Require SCRAM-SHA-256 for this user. Repeatable. Once any is set, every connection must authenticate.</td></tr><tr><td><code>NUSADB_USER</code> + <code>NUSADB_PASSWORD</code></td><td>none</td><td>Environment fallback when no <code>--auth-user</code> is given. Setting only one is an error.</td></tr><tr><td><code>--tls-cert</code> / <code>--tls-key</code></td><td>none</td><td>PEM chain and key; TLS is enabled when both are set.</td></tr><tr><td><code>--tls-client-ca</code></td><td>none</td><td>PEM CA for mutual TLS: every client must present a certificate signed by it.</td></tr><tr><td><code>--metrics-listen</code></td><td>off</td><td>Serve Prometheus metrics on this address, for example <code>127.0.0.1:9100</code>.</td></tr><tr><td><code>--max-connections</code></td><td><code>25</code></td><td>Cap on concurrent connections; excess queue. <code>0</code> is unlimited.</td></tr><tr><td><code>--idle-timeout</code></td><td><code>0</code></td><td>Close a connection idle this many seconds. <code>0</code> is no limit.</td></tr><tr><td><code>--statement-timeout</code></td><td><code>0</code></td><td>Cancel statements running longer than this many seconds.</td></tr><tr><td><code>--drain-timeout</code></td><td><code>30</code></td><td>On shutdown, wait this long for in-flight connections to finish.</td></tr><tr><td><code>--mem-budget</code></td><td><code>0</code></td><td>Engine memory budget in bytes; new transactions are refused past it instead of the process being killed by the system.</td></tr><tr><td><code>--max-resident-bytes</code></td><td>derived</td><td>Ceiling on each database's in-memory page store. Row inserts past it are refused with an error naming the limit.</td></tr><tr><td><code>--work-mem</code></td><td><code>0</code></td><td>Per-query materialisation budget in bytes; a query over it fails with a clear error rather than exhausting memory.</td></tr></tbody></table></div>
-<p><code>RUST_LOG</code> sets log verbosity, for example <code>RUST_LOG=info</code>.</p>
-
-<div class="note caution">
-  <b>Production checklist</b>
-  <p>Require authentication with at least one <code>--auth-user</code> or the environment pair;
-  terminate TLS with <code>--tls-cert</code> and <code>--tls-key</code>; and keep
-  <code>--data-dir</code> on a persistent volume you back up. With no credentials the server runs
-  trust-on-startup: every client is accepted and no password is asked for. It logs a
-  warning at start-up.</p>
-</div>
-
-<h2 id="defaults">Resource defaults</h2>
-<p>NusaDB defaults small and scales up explicitly. A fresh install is tuned to stay healthy on a
-host with about 2&nbsp;GB of RAM and one or two cores, with no flags set, rather than defaulting to
-values that exhaust a small machine. A larger host raises the limits on purpose.</p>
-<div class="table-scroll"><table><thead><tr><th>Resource</th><th>Default</th><th>Raise it with</th></tr></thead><tbody><tr><td>Concurrent connections</td><td>25</td><td><code>--max-connections</code>, or an external pooler</td></tr><tr><td>Engine memory budget</td><td>unlimited</td><td><code>--mem-budget</code> on a constrained host</td></tr><tr><td>Per-query work memory</td><td>unlimited</td><td><code>--work-mem</code></td></tr><tr><td>Version-store purge workers</td><td>1</td><td>sufficient at this scale</td></tr></tbody></table></div>
-<p>The memory budget ships off because its safe value depends on measured resident size on the
-host in question, and a guessed number would be worse than none. Set <code>--mem-budget</code>
-explicitly to cap memory today. A declarative profile file that sets these together is planned.</p>
-
-<h2 id="systemd">Running as a service</h2>
+<p>NusaDB ships as a single server binary (<code>nusadb-server</code>) plus an interactive client (<code>nusadb-cli</code>). The server is configured entirely by command-line flags; there is no configuration file. The durable state is the write-ahead log under <code>--data-dir</code>: back that path up and you have backed up the database.</p>
+<h2 id="server-flags">Server flags</h2>
+<div class="table-scroll"><table><thead><tr><th>Flag</th><th>Default</th><th>Purpose</th></tr></thead><tbody><tr><td><code>--listen</code></td><td><code>0.0.0.0:5678</code></td><td>TCP listen address for the wire protocol.</td></tr><tr><td><code>--data-dir</code></td><td><code>./data</code></td><td>Durable data directory: the write-ahead log and checkpoint image of every database, under <code>base/&lt;name&gt;/</code>. Created if absent.</td></tr><tr><td><code>--auth-user USER:PASSWORD</code></td><td>none</td><td>Require SCRAM-SHA-256 for this user. Repeatable. Once <b>any</b> is set, every connection must authenticate; with none, the server trusts every client and logs a warning.</td></tr><tr><td><code>NUSADB_USER</code> + <code>NUSADB_PASSWORD</code> (environment)</td><td>none</td><td>The same as one <code>--auth-user</code>, for containers. Setting only one of the pair is a start-up error.</td></tr><tr><td><code>--tls-cert</code> / <code>--tls-key</code></td><td>none</td><td>PEM certificate chain and private key; TLS is on when both are set, on the same port.</td></tr><tr><td><code>--tls-client-ca</code></td><td>none</td><td>PEM CA for mutual TLS: every client must present a certificate signed by it.</td></tr><tr><td><code>--max-connections</code></td><td><code>25</code></td><td>Cap on concurrent connections; excess connections wait for a slot. <code>0</code> is unlimited.</td></tr><tr><td><code>--reject-excess-connections</code></td><td>off</td><td>Refuse a connection past the cap at once with SQLSTATE <code>53300</code> instead of queueing it, so a pool can back off.</td></tr><tr><td><code>--idle-timeout</code></td><td><code>0</code></td><td>Close a connection idle this many seconds. <code>0</code> is no limit.</td></tr><tr><td><code>--handshake-timeout</code></td><td><code>60</code></td><td>Drop a connection that has not finished the start-up and authentication exchange within this many seconds, so a stalled client cannot hold a slot.</td></tr><tr><td><code>--statement-timeout</code></td><td><code>0</code></td><td>Cancel any statement running longer than this many seconds (<code>57014</code>). Sessions can lower it with <code>SET statement_timeout</code>.</td></tr><tr><td><code>--drain-timeout</code></td><td><code>30</code></td><td>On Ctrl-C, wait this long for in-flight connections to finish before aborting them. <code>0</code> waits indefinitely.</td></tr><tr><td><code>--mem-budget</code></td><td><code>0</code></td><td>Total memory budget in bytes. <code>0</code> auto-detects on Linux as the smaller of host RAM and the cgroup limit, so a container limit is honoured; on other systems <code>0</code> means no budget. The budget derives the limits below.</td></tr><tr><td><code>--max-resident-bytes</code></td><td>derived</td><td>Ceiling on each database's in-memory page store; a row insert past it is refused with an error naming the limit. Derived from the memory budget (floor 256 MiB); unlimited when no budget is known.</td></tr><tr><td><code>--work-mem</code></td><td><code>0</code></td><td>Per-query memory for one sort, aggregate or join stage. Past it a stage spills (with <code>--spill-dir</code>) or fails with an error naming the limit. <code>0</code> is unlimited unless a budget derives a value.</td></tr><tr><td><code>--spill-dir</code></td><td>none</td><td>Directory for transient spill files. Sorts and hash joins over <code>--work-mem</code> stream to it instead of failing. Stale files from a crash are removed at start-up.</td></tr><tr><td><code>--maintenance-work-mem</code></td><td><code>0</code></td><td>Bytes of index entries a <code>CREATE INDEX</code> buffers before flushing a sorted batch. <code>0</code> uses a built-in bound.</td></tr><tr><td><code>--max-txn-write-bytes</code></td><td><code>0</code></td><td>Ceiling on the uncommitted writes one transaction may buffer; past it the transaction fails with <code>XX000</code> instead of growing until the host kills the process. <code>0</code> derives 25% of the budget (floor 128 MiB).</td></tr><tr><td><code>--copy-max-bytes</code></td><td>derived</td><td>Ceiling on one <code>COPY ... FROM STDIN</code>. Derived as about 20% of the budget, capped at 1 GiB; <code>0</code> is unbounded.</td></tr><tr><td><code>--autoanalyze-interval</code></td><td><code>60</code></td><td>Seconds between sweeps of the background worker that re-analyzes tables whose statistics went stale. <code>0</code> disables it.</td></tr><tr><td><code>--autoanalyze-scale</code> / <code>--autoanalyze-threshold</code></td><td><code>0.1</code> / <code>50</code></td><td>A table is re-analyzed once its writes since the last analyze exceed <code>threshold + scale * rows</code>.</td></tr><tr><td><code>--metrics-listen</code></td><td>none</td><td>Serve Prometheus metrics on this address, for example <code>127.0.0.1:9100</code>.</td></tr><tr><td><code>--storage-engine</code></td><td><code>btree</code></td><td>The only value. A data directory written by the removed <code>lsm</code> engine is refused with a migration hint.</td></tr></tbody></table></div>
+<p><code>RUST_LOG</code> sets log verbosity (<code>tracing</code> filter syntax, for example <code>RUST_LOG=info</code> or <code>RUST_LOG=nusadb_wire=debug</code>). <code>NUSADB_DISABLE_SIMD=1</code> forces the portable executor path on a host where the AVX2 path is suspect; results are identical either way. On a CPU without AVX2 the fallback is automatic.</p>
+<div class="note caution"><b>Production checklist.</b><p>Set at least one <code>--auth-user</code> (or the environment pair); terminate TLS with <code>--tls-cert</code> / <code>--tls-key</code>; keep <code>--data-dir</code> on a persistent, backed-up volume; keep the metrics port private; and read <a href="#memory-limits-and-capacity">Memory limits and capacity</a> before loading a large dataset.</p></div>
+<h2 id="authentication-and-users">Authentication and users</h2>
+<p>Authentication and authorization are two separate lists.</p>
+<ul><li><b>Who may connect</b> is the <code>--auth-user</code> list (or <code>NUSADB_USER</code> / <code>NUSADB_PASSWORD</code>). Each entry is a user name and a password verified with SCRAM-SHA-256; the password never crosses the wire. A wrong password and an unknown user return the same <code>authentication failed</code>, so the error does not reveal which names exist. Changing a password means restarting the server with the new <code>--auth-user</code> value.</li><li><b>What a connected user may do</b> is decided by SQL roles and grants inside each database. Create a role with the same name as the <code>--auth-user</code> entry and grant it what it needs; <code>PASSWORD</code> in <code>CREATE ROLE</code> is refused because it would never be checked. A user with no matching role can create its own tables and read nothing else.</li></ul>
+<div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre>nusadb-server --data-dir /var/lib/nusadb \
+  --auth-user nusadb-root:ROOT_SECRET \
+  --auth-user app:APP_SECRET</pre></div>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="c">-- as nusadb-root</span>
+<span class="k">CREATE</span> <span class="k">ROLE</span> app <span class="k">LOGIN</span>;
+<span class="k">GRANT</span> <span class="k">SELECT</span>, <span class="k">INSERT</span>, <span class="k">UPDATE</span>, <span class="k">DELETE</span> <span class="k">ON</span> orders <span class="k">TO</span> app;</pre></div>
+<div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre>NUSADB_PASSWORD=APP_SECRET nusadb-cli --user app</pre></div>
+<p><code>nusadb-root</code> is the bootstrap superuser and bypasses every grant; list it in <code>--auth-user</code> with a strong password, since with authentication on it cannot connect otherwise. Without any <code>--auth-user</code> the server runs trust-on-startup: any name is accepted with no password. That is fine on a laptop and wrong for anything reachable by others; the start-up log says so in capitals.</p>
+<h2 id="memory-limits-and-capacity">Memory limits and capacity</h2>
+<p>NusaDB defaults small and scales up explicitly: a fresh install stays healthy on a host with about 2 GB of RAM and one or two cores, and a larger machine raises the limits on purpose.</p>
+<h3 id="table-data-is-bounded-by-memory">Table data is bounded by memory</h3>
+<p>Table pages live in memory and are made durable through the write-ahead log; pages are not evicted to disk. Once a database's resident store reaches its ceiling (<code>--max-resident-bytes</code>, derived from the memory budget when unset), further row inserts are refused with an error that names the limit and the bytes resident:</p>
+<div class="code"><div class="code-bar"><span>output</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="o">ERROR XX000: out of memory: the in-memory store reached its resident-memory limit of</span>
+<span class="o">858993440 bytes (859001088 bytes resident); free rows (DELETE/TRUNCATE), raise the limit,</span>
+<span class="o">or use a larger host</span></pre></div>
+<p>Size against the ceiling, not against total RAM. With the default derivation the ceiling is about a fifth of the memory budget: measured, an 859 MB ceiling inside a 4 GB container, which held roughly 2 to 3 million rows of about 220 bytes. A dataset larger than the ceiling does not load slowly; it does not load, and the first sign is the insert refusal itself, mid-load.</p>
+<p>Three details worth knowing:</p>
+<ul><li>Updates and index builds are not gated by the ceiling, so an update-heavy workload already at the limit can still grow past it.</li><li>Deleting rows frees pages for reuse but does not lower the resident meter within a running process; page memory is recycled rather than returned. A restart after a checkpoint does lower it, because recovery rebuilds the store from the checkpoint image, which holds only live rows.</li><li>Once the ceiling has been hit, the remedies are raising it, using a larger host, or reloading the live rows into a fresh data directory.</li></ul>
+<h3 id="one-query-one-transaction-one-load">One query, one transaction, one load</h3>
+<p>The other three limits bound what a single client can do to the server:</p>
+<div class="table-scroll"><table><thead><tr><th>Limit</th><th>Flag</th><th>Past it</th></tr></thead><tbody><tr><td>one executor stage (sort, aggregate, join)</td><td><code>--work-mem</code></td><td>spills to <code>--spill-dir</code> for sorts and hash joins; otherwise fails with a message naming the limit and the flag</td></tr><tr><td>one transaction's uncommitted writes</td><td><code>--max-txn-write-bytes</code></td><td>the transaction fails with <code>XX000</code></td></tr><tr><td>one <code>COPY ... FROM STDIN</code></td><td><code>--copy-max-bytes</code></td><td>the load is aborted; split it or raise the flag</td></tr></tbody></table></div>
+<p>Aggregation, <code>DISTINCT</code> and window functions do not spill yet; at the budget they fail rather than swap. A failed query leaves the server responsive, which is the point.</p>
+<p>On Linux all of these derive from <code>--mem-budget</code>, which auto-detects the host or container limit, so a container with a memory limit gets sensible ceilings with no flags. On other systems set <code>--mem-budget</code> (or the individual flags) explicitly; without it the derived limits are unlimited.</p>
+<h3 id="cpu-compatibility">CPU compatibility</h3>
+<p>The executor uses AVX2 where the CPU has it and falls back to a portable path otherwise (older x86, some budget VPS, ARM). The engine never emits an illegal instruction; only throughput differs.</p>
+<h2 id="running-the-container-image">Running the container image</h2>
+<p>The image on Docker Hub, <code>nusadb/nusadb</code>, carries both <code>nusadb-server</code> and <code>nusadb-cli</code>. Use <code>latest</code> or pin a version tag such as <code>0.1.0</code>. The durable state lives in <code>/var/lib/nusadb</code>; mount a volume there or the database dies with the container.</p>
+<div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre>docker run -d --name nusadb \
+  -p 5678:5678 \
+  -v nusadb-data:/var/lib/nusadb \
+  -e NUSADB_USER=app \
+  -e NUSADB_PASSWORD=change-me \
+  -e RUST_LOG=info \
+  nusadb/nusadb:latest</pre></div>
+<ul><li>Server flags go after the image name and replace the default <code>--listen 0.0.0.0:5678 --data-dir /var/lib/nusadb</code>, so repeat those two when you add others: <code>... nusadb/nusadb:latest --listen 0.0.0.0:5678 --data-dir /var/lib/nusadb --metrics-listen 0.0.0.0:9100</code>.</li><li><code>.sql</code> files mounted into <code>/docker-entrypoint-initdb.d</code> run once, in name order, on the first start against an empty data directory: the place for <code>CREATE ROLE</code>, <code>GRANT</code> and schema.</li><li>The container honours its memory limit (<code>--memory=2g</code>) through the auto-detected budget.</li><li>Connect from inside: <code>docker exec -it nusadb nusadb-cli --user app</code>. The password is read from <code>NUSADB_PASSWORD</code>, which the container already has.</li><li>The image exposes <code>5678</code> and <code>9100</code>; publish <code>9100</code> only on a private interface.</li></ul>
+<div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre>docker run -d --name nusadb \
+  -p 5678:5678 \
+  -v nusadb-data:/var/lib/nusadb \
+  -v ./init:/docker-entrypoint-initdb.d:ro \
+  -e NUSADB_USER=nusadb-root \
+  -e NUSADB_PASSWORD=change-me \
+  --memory=2g \
+  nusadb/nusadb:latest</pre></div>
+<h2 id="running-on-a-linux-vm-with-systemd">Running on a Linux VM with systemd</h2>
+<h3 id="1-get-the-binary">1. Get the binary</h3>
+<p>Build from source on the VM (the toolchain pinned in <code>rust-toolchain.toml</code> is installed by <code>rustup</code> automatically), or download a release tarball for your platform when one is published for the version you want.</p>
+<div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre>cargo build --release --locked -p nusadb-server -p nusadb-cli
+sudo install -m 0755 target/release/nusadb-server /usr/local/bin/
+sudo install -m 0755 target/release/nusadb-cli    /usr/local/bin/</pre></div>
+<h3 id="2-create-a-service-user-and-data-directory">2. Create a service user and data directory</h3>
+<div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre>sudo useradd --system --no-create-home --shell /usr/sbin/nologin nusadb
+sudo mkdir -p /var/lib/nusadb /etc/nusadb
+sudo chown -R nusadb:nusadb /var/lib/nusadb
+<span class="c"># Place server.crt / server.key under /etc/nusadb (root-owned, readable by nusadb).</span>
+sudo chown root:nusadb /etc/nusadb/server.* &amp;&amp; sudo chmod 0640 /etc/nusadb/server.*</pre></div>
+<p>Put the credentials in an environment file readable only by root rather than in the unit:</p>
+<div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre>sudo tee /etc/nusadb/nusadb.env &gt;/dev/null &lt;&lt;'EOF'
+NUSADB_USER=nusadb-root
+NUSADB_PASSWORD=STRONG_PASSWORD
+RUST_LOG=info
+EOF
+sudo chmod 0600 /etc/nusadb/nusadb.env</pre></div>
+<h3 id="3-systemd-unit">3. systemd unit</h3>
+<p>Create <code>/etc/systemd/system/nusadb.service</code>:</p>
 <div class="code"><div class="code-bar"><span>ini</span><button class="copy" type="button"><em>Copy</em></button></div>
 <pre>[Unit]
-Description=NusaDB
+Description=NusaDB server
 After=network-online.target
+Wants=network-online.target
 
 [Service]
+Type=simple
 User=nusadb
 Group=nusadb
+EnvironmentFile=/etc/nusadb/nusadb.env
 ExecStart=/usr/local/bin/nusadb-server \
   --listen 0.0.0.0:5678 \
   --data-dir /var/lib/nusadb \
-  --auth-user app:CHANGE_ME \
   --tls-cert /etc/nusadb/server.crt \
   --tls-key /etc/nusadb/server.key \
+  --spill-dir /var/lib/nusadb/spill \
   --metrics-listen 127.0.0.1:9100 \
   --max-connections 100
 Restart=on-failure
-Environment=RUST_LOG=info
+RestartSec=2
 
-# The server only needs its own data directory writable.
+# The server only needs its data directory writable.
+NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
 PrivateTmp=true
-NoNewPrivileges=true
 ReadWritePaths=/var/lib/nusadb
 
 [Install]
 WantedBy=multi-user.target</pre></div>
-<p>Put the credential in a unit drop-in or an environment file readable only by root rather than in
-a world-readable unit, and keep the metrics port on localhost, because it is not
-authenticated.</p>
+<h3 id="4-start-and-verify">4. Start and verify</h3>
+<div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre>sudo systemctl daemon-reload
+sudo systemctl enable --now nusadb
+sudo systemctl status nusadb
+journalctl -u nusadb -f          # follow logs
 
+<span class="c"># From a client host, after opening the VM firewall to 5678:</span>
+NUSADB_PASSWORD=STRONG_PASSWORD nusadb-cli --host VM_HOST:5678 --user nusadb-root \
+  --tls --tls-ca /path/to/ca.crt</pre></div>
+<h3 id="5-firewall">5. Firewall</h3>
+<p>Expose the wire port to your clients; keep metrics on localhost.</p>
+<div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre>sudo ufw allow 5678/tcp</pre></div>
+<h2 id="tls">TLS</h2>
+<p>TLS runs on the same port: when <code>--tls-cert</code> and <code>--tls-key</code> are set the server offers TLS and a plaintext client is refused. Clients are told what to trust, because no system trust store is consulted:</p>
+<div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre>nusadb-cli --host db.internal:5678 --user app --tls --tls-ca /etc/nusadb/ca.crt
+nusadb-cli --host 10.0.0.5:5678 --tls --tls-ca ca.crt --tls-domain db.internal   # name to verify</pre></div>
+<p>A certificate generated with the usual self-signed one-liner is marked as a certificate authority, and presenting it as a server certificate is rejected. Either create a small private CA and sign a server certificate with it, or generate a leaf certificate that is not marked as a CA. Host-name verification is applied and a mismatch reports which names the certificate covers.</p>
+<p>For mutual TLS add <code>--tls-client-ca</code>; every client must then present a certificate signed by that CA, in addition to SCRAM authentication.</p>
 <h2 id="metrics">Metrics</h2>
-<p>With <code>--metrics-listen</code> set, the server answers Prometheus scrapes in the text
-exposition format.</p>
-<div class="table-scroll"><table><thead><tr><th>Metric</th><th>Type</th><th>Meaning</th></tr></thead><tbody><tr><td><code>nusadb_connections_total</code></td><td>counter</td><td>Connections accepted since start.</td></tr><tr><td><code>nusadb_connections_active</code></td><td>gauge</td><td>Connections currently open.</td></tr><tr><td><code>nusadb_queries_total</code></td><td>counter</td><td>Statements executed.</td></tr><tr><td><code>nusadb_query_errors_total</code></td><td>counter</td><td>Statements that returned an error.</td></tr></tbody></table></div>
-<p>That is enough to see whether the server is up and busy, and not enough for latency analysis:
-there are no query-duration histograms, per-database counters, or write-ahead log and storage
-metrics yet. Given the retry behaviour described under
-<a href="transactions.html#occ">transactions</a>, a serialization-conflict counter is a gap worth
-knowing about. Track conflicts from the application side for now.</p>
-
-<h2 id="upgrades">Upgrades and engine changes</h2>
-<p>Each database directory records which storage engine wrote it. A directory written by the
-removed <code>lsm</code> engine is refused at start-up rather than misread; migrating means
-exporting from the last release that shipped that engine and reloading into a fresh data
-directory. Read the release notes before upgrading a data directory in place.</p>
+<p>With <code>--metrics-listen</code> set, the server answers Prometheus scrapes in the text exposition format. The endpoint is unauthenticated, so bind it to a private address.</p>
+<div class="table-scroll"><table><thead><tr><th>Metric</th><th>Type</th><th>Meaning</th></tr></thead><tbody><tr><td><code>nusadb_connections_total</code></td><td>counter</td><td>connections accepted since start</td></tr><tr><td><code>nusadb_connections_active</code></td><td>gauge</td><td>connections currently open</td></tr><tr><td><code>nusadb_queries_total</code></td><td>counter</td><td>statements executed</td></tr><tr><td><code>nusadb_query_errors_total</code></td><td>counter</td><td>statements that returned an error</td></tr></tbody></table></div>
+<p>That is enough to see whether the server is up and busy, and not enough for latency analysis: there are no duration histograms, per-database counters, or storage metrics yet, and no serialization-conflict counter, so track <code>40001</code> retries from the application side.</p>
+<h2 id="checkpoints-backup-and-restore">Checkpoints, backup and restore</h2>
+<p>The write-ahead log is the durable copy of the data. A checkpoint folds the in-memory state into an image file beside the log and truncates the log, so the data directory holds live data plus the write history since the last checkpoint, and recovery replays only that tail. A checkpoint is taken automatically when a database is opened with a log past a few megabytes.</p>
+<p>While the server runs, nothing checkpoints automatically, so a long-lived server keeps appending. Bound the log and the restart time by issuing <code>CHECKPOINT</code> from a cron job over an otherwise idle connection:</p>
+<div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre>NUSADB_PASSWORD=... nusadb-cli --user nusadb-root -c "CHECKPOINT"</pre></div>
+<p>It requires a quiesced engine: it refuses, naming how many transactions are still active, while any transaction is open, including one on the connection issuing it. Run it from a connection in autocommit at a quiet moment; a load with continuously overlapping transactions may need a retry.</p>
+<p><b>Backup.</b> The whole database is the <code>--data-dir</code> tree. With the server stopped, or from a filesystem snapshot for a consistent point-in-time copy, archive that directory; restore by extracting it and starting the server against it. Alternatively export each table over a connection with <code>COPY table TO STDOUT</code> and reload with <code>COPY table FROM STDIN</code>. There is no built-in scheduled backup, point-in-time recovery, or replication.</p>
+<h2 id="upgrades">Upgrades</h2>
+<p>Replace the binary (or pull a newer image tag) and restart the service; recovery replays the log, so a clean restart keeps every committed transaction. Read the release notes before restarting an existing data directory on a new version: the on-disk format may still change before 1.0. Each database directory records which engine wrote it, and one written by the removed <code>lsm</code> engine is refused rather than misread; migrate it by exporting from the last release that shipped that engine and reloading into a fresh <code>--data-dir</code>.</p>
 
 <div class="nextprev">
 <a href="clients.html"><small>Previous</small>Clients and protocol</a>

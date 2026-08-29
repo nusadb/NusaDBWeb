@@ -55,73 +55,80 @@
     <main class="prose" id="main">
       <p class="crumb"><a href="./">Documentation</a> / Transactions</p>
       <h1>Transactions</h1>
-      <p class="summary">NusaDB uses multi-version rows and optimistic concurrency control. Readers work from a snapshot and never block writers; conflicting writers are told to retry rather than made to wait.</p>
+      <p class="summary">Multi-version rows and optimistic concurrency: what a conflict looks like, the retry loop every write path needs, isolation levels, savepoints, locks and cursors.</p>
 
-<h2 id="levels">Isolation levels</h2>
-<div class="table-scroll"><table><thead><tr><th>Level</th><th>Behaviour</th></tr></thead><tbody><tr><td><code>READ UNCOMMITTED</code></td><td>Accepted; behaves as read committed. The engine never exposes uncommitted rows.</td></tr><tr><td><code>READ COMMITTED</code></td><td>The default. Each statement sees rows committed before it started.</td></tr><tr><td><code>REPEATABLE READ</code></td><td>The transaction reads from one snapshot taken at its start.</td></tr><tr><td><code>SERIALIZABLE</code></td><td>Snapshot reads plus conflict detection, so the outcome matches some serial order.</td></tr></tbody></table></div><div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
-<pre><span class="k">BEGIN</span>;
-<span class="k">SET TRANSACTION ISOLATION LEVEL</span> <span class="k">SERIALIZABLE</span>;
-<span class="k">SELECT</span> balance <span class="k">FROM</span> accounts <span class="k">WHERE</span> id = <span class="s">1</span>;
-<span class="k">UPDATE</span> accounts <span class="k">SET</span> balance = balance - <span class="s">50</span> <span class="k">WHERE</span> id = <span class="s">1</span>;
-<span class="k">COMMIT</span>;</pre></div>
+<p>NusaDB uses MVCC with optimistic concurrency control (OCC): readers never block writers and writers never block readers. The trade-off is that under write contention the engine aborts one of the conflicting transactions instead of blocking it, so your application must be prepared to retry.</p>
+<h2 id="what-your-application-will-see">What your application will see</h2>
+<div class="table-scroll"><table><thead><tr><th>Situation</th><th>NusaDB behaviour</th><th>SQLSTATE</th></tr></thead><tbody><tr><td>Two transactions write the same row/key</td><td>Second writer aborts immediately (no wait)</td><td><code>40001</code></td></tr><tr><td>Deadlock between transactions</td><td>Both abort (no hang)</td><td><code>40P01</code></td></tr><tr><td>SERIALIZABLE rw-antidependency cycle</td><td>One transaction aborts at COMMIT</td><td><code>40001</code></td></tr></tbody></table></div>
+<p>Neither <code>40001</code> (<code>serialization_failure</code>) nor <code>40P01</code> (<code>deadlock_detected</code>) is an application bug. Both are the engine asking you to run the transaction again, so retry on the class — any code starting <code>40</code> — rather than on one value. The engine's own retry helper treats both as retryable. Integrity is preserved either way: exactly one writer wins, and there are no lost updates.</p>
+<h2 id="the-retry-loop-required-discipline">The retry loop (required discipline)</h2>
+<p>Wrap every write transaction in a bounded retry loop that re-runs the whole transaction on a class-<code>40</code> error. Never retry a single statement in isolation, because the aborted transaction's earlier reads may be stale.</p>
+<p>Python:</p>
+<div class="code"><div class="code-bar"><span>python</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre>import time, random
 
-<h2 id="occ">Conflicts instead of waiting</h2>
-<p>Locks do not wait. When two transactions write the same row, one of them fails with SQLSTATE
-<code>40001</code> and the message says it must be retried. Nothing is lost and nothing hangs, but
-the losing transaction has to run again.</p>
-<p>The trade is visible in both directions. Without contention this is faster than queuing, because
-no writer waits behind another. Under contention on one hot row it means retries, so an application
-that updates a shared counter needs to handle <code>40001</code>.</p>
-
-<h3 id="autoretry">The server retries a single auto-commit statement</h3>
-<p>A statement outside an explicit transaction has committed nothing and has shown the application
-no intermediate result, so the server re-runs it after a short randomised back-off instead of
-returning the conflict. This is what a correct client retry loop would do, done in the server.</p>
-<p>Inside <code>BEGIN … COMMIT</code> the same retry would be wrong: a statement there may follow
-others whose results the application already acted on, and only the application knows whether the
-whole transaction can be replayed. So it is not retried, and the conflict is returned.</p>
+def with_retry(conn, work, attempts=5):
+    for attempt in range(attempts):
+        try:
+            cur = conn.cursor()
+            cur.execute("BEGIN")
+            result = work(cur)
+            cur.execute("COMMIT")
+            return result
+        except Exception as e:
+            cur.execute("ROLLBACK")
+            # Retry the whole class: `40001` and `40P01` are both "run it again".
+            sqlstate = getattr(e, "sqlstate", None) or ""
+            if not sqlstate.startswith("40") or attempt == attempts - 1:
+                raise
+            time.sleep(random.uniform(0, 0.05 * 2**attempt))  # jittered backoff</pre></div>
+<p>The same shape applies through any driver or ORM: catch class <code>40</code>, roll back, back off with jitter, re-run. ORMs with a "retry on serialization failure" option (e.g. SQLAlchemy retrying decorators) should enable it.</p>
+<h3 id="class-25-the-transaction-is-in-the-wrong-state">Class <code>25</code> — the transaction is in the wrong state</h3>
+<p>Class <code>40</code> says <em>run it again</em>. Class <code>25</code> says <em>the transaction you are in cannot take this statement</em>, which is a different instruction:</p>
+<div class="table-scroll"><table><thead><tr><th>Code</th><th>What happened</th><th>What to do</th></tr></thead><tbody><tr><td><code>25P02</code></td><td>a statement already failed, so the transaction is aborted and every later statement is refused</td><td><code>ROLLBACK</code> (or roll back to a <code>SAVEPOINT</code> taken before the failure), then start again</td></tr><tr><td><code>25P01</code></td><td><code>SAVEPOINT</code> / <code>RELEASE</code> / <code>ROLLBACK TO</code> outside a transaction block</td><td>open a transaction first; there is no savepoint scope without one</td></tr><tr><td><code>25001</code></td><td><code>SET TRANSACTION ISOLATION LEVEL</code> after the transaction has already run a query</td><td>issue it before the transaction's first statement</td></tr></tbody></table></div>
+<p>Two things the server does <b>not</b> treat as errors, which a client should not code around:</p>
+<ul><li><code>COMMIT</code> and <code>ROLLBACK</code> outside a transaction block <b>succeed as no-ops</b>. A pool that ends a transaction defensively before returning a connection can do so unconditionally.</li><li>A redundant <code>BEGIN</code> inside an open transaction is a <b>no-op</b>, not <code>25001</code>. Transactions do not nest; use <code>SAVEPOINT</code> for a nested scope.</li></ul>
+<p><code>25P02</code> is the one worth handling explicitly. The loop above already does the right thing — its handler rolls back before deciding whether to retry — but a handler that instead re-runs the <em>statement</em> on a connection in this state will get <code>25P02</code> again for every attempt, because nothing clears it but ending the transaction. Nothing in class <code>25</code> is retryable in place.</p>
+<p>(<code>25006</code>, <em>read-only transaction</em>, is defined but not reachable over the wire: <code>BEGIN READ ONLY</code> and <code>SET TRANSACTION READ ONLY</code> are refused up front with <code>0A000</code> — see the note below.)</p>
+<h2 id="isolation-levels-over-the-wire">Isolation levels over the wire</h2>
+<p>The default is <code>READ COMMITTED</code>. All four standard levels are supported end-to-end, requested any of these ways:</p>
 <div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
-<pre><span class="k">SET</span> max_autocommit_retries = <span class="s">50</span>;  <span class="c">-- default; 0 turns the retry off</span></pre></div>
-<p>The budget is a bound, not a promise. A conflict that outlives it is reported unchanged, so an
-application's own retry loop still sees its <code>40001</code>. Two things follow from a retry
-being a re-run: volatile expressions are evaluated again, so <code>now()</code> and
-<code>random()</code> produce fresh values and a sequence consumed by a failed attempt leaves a
-gap. Pair the retry budget with <code>statement_timeout</code> if you want an upper bound on how
-long one statement may occupy a connection.</p>
-
+<pre><span class="k">BEGIN</span> <span class="k">ISOLATION</span> <span class="k">LEVEL</span> <span class="k">SERIALIZABLE</span>;                                   <span class="c">-- this transaction</span>
+<span class="k">BEGIN</span>; <span class="k">SET</span> <span class="k">TRANSACTION</span> <span class="k">ISOLATION</span> <span class="k">LEVEL</span> <span class="k">REPEATABLE</span> <span class="k">READ</span>; ...           <span class="c">-- before its first query</span>
+<span class="k">SET</span> <span class="k">SESSION</span> <span class="k">CHARACTERISTICS</span> <span class="k">AS</span> <span class="k">TRANSACTION</span> <span class="k">ISOLATION</span> <span class="k">LEVEL</span> <span class="k">SERIALIZABLE</span>;  <span class="c">-- session default</span>
+<span class="k">SET</span> default_transaction_isolation = <span class="s">'serializable'</span>;                   <span class="c">-- session default (GUC)</span></pre></div>
+<p><code>SET TRANSACTION ISOLATION LEVEL</code> after the transaction has already run a query is refused with <code>25001</code>: it must be set before the transaction runs any query. <code>BEGIN READ ONLY</code> / <code>SET TRANSACTION READ ONLY</code> are refused loudly over the wire for now (the wire layer does not yet enforce access modes; an error is safer than silently granting a writable "read-only" transaction).</p>
+<p>Higher isolation means more class-<code>40</code> aborts under contention, and the retry loop above is what makes SERIALIZABLE practical.</p>
 <h2 id="savepoints">Savepoints</h2>
-<p>A savepoint marks a point a transaction can roll back to without abandoning the whole
-transaction.</p>
+<p>A savepoint marks a point a transaction can roll back to without abandoning the whole transaction. Transactions do not nest; a savepoint is the nested scope.</p>
 <div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
 <pre><span class="k">BEGIN</span>;
-<span class="k">INSERT INTO</span> audit (event) <span class="k">VALUES</span> (<span class="s">'import started'</span>);
+<span class="k">INSERT</span> <span class="k">INTO</span> audit (event) <span class="k">VALUES</span> (<span class="s">'import started'</span>);
 <span class="k">SAVEPOINT</span> before_rows;
-
-<span class="k">INSERT INTO</span> rows_in (payload) <span class="k">VALUES</span> (<span class="s">'…'</span>);
-<span class="k">ROLLBACK TO SAVEPOINT</span> before_rows;   <span class="c">-- audit row survives</span>
-
+<span class="k">INSERT</span> <span class="k">INTO</span> rows_in (payload) <span class="k">VALUES</span> (<span class="s">'...'</span>);
+<span class="k">ROLLBACK</span> <span class="k">TO</span> <span class="k">SAVEPOINT</span> before_rows;   <span class="c">-- the audit row survives</span>
+<span class="k">RELEASE</span> <span class="k">SAVEPOINT</span> before_rows;       <span class="c">-- optional: forget the savepoint, keep the work</span>
 <span class="k">COMMIT</span>;</pre></div>
-
-<h2 id="errors">An error aborts the whole transaction</h2>
-<p>After a failed statement the transaction is in an aborted state and further statements are
-refused until it ends. Rows written earlier in the transaction do not leak: either everything
-commits or nothing does. Use a savepoint when you want to recover from an expected failure
-without discarding earlier work.</p>
-
-<h2 id="visibility">How versions are kept</h2>
-<p>Each row version records the transaction that created it and, once removed, the transaction that
-removed it. A reader compares those against its own snapshot, which is why it never has to wait for
-a writer. Versions no live snapshot can still reach are removed by a background worker, so the
-version store does not grow without bound under sustained updates.</p>
-<p>One consequence is worth knowing when sizing a deployment: deleting rows frees pages for reuse
-but does not reduce the resident memory the engine reports, because page memory is recycled rather
-than returned. See <a href="limits.html">limits and capacity</a>.</p>
-
-<h2 id="locking">Explicit locking</h2>
-<p><code>SELECT … FOR UPDATE</code> and <code>FOR SHARE</code> are available, including
-<code>SKIP LOCKED</code>, and so is <code>LOCK TABLE</code>. <code>NOWAIT</code> is not accepted:
-because locks already do not wait, a conflicting request fails immediately, which is what
-<code>NOWAIT</code> asks for.</p>
+<p><code>ROLLBACK TO SAVEPOINT</code> is also the way out of an aborted transaction (<code>25P02</code>) when the work before the savepoint is worth keeping.</p>
+<h2 id="row-and-table-locks">Row and table locks</h2>
+<p>Locks never wait, so <code>SELECT ... FOR UPDATE</code> on a row another transaction has locked fails at once with <code>40001</code>; <code>NOWAIT</code> is accepted and changes nothing. <code>SKIP LOCKED</code> steps over such rows instead, which is the usual shape for a job queue: each worker claims a different row and none of them conflict.</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">BEGIN</span>;
+<span class="k">SELECT</span> * <span class="k">FROM</span> jobs <span class="k">WHERE</span> state = <span class="s">'queued'</span> <span class="k">ORDER</span> <span class="k">BY</span> id <span class="k">LIMIT</span> <span class="s">1</span> <span class="k">FOR</span> <span class="k">UPDATE</span> <span class="k">SKIP</span> <span class="k">LOCKED</span>;
+<span class="k">UPDATE</span> jobs <span class="k">SET</span> state = <span class="s">'running'</span> <span class="k">WHERE</span> id = <span class="s">42</span>;
+<span class="k">COMMIT</span>;</pre></div>
+<p><code>LOCK TABLE name IN ACCESS SHARE MODE</code> and <code>IN ACCESS EXCLUSIVE MODE</code> are available inside a transaction; the other modes are refused.</p>
+<h2 id="cursors">Cursors</h2>
+<p>A cursor reads a large result in pieces without materialising it on the client. It lives inside a transaction and is closed when the transaction ends.</p>
+<div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">BEGIN</span>;
+<span class="k">DECLARE</span> c <span class="k">CURSOR</span> <span class="k">FOR</span> <span class="k">SELECT</span> id, email <span class="k">FROM</span> customers <span class="k">ORDER</span> <span class="k">BY</span> id;
+<span class="k">FETCH</span> <span class="s">100</span> <span class="k">FROM</span> c;
+<span class="k">FETCH</span> <span class="k">NEXT</span> <span class="k">FROM</span> c;
+<span class="k">CLOSE</span> c;
+<span class="k">COMMIT</span>;</pre></div>
+<h2 id="timeouts-and-cancellation">Timeouts and cancellation</h2>
+<ul><li><code>SET statement_timeout = '30s'</code> bounds any single statement on this session; the server flag <code>--statement-timeout</code> sets a default for every session. A cancelled statement reports <code>57014</code>.</li><li>A connection cap (<code>--max-connections</code>) queues excess connections by default; <code>--reject-excess-connections</code> refuses them immediately with <code>53300</code> so a pool can back off.</li><li><code>CHECKPOINT</code> refuses while any transaction is open, including one on the connection issuing it; run it from a connection in autocommit.</li></ul>
 
 <div class="nextprev">
 <a href="sql.html"><small>Previous</small>SQL reference</a>
