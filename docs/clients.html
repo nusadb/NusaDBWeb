@@ -64,7 +64,7 @@
 <p>So porting an application means changing how it connects, not rewriting its SQL.</p>
 <h2 id="official-clients">Official clients</h2>
 <p>Every driver speaks the protocol directly with no native dependencies, binds parameters as <code>$1</code>, <code>$2</code>, ..., and returns typed values (an <code>INT</code> column arrives as the host language's integer, <code>NUMERIC</code> as a decimal, <code>TIMESTAMPTZ</code> as a datetime, <code>JSON</code> parsed).</p>
-<div class="table-scroll"><table><thead><tr><th>Client</th><th>Install</th><th>Notes</th></tr></thead><tbody><tr><td><code>nusadb-cli</code></td><td>in the container image and every release</td><td>interactive shell and batch runner</td></tr><tr><td>Python</td><td><code>pip install nusadb</code></td><td>DB-API 2.0, with a SQLAlchemy dialect</td></tr><tr><td>Node.js</td><td><code>npm install nusadb</code></td><td>Promise-based, TypeScript typings</td></tr><tr><td>Go</td><td><code>go get github.com/nusadb/go</code></td><td><code>database/sql</code> driver, registered as <code>nusadb</code></td></tr><tr><td>Rust</td><td><code>cargo add nusadb</code></td><td>sync and async (Tokio), connection pool, <code>tls</code> feature</td></tr><tr><td>Ruby</td><td><code>gem install nusadb</code></td><td>native client</td></tr><tr><td>PHP</td><td><code>composer require nusadb/nusadb</code></td><td>PDO-style API in pure PHP</td></tr><tr><td>Java (JDBC), .NET (ADO.NET)</td><td>in the source tree</td><td>not yet published to Maven Central or NuGet</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>Client</th><th>Install</th><th>Notes</th></tr></thead><tbody><tr><td><code>nusadb-cli</code></td><td>in the container image and every release</td><td>interactive shell and batch runner</td></tr><tr><td>Python</td><td><code>pip install nusadb</code></td><td>DB-API 2.0, with a SQLAlchemy dialect</td></tr><tr><td>Node.js</td><td><code>npm install nusadb</code></td><td>Promise-based, TypeScript typings</td></tr><tr><td>Go</td><td><code>go get github.com/nusadb/go</code></td><td><code>database/sql</code> driver, registered as <code>nusadb</code></td></tr><tr><td>Rust</td><td><code>cargo add nusadb</code></td><td>sync and async (Tokio), connection pool, <code>tls</code> feature</td></tr><tr><td>Ruby</td><td><code>gem install nusadb</code></td><td>native client</td></tr><tr><td>PHP</td><td><code>composer require nusadb/nusadb</code></td><td>PDO-style API in pure PHP</td></tr><tr><td>Java</td><td><code>com.nusadb:nusadb-jdbc:0.1.0</code> (Maven Central)</td><td>JDBC, pure Java; Hibernate dialects: <code>nusadb-hibernate5</code>, <code>nusadb-hibernate6</code></td></tr><tr><td>.NET (ADO.NET)</td><td>in the source tree</td><td>not yet published to NuGet</td></tr></tbody></table></div>
 <div class="note caution"><b>Two names changed recently.</b><p>The shell is <code>nusadb-cli</code> and the bootstrap superuser is <code>nusadb-root</code>. Container images published before that change carry the older <code>nusa-cli</code> and <code>nusa-root</code>, so on an older image use those instead.</p></div>
 <p>Python:</p>
 <div class="code"><div class="code-bar"><span>python</span><button class="copy" type="button"><em>Copy</em></button></div>
@@ -100,13 +100,27 @@ await conn.close();</pre></div>
 db, err := sql.Open("nusadb", "nusadb://app:change-me@127.0.0.1:5678/nusadb")
 var email string
 err = db.QueryRow("SELECT email FROM customers WHERE id = $1", 1).Scan(&amp;email)</pre></div>
+<p>Java:</p>
+<div class="code"><div class="code-bar"><span>java</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre>// pom.xml: &lt;dependency&gt;&lt;groupId&gt;com.nusadb&lt;/groupId&gt;
+//          &lt;artifactId&gt;nusadb-jdbc&lt;/artifactId&gt;&lt;version&gt;0.1.0&lt;/version&gt;&lt;/dependency&gt;
+import java.sql.*;
+
+String url = "jdbc:nusadb://app:change-me@127.0.0.1:5678/nusadb";
+try (Connection conn = DriverManager.getConnection(url);
+     PreparedStatement ps = conn.prepareStatement("SELECT email FROM customers WHERE country = $1")) {
+    ps.setString(1, "ID");
+    try (ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) System.out.println(rs.getString("email"));
+    }
+}</pre></div>
 <p>Rust:</p>
 <div class="code"><div class="code-bar"><span>rust</span><button class="copy" type="button"><em>Copy</em></button></div>
 <pre>use nusadb::Connection;
 
 let mut conn = Connection::connect("nusadb://app:change-me@127.0.0.1:5678/nusadb")?;
 let rows = conn.query_params("SELECT id, email FROM customers WHERE country = $1", &amp;[&amp;"ID"])?;</pre></div>
-<p>A prepared statement is what every driver does for you: the statement is parsed once and run with values for <code>$1..$n</code>, and the server caches the plan. <code>PREPARE</code> typed as SQL over a connection is refused; <code>nusadb-cli</code> has no parameter binding, so write the value into the text there.</p>
+<p>A prepared statement is what every driver does for you: the statement is parsed once and run with values for <code>$1..$n</code>, and the server caches the plan. The SQL spellings <code>PREPARE</code> / <code>EXECUTE</code> / <code>DEALLOCATE</code> also work on any connection, which is how <code>nusadb-cli</code> binds parameters.</p>
 <h2 id="errors-and-retries">Errors and retries</h2>
 <p>Every failed statement carries a five-character SQLSTATE, and the drivers expose it. Branch on the code, not on the message. Class <code>40</code> (<code>40001</code>, <code>40P01</code>) means run the whole transaction again; <code>25P02</code> means the transaction is aborted and must be rolled back first; <code>42501</code> is a missing grant. The retry loop every write path needs is on the <a href="transactions.html">transactions</a> page, and the full table of codes is in the <a href="sql.html#error-codes">SQL reference</a>.</p>
 <h2 id="connection-settings">Connection settings</h2>
