@@ -617,7 +617,8 @@ nusadb-cli -c "COPY (SELECT email FROM customers WHERE country = 'ID' ORDER BY e
 <pre><span class="k">SELECT</span> d::<span class="k">DATE</span> <span class="k">FROM</span> generate_series(<span class="k">DATE</span> <span class="s">'2026-01-01'</span>, <span class="k">DATE</span> <span class="s">'2026-01-07'</span>, <span class="k">INTERVAL</span> <span class="s">'1 day'</span>) <span class="k">AS</span> d;
 <span class="k">SELECT</span> n <span class="k">FROM</span> generate_series(<span class="s">1</span>, <span class="s">5</span>) <span class="k">AS</span> n;
 <span class="k">SELECT</span> word <span class="k">FROM</span> regexp_split_to_table(<span class="s">'a b  c'</span>, <span class="s">'\s+'</span>) <span class="k">AS</span> word;
-<span class="k">SELECT</span> part, i <span class="k">FROM</span> string_to_table(<span class="s">'x,y,z'</span>, <span class="s">','</span>) <span class="k">WITH</span> <span class="k">ORDINALITY</span> <span class="k">AS</span> t(part, i);</pre></div>
+<span class="k">SELECT</span> part, i <span class="k">FROM</span> string_to_table(<span class="s">'x,y,z'</span>, <span class="s">','</span>) <span class="k">WITH</span> <span class="k">ORDINALITY</span> <span class="k">AS</span> t(part, i);
+<span class="k">SELECT</span> unnest(<span class="k">ARRAY</span>[<span class="s">30</span>, <span class="s">10</span>, <span class="s">20</span>]) <span class="k">AS</span> v <span class="k">ORDER</span> <span class="k">BY</span> v <span class="k">DESC</span>;   <span class="c">-- the sort runs on the expanded rows</span></pre></div>
 <h3 id="reading-a-plan-explain">Reading a plan (<code>EXPLAIN</code>)</h3>
 <div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
 <pre><span class="k">EXPLAIN</span> <span class="k">SELECT</span> c.email, sum(o.total)
