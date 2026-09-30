@@ -14,7 +14,7 @@ docs/
   sql.html              Types, statements, and NusaDB's own behaviours
   transactions.html     Isolation, conflicts and retries, savepoints
   clients.html          Drivers, connection settings, TLS and SCRAM
-  configuration.html    Server flags, resource defaults, systemd, metrics
+  configuration.html    Server flags, resource defaults, systemd, metrics, backup
   limits.html           Capacity, log growth, restart time, what is missing
 css/style.css           The whole design system
 js/main.js              Theme toggle, navigation, copy buttons, page contents

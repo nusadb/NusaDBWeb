@@ -114,8 +114,8 @@
             <tr><td><a href="sql.html">SQL reference</a></td><td>Every type, statement and function the engine accepts, each with an example run against this release; error codes; where NusaDB chooses differently.</td></tr>
             <tr><td><a href="transactions.html">Transactions</a></td><td>Isolation levels, conflicts and the retry loop, aborted transactions, savepoints, locks, cursors.</td></tr>
             <tr><td><a href="clients.html">Clients and protocol</a></td><td>Official drivers with install commands and snippets, connection settings, TLS and SCRAM, notifications.</td></tr>
-            <tr><td><a href="configuration.html">Configuration</a></td><td>Every server flag, authentication and roles, memory limits, the container image, systemd, TLS, metrics, checkpoints and backup.</td></tr>
-            <tr><td><a href="limits.html">Limits and capacity</a></td><td>Memory-bound data size, log growth and checkpoints, restart time, and what is not built yet.</td></tr>
+            <tr><td><a href="configuration.html">Configuration</a></td><td>Every server flag, authentication and roles, memory limits and the page cache, the container image, systemd, TLS, metrics, checkpoints, backup, point-in-time recovery and standby.</td></tr>
+            <tr><td><a href="limits.html">Limits and capacity</a></td><td>What still has to fit in memory, log growth and checkpoints, restart time, backup and standby, one server per data directory, storage errors, and what is not built yet.</td></tr>
           </tbody>
         </table>
       </div>
@@ -136,7 +136,7 @@
       <p>
         Durability comes from the write-ahead log. A record is written and made durable before a
         commit is acknowledged, each record carries a CRC32, and records are lz4-compressed.
-        On start-up the engine replays the log to rebuild state.
+        A checkpoint writes the pages changed since the last one into a new page segment and publishes an image naming every page, then truncates the log. On start-up the engine opens that image, loads pages from it as they are used, and replays only the log written after it.
       </p>
 
       <div class="table-scroll">
@@ -147,8 +147,8 @@
             <tr><td>Protocol</td><td>Framing, TLS, SCRAM-SHA-256 authentication, extended query flow.</td></tr>
             <tr><td>SQL engine</td><td>Parser, analyzer, planner and cost model, vectorized executor.</td></tr>
             <tr><td>Transactions</td><td>Multi-version rows, no-wait locking, isolation levels, rollback.</td></tr>
-            <tr><td>Storage</td><td>Clustered B-link/B+tree, secondary indexes, version store, catalog.</td></tr>
-            <tr><td>Log</td><td>Append-only write-ahead log with per-record checksums and compression.</td></tr>
+            <tr><td>Storage</td><td>Clustered B-link/B+tree, secondary indexes, version store, catalog, page cache with eviction and spill.</td></tr>
+            <tr><td>Log</td><td>Append-only write-ahead log with per-record checksums and compression, incremental checkpoints over immutable page segments, optional archive for point-in-time recovery.</td></tr>
           </tbody>
         </table>
       </div>
