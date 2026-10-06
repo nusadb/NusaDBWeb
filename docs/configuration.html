@@ -228,17 +228,19 @@ nusadb-cli --host 10.0.0.5:5678 --tls --tls-ca ca.crt --tls-domain db.internal  
 <pre>NUSADB_PASSWORD=... nusadb-cli --user nusadb-root -d shop -c "CHECKPOINT"
 snap=/data/snapshots/shop-$(date +%F)       # on the same file system as $DATA_DIR
 mkdir -p "$snap/btree.wal.pages"
+ln "$DATA_DIR/base/shop/btree.wal.format" "$snap/btree.wal.format"
 ln "$DATA_DIR/base/shop/btree.wal.ckpt" "$snap/btree.wal.ckpt"
 ln "$DATA_DIR/base/shop/btree.wal.pages/"*.seg "$snap/btree.wal.pages/"
 cp -r "$snap" /backups/                     # then copy it anywhere</pre></div>
-<p>A copy that misses a segment its image names is refused when opened, naming the segment, never read with pages missing. The backup holds every transaction committed before the <code>CHECKPOINT</code>; what commits afterwards is in the log tail only. The background checkpoint worker refreshes the image on its own as the log grows, so a copy taken without an explicit <code>CHECKPOINT</code> is still consistent, just older.</p>
+<p>A copy that misses a segment its image names is refused when opened, naming the segment, never read with pages missing. <code>btree.wal.format</code> records the data format the copy is in (see <a href="#upgrades">Upgrades</a>), so a release too old for it refuses it instead of misreading it; the server writes it the first time it opens a database. The backup holds every transaction committed before the <code>CHECKPOINT</code>; what commits afterwards is in the log tail only. The background checkpoint worker refreshes the image on its own as the log grows, so a copy taken without an explicit <code>CHECKPOINT</code> is still consistent, just older.</p>
 <h3 id="restore">Restore</h3>
 <p>The database must be registered in the cluster (it is, if it was created there; in a fresh data directory run <code>CREATE DATABASE shop</code> first), and its directory must hold no log (<code>btree.wal</code>). With the server stopped, remove that database's log if one exists, place the copy, and start the server. It opens the image with an empty log tail.</p>
 <div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
 <pre>rm -rf "$DATA_DIR/base/shop/btree.wal" "$DATA_DIR/base/shop/btree.wal.ckpt" \
-  "$DATA_DIR/base/shop/btree.wal.pages"
+  "$DATA_DIR/base/shop/btree.wal.pages" "$DATA_DIR/base/shop/btree.wal.format"
 cp -r /backups/shop-2026-09-26/btree.wal.pages "$DATA_DIR/base/shop/"
 cp /backups/shop-2026-09-26/btree.wal.ckpt "$DATA_DIR/base/shop/btree.wal.ckpt"
+cp /backups/shop-2026-09-26/btree.wal.format "$DATA_DIR/base/shop/btree.wal.format"
 nusadb-server --data-dir "$DATA_DIR"</pre></div>
 <p>A <code>btree.wal</code> left in place would be replayed on top of the image, which is not a restore. For a whole-cluster copy with the server stopped, archive the <code>--data-dir</code> tree and extract it in place. Logical export with <code>COPY table TO STDOUT</code> and reload with <code>COPY table FROM STDIN</code> remains available. There is no built-in scheduled backup.</p>
 <h3 id="point-in-time-recovery">Point-in-time recovery</h3>
@@ -277,7 +279,24 @@ nusadb-server --data-dir /var/lib/nusadb-standby --standby-from /srv/nusadb-arch
 <p><code>--standby-from</code> cannot be combined with <code>--wal-archive-dir</code>. When the archive root is replicated to the standby's host rather than shared, each segment must land atomically (copied under a scratch name and renamed into place): a segment whose copy is still in progress is left alone until it is complete.</p>
 <p>To promote the standby, stop it and start it again without <code>--standby-from</code> (add a <code>--wal-archive-dir</code> of its own if it should archive): it opens every database writable and continues the primary's history from the last applied position. Point the old primary's clients at it, and do not start the old primary against the same archive root again without moving that archive aside, or the two histories would meet in one archive.</p>
 <h2 id="upgrades">Upgrades</h2>
-<p>Replace the binary (or pull a newer image tag) and restart the service; recovery replays the log, so a clean restart keeps every committed transaction. Read the release notes before restarting an existing data directory on a new version: the on-disk format may still change before 1.0. Each database directory records which engine wrote it, and one written by the removed <code>lsm</code> engine is refused rather than misread; migrate it by exporting from the last release that shipped that engine and reloading into a fresh <code>--data-dir</code>.</p>
+<p>Stop the server, back up the data directory (see <a href="#backup">Backup</a>), replace the binary (or pull a newer image tag) and start the server again. Recovery replays the log, so a clean restart keeps every committed transaction.</p>
+<h3 id="data-format">Data format</h3>
+<p>The files of a data directory are written in a numbered data format, and every directory records which one:</p>
+<div class="table-scroll"><table><thead><tr><th>File</th><th>Holds</th></tr></thead><tbody>
+<tr><td><code>global/format</code></td><td>the cluster format: the <code>global/</code> and <code>base/&lt;db&gt;/</code> layout and the database catalog</td></tr>
+<tr><td><code>base/&lt;db&gt;/btree.wal.format</code></td><td>the data format of that database: its log, checkpoint image, page segments, and page and row layouts</td></tr>
+<tr><td><code>&lt;archive&gt;/&lt;db&gt;/format</code></td><td>the data format of a <code>--wal-archive-dir</code> archive</td></tr>
+</tbody></table></div>
+<p>Each file also names the release that last wrote it, for example <code>nusadb data format 1</code> followed by <code>written by nusadb 0.1.0</code>. On start-up the server checks the cluster format and the data format of every database before it opens any database or records anything, and the engine checks again when a database opens:</p>
+<ul>
+<li><strong>The same format.</strong> The directory opens normally.</li>
+<li><strong>An older format.</strong> The release upgrades it in place, one format at a time, when the database opens, and records each step as it completes, so an interrupted upgrade resumes where it stopped. Back up first: an upgraded directory cannot be opened by the older release again.</li>
+<li><strong>A newer format</strong> (an older binary started on data a newer one wrote). The server refuses to start, names the format and the release that wrote it, and changes nothing. Start it with that release or a newer one. Downgrades are not supported; to go back, restore the backup taken before the upgrade.</li>
+</ul>
+<p>A directory written before formats were recorded has no format files; it is format 1 and is stamped the first time a release that records formats opens it.</p>
+<h3 id="when-the-format-changes">When the format changes</h3>
+<p>A release that changes how anything on disk is written, in a way an older release cannot read, raises the format number, and its release notes say so. Patch releases (<code>0.1.x</code>, and <code>1.x.y</code> after 1.0) never change the format. Before 1.0 a minor release (<code>0.2.0</code>) may; after 1.0 only a major release does. A new release reads the formats of the releases before it, upgrading them in place, unless its release notes name a format it no longer reads; such a directory is refused with a message saying so, and is moved by exporting it with a release that reads it (<code>COPY table TO STDOUT</code>) and loading it into a fresh <code>--data-dir</code>.</p>
+<p>A database directory written by the removed <code>lsm</code> engine is refused the same way rather than misread; migrate it by exporting from the last release that shipped that engine and reloading into a fresh <code>--data-dir</code>.</p>
 
 <div class="nextprev">
 <a href="clients.html"><small>Previous</small>Clients and protocol</a>
