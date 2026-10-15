@@ -60,7 +60,7 @@
 <p>From nothing to a queried table. Two installation routes are covered: the published container image, and a build from source. Everything after that is the same either way.</p>
 <h2 id="install">Install</h2>
 <h3 id="container">Container</h3>
-<p>The image carries both the server and the shell. Give it a volume: the data directory holds the write-ahead log, which is the durable copy of your data.</p>
+<p>The image carries both the server and the shell, and is published for <code>linux/amd64</code> and <code>linux/arm64</code> under the same tag. Give it a volume: the data directory holds the write-ahead log, which is the durable copy of your data.</p>
 <div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
 <pre>docker run -d --name nusadb \
   -p 5678:5678 \
