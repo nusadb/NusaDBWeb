@@ -11,13 +11,15 @@ index.html              Landing page
 docs/
   index.html            Documentation overview and architecture
   getting-started.html  Install, connect, create, load and export
+  internals.html        How it works: page layout, versions, log frame, checkpoints
   sql.html              Types, statements, and NusaDB's own behaviours
   transactions.html     Isolation, conflicts and retries, savepoints
   clients.html          Drivers, connection settings, TLS and SCRAM
   configuration.html    Server flags, resource defaults, systemd, metrics, backup
   limits.html           Capacity, log growth, restart time, what is missing
 css/style.css           The whole design system
-js/main.js              Theme toggle, navigation, copy buttons, page contents
+js/main.js              Theme toggle, navigation, copy buttons, tabs, page contents,
+                        chart tooltips, the write-path figure on the home page
 ```
 
 ## Running it locally
@@ -33,17 +35,27 @@ npx serve .
 
 ## Design notes
 
-Structure comes from 1px lines rather than shadows or tinted bands, with corner radii of 2 to
-6px. The two brand colours are `#293880` (navy) and `#4297C8` (blue). Blue is about 3.0:1
-on the light ground, too low for text, so light-theme links use `#1d6e99` (5.2:1); on the
-dark ground blue reaches 5.9:1 and is used for links directly. Body text is 16.9:1 (light)
-and 15.8:1 (dark). The page follows the operating system's colour scheme, and the toggle
-overrides it and is remembered in `localStorage`.
+The site reads like a datasheet and an engineering drawing: a paper-coloured ground with hairline
+rules, numbered sections with a margin label, numbered figures with captions, and monospace for
+anything that is a name, a size, a flag or a byte offset. Headings are IBM Plex Serif, text is
+IBM Plex Sans and code is IBM Plex Mono, loaded from Google Fonts with system fallbacks.
 
-Type is IBM Plex Sans for text and headings and IBM Plex Mono for code, commands and
-versions, loaded from Google Fonts with system fallbacks. The scale steps by about 1.2 from
-16px. Every page works without JavaScript: the script only adds the theme toggle, the
-mobile menus, copy buttons and the on-page contents list.
+Colour is spent where it means something. Navy `#293880` and blue `#4297C8` are the brand; one
+warm signal colour (`#b23c0a` light, `#f0884a` dark) marks the durability point in diagrams, such
+as the fsync of a commit or the CRC field of a log frame, and nothing else. Every colour is a token
+on `:root`, redefined for the dark theme; contrast ratios are listed at the top of
+`css/style.css`. The page follows the operating system's colour scheme, and the toggle overrides
+it and is remembered in `localStorage`.
+
+Diagrams are inline SVG drawn with classes (`d-box`, `d-txt`, `d-line-sig` and so on), so both
+themes come from the same tokens. Fig. 1 on the home page is the only animated element: it steps
+through a write, a commit and a checkpoint, has pause and step buttons, starts only when it is on
+screen, and stays still when the reader prefers reduced motion. Every page works without
+JavaScript: tab panels then show one under another and the figure shows its pre-checkpoint state.
+
+Session output on the home page and in the docs was produced by the release binary and is pasted
+unedited, apart from trimmed `ls` columns. Measured numbers carry the date, the build and the
+machine they were measured on.
 
 ## Editing
 
@@ -54,6 +66,9 @@ so navigation stays consistent:
 1. the sidebar group it belongs to, in every `docs/*.html` file
 2. the previous and next links on its neighbours
 3. the footer column on `index.html`
+
+Bump the `?v=` string on `style.css` and `main.js` in every page when either file changes, so
+browsers fetch the new copy.
 
 `js/main.js` builds the on-page contents list from `h2` and `h3` elements that carry an
 `id`, so give every section heading one. Code samples use this shape, and the copy button

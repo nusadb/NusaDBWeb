@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Documentation · NusaDB</title>
 <meta name="description" content="Documentation for NusaDB: installation, SQL reference, transactions, server configuration, capacity limits, and the client protocol." />
-<meta name="theme-color" content="#0e1014" />
+<meta name="theme-color" content="#0b0f17" />
 <script>document.documentElement.classList.add("js");try{var t=localStorage.getItem("nusadb-theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="../css/style.css?v=20261029b" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,500;1,500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../css/style.css?v=20261029r2" />
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -24,8 +24,9 @@
         <path d="M4 12c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5"/>
       </svg>
       <span>Nusa<b>DB</b></span>
+      <span class="ver">0.1.0-beta.16</span>
     </a>
-    <nav class="mast-nav" id="mastNav" aria-label="Main"><ul><li><a href="./" aria-current="page">Docs</a></li><li><a href="getting-started.html">Install</a></li><li><a href="clients.html">Drivers</a></li><li><a href="sql.html">SQL</a></li><li><a href="limits.html">Limits</a></li><li><a href="../#changes">Changes</a></li><li><a href="https://github.com/nusadb/nusadb">GitHub</a></li></ul></nav>
+    <nav class="mast-nav" id="mastNav" aria-label="Main"><ul><li><a href="./" aria-current="page">Docs</a></li><li><a href="../#install">Install</a></li><li><a href="internals.html">Internals</a></li><li><a href="sql.html">SQL</a></li><li><a href="clients.html">Drivers</a></li><li><a href="limits.html">Limits</a></li><li><a href="https://github.com/nusadb/nusadb">GitHub</a></li></ul></nav>
     <div class="mast-tools">
       <button class="icon-btn" id="themeBtn" type="button" aria-label="Switch theme"></button>
       <button class="icon-btn burger" id="burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mastNav">
@@ -48,6 +49,7 @@
 <ul>
 <li><a href="./" aria-current="page">Overview</a></li>
 <li><a href="getting-started.html">Getting started</a></li>
+<li><a href="internals.html">How it works</a></li>
 </ul>
 <h4>Reference</h4>
 <ul>
@@ -65,17 +67,30 @@
 <li><a href="https://github.com/nusadb/nusadb">Source repository</a></li>
 <li><a href="https://github.com/nusadb/nusadb/issues">Issues</a></li>
 <li><a href="https://hub.docker.com/r/nusadb/nusadb">Container image</a></li>
+<li><a href="https://github.com/nusadb/nusadb/releases">Release archives</a></li>
 </ul>
+<p class="side-ver">Documents <b>0.1.0-beta.16</b><br />engine db799f1</p>
 </div>
     </aside>
 
     <main class="prose" id="main">
-      <p class="crumb">Documentation</p>
+      <p class="crumb">Documentation / 0.1.0-beta.16</p>
       <h1>NusaDB documentation</h1>
       <p class="summary">
         Reference for NusaDB 0.1.0-beta.16, a single-node relational database written in Rust:
         installing and running it, the SQL it accepts, transactions, clients and limits.
       </p>
+
+      <div class="cards">
+        <a href="getting-started.html"><span>Start</span><b>Getting started</b>Install, connect, a worked example, the shell, loading and exporting data, adding a user, the first errors.</a>
+        <a href="internals.html"><span>Start</span><b>How it works</b>Layers, the 8 KiB page, versions and visibility, the log frame, checkpoints, the page cache, recovery, encryption.</a>
+        <a href="sql.html"><span>Reference</span><b>SQL reference</b>Types, statements and functions, each with an example run against this release; error codes; behaviour specific to NusaDB.</a>
+        <a href="transactions.html"><span>Reference</span><b>Transactions</b>Isolation levels, conflicts and the retry loop, savepoints, locks, deferred constraints, cursors, two-phase commit.</a>
+        <a href="clients.html"><span>Reference</span><b>Clients and protocol</b>The eight drivers with install commands and snippets, connection settings, TLS and SCRAM, notifications, bulk transfer.</a>
+        <a href="configuration.html"><span>Operating</span><b>Configuration</b>Every server flag, memory limits, the container image, systemd, TLS, metrics, encryption at rest, backup, restore, standby, upgrades.</a>
+        <a href="limits.html"><span>Operating</span><b>Limits and capacity</b>What still has to fit in memory, log growth, restart time, single-node limits, and what is not in this release.</a>
+        <a href="https://github.com/nusadb/nusadb/blob/master/docs/wire-protocol.md"><span>Protocol</span><b>Wire protocol specification</b>Frames, start-up and authentication, simple and extended query, COPY, notices: what a new client has to implement.</a>
+      </div>
 
       <h2 id="where-to-start">Where to start</h2>
       <div class="table-scroll">
@@ -85,7 +100,7 @@
           </thead>
           <tbody>
             <tr><td>Decide whether NusaDB fits a project</td><td><a href="limits.html">Limits and capacity</a>, then <a href="#protocol">the wire protocol</a> below</td></tr>
-            <tr><td>Install and run a first query</td><td><a href="getting-started.html">Getting started</a></td></tr>
+            <tr><td>Understand how rows are stored, logged and recovered</td><td><a href="internals.html">How it works</a></td></tr><tr><td>Install and run a first query</td><td><a href="getting-started.html">Getting started</a></td></tr>
             <tr><td>Connect an application</td><td><a href="clients.html#official-clients">Official clients</a> and <a href="clients.html#connection-settings">connection settings</a></td></tr>
             <tr><td>Look up a statement, type or function</td><td><a href="sql.html#statement-index">SQL statement index</a></td></tr>
             <tr><td>Handle conflicts and retries</td><td><a href="transactions.html">Transactions</a></td></tr>
@@ -96,21 +111,7 @@
         </table>
       </div>
 
-      <div class="table-scroll">
-        <table>
-          <thead>
-            <tr><th>Page</th><th>Contents</th></tr>
-          </thead>
-          <tbody>
-            <tr><td><a href="getting-started.html">Getting started</a></td><td>Install, connect, a worked example, the shell, the drivers, adding a user, the first errors.</td></tr>
-            <tr><td><a href="sql.html">SQL reference</a></td><td>Types, statements and functions, each with an example run against this release; error codes; behaviour specific to NusaDB.</td></tr>
-            <tr><td><a href="transactions.html">Transactions</a></td><td>Isolation levels, conflicts and the retry loop, aborted transactions, savepoints, locks, cursors, two-phase commit.</td></tr>
-            <tr><td><a href="clients.html">Clients and protocol</a></td><td>Official drivers with install commands and snippets, connection settings, TLS and SCRAM, notifications.</td></tr>
-            <tr><td><a href="configuration.html">Configuration</a></td><td>Server flags, authentication and roles, memory limits and the page cache, the container image, systemd, TLS, metrics, encryption at rest, checkpoints, backup, point-in-time recovery, standby, upgrades.</td></tr>
-            <tr><td><a href="limits.html">Limits and capacity</a></td><td>What has to fit in memory, log growth and checkpoints, restart time, backup and standby, one server per data directory, storage errors, and features not in this release.</td></tr>
-          </tbody>
-        </table>
-      </div>
+      
 
       <h2 id="architecture">Architecture</h2>
       <p>
@@ -133,6 +134,7 @@
         as they are used, and replays only the log written after it.
       </p>
 
+      <p><a class="more" href="internals.html">How it works, with diagrams of the page, the log frame and a checkpoint</a></p>
       <div class="table-scroll">
         <table>
           <thead><tr><th>Layer</th><th>Responsibility</th></tr></thead>
@@ -179,11 +181,8 @@
       </p>
 
       <div class="nextprev">
-        <a class="to-next" href="getting-started.html" style="margin-left:auto">
-          <small>Next</small>
-          Getting started
-        </a>
-      </div>
+<a class="to-next" href="getting-started.html" style="margin-left:auto"><small>Next</small>Getting started</a>
+</div>
     </main>
 
     <nav class="toc" id="toc" aria-label="On this page"><strong>On this page</strong></nav>
@@ -200,6 +199,6 @@
   </div>
 </footer>
 
-<script src="../js/main.js?v=20261029b"></script>
+<script src="../js/main.js?v=20261029r2"></script>
 </body>
 </html>
