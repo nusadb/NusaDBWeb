@@ -5,15 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>NusaDB · relational database for a single machine</title>
 <meta name="description" content="NusaDB is an open-source relational database written in Rust: a clustered B+tree on 8 KiB pages, a checksummed redo log, serializable snapshot isolation and its own wire protocol, in one server binary. Version 0.1.0-beta.16, Apache-2.0." />
-<meta name="theme-color" content="#0b0f17" />
+<meta name="theme-color" content="#293681" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M4 1h18l9 9v18a3 3 0 0 1-3 3H4a3 3 0 0 1-3-3V4a3 3 0 0 1 3-3z' fill='%23D0E7E6'/%3E%3Cpath d='M22 1l9 9h-9z' fill='%2395CCDD'/%3E%3Crect x='5' y='8' width='13' height='5' rx='2.5' fill='%23293681'/%3E%3Crect x='11' y='16' width='16' height='5' rx='2.5' fill='%234274D9'/%3E%3Crect x='5' y='24' width='8' height='5' rx='2.5' fill='%23293681'/%3E%3Crect x='16' y='24' width='5' height='5' rx='2.5' fill='%2395CCDD'/%3E%3C/svg%3E" />
 <meta property="og:type" content="website" />
 <meta property="og:title" content="NusaDB" />
 <meta property="og:description" content="A relational database for a single machine, written in Rust. Version 0.1.0-beta.16, Apache-2.0." />
 <script>document.documentElement.classList.add("js");try{var t=localStorage.getItem("nusadb-theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,500;1,500&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="css/style.css?v=20261029r2" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css?v=20261029r3" />
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -21,11 +22,7 @@
 <header class="masthead">
   <div class="wrap masthead-in">
     <a class="brand" href="./">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
-        <path d="M4 6.5c0-1.4 3.6-2.5 8-2.5s8 1.1 8 2.5-3.6 2.5-8 2.5-8-1.1-8-2.5Z"/>
-        <path d="M4 6.5v11c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5v-11"/>
-        <path d="M4 12c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5"/>
-      </svg>
+      <svg class="mark" width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><path d="M4 1h18l9 9v18a3 3 0 0 1-3 3H4a3 3 0 0 1-3-3V4a3 3 0 0 1 3-3z" fill="#D0E7E6"/><path d="M22 1l9 9h-9z" fill="#95CCDD"/><rect x="5" y="8" width="13" height="5" rx="2.5" fill="#293681"/><rect x="11" y="16" width="16" height="5" rx="2.5" fill="#4274D9"/><rect x="5" y="24" width="8" height="5" rx="2.5" fill="#293681"/><rect x="16" y="24" width="5" height="5" rx="2.5" fill="#95CCDD"/></svg>
       <span>Nusa<b>DB</b></span>
       <span class="ver">0.1.0-beta.16</span>
     </a>
@@ -52,11 +49,10 @@
 <main id="main">
 
 <!-- ================================================================ hero -->
-<section class="hero" aria-labelledby="hero-title">
+<section class="hero on-navy" aria-labelledby="hero-title">
   <div class="wrap hero-in">
-    <div class="hero-copy">
-      <p class="hero-kicker"><span>0.1.0-beta.16</span><span>Apache-2.0</span><span>Rust 1.95</span><span>one machine</span></p>
-      <h1 id="hero-title">Relational SQL on one machine, written from the wire protocol down to the <em>8&nbsp;KiB page</em>.</h1>
+    <h1 id="hero-title">Relational SQL on one machine, written from the wire protocol down to the <em>8&nbsp;KiB page</em>.</h1>
+    <div class="hero-row">
       <p class="lede">
         NusaDB keeps rows in the leaves of a clustered B+tree, writes every change to a
         checksummed redo log, and returns from <code>COMMIT</code> after that log is on disk.
@@ -72,22 +68,6 @@
         </a>
       </div>
     </div>
-
-    <aside class="spec" aria-labelledby="spec-title">
-      <h2 id="spec-title">Specification</h2>
-      <dl>
-        <dt>Release</dt><dd>0.1.0-beta.16</dd>
-        <dt>Licence</dt><dd>Apache-2.0</dd>
-        <dt>Port</dt><dd>5678</dd>
-        <dt>Protocol</dt><dd>Nusa wire 1.3</dd>
-        <dt>Storage</dt><dd>B-link tree, 8 KiB</dd>
-        <dt>Isolation</dt><dd>RC default, SSI</dd>
-        <dt>Executor</dt><dd>1,024-row batches</dd>
-        <dt>At rest</dt><dd>AES-256-GCM-SIV</dd>
-        <dt>Auth</dt><dd>SCRAM-SHA-256</dd>
-        <dt>Image</dt><dd>amd64, arm64</dd>
-      </dl>
-    </aside>
 
     <!-- Fig. 1: the one animated drawing on the site. It shows the write path:
          records appended to the log, the fsync that makes a commit durable,
@@ -214,17 +194,37 @@
   </div>
 </section>
 
-<!-- ================================================================ 01 fit -->
+<!-- ================================================================ specification strip -->
+<section class="spec-strip on-strip" aria-labelledby="spec-title">
+  <div class="wrap">
+    <h2 id="spec-title" class="sr">Specification</h2>
+    <dl class="spec">
+      <div><dt>Release</dt><dd>0.1.0-beta.16</dd></div>
+      <div><dt>Licence</dt><dd>Apache-2.0</dd></div>
+      <div><dt>Port</dt><dd>5678</dd></div>
+      <div><dt>Protocol</dt><dd>Nusa wire 1.3</dd></div>
+      <div><dt>Storage</dt><dd>B-link tree, 8 KiB</dd></div>
+      <div><dt>Isolation</dt><dd>RC default, SSI</dd></div>
+      <div><dt>Executor</dt><dd>1,024-row batches</dd></div>
+      <div><dt>At rest</dt><dd>AES-256-GCM-SIV</dd></div>
+      <div><dt>Auth</dt><dd>SCRAM-SHA-256</dd></div>
+      <div><dt>Image</dt><dd>amd64, arm64</dd></div>
+    </dl>
+  </div>
+</section>
+
+<!-- ================================================================ fit -->
 <section class="sec" id="fit" aria-labelledby="fit-title">
-  <div class="wrap sec-in">
-    <p class="sec-label"><b>01</b>Who it is for</p>
-    <div class="sec-body">
-      <h2 id="fit-title">One server, one disk, one SQL database that you can reason about.</h2>
+  <div class="wrap sec-in side">
+    <header>
+      <h2 id="fit-title">One server, one disk, one SQL database you can reason about</h2>
       <p class="lede">
-        This release targets applications that run on a single host and want ordinary
-        relational guarantees from it. It is not a cluster. The second column is as
-        important as the first.
+        For applications on a single host that want ordinary relational guarantees from it.
+        It is not a cluster, so the second column matters as much as the first.
       </p>
+      <p style="margin-top:22px"><a class="more" href="docs/limits.html">Limits and capacity, in full</a></p>
+    </header>
+    <div>
       <div class="cols-2">
         <div>
           <p class="fit-h">Fits today</p>
@@ -237,7 +237,7 @@
           </ul>
         </div>
         <div>
-          <p class="fit-h">Does not fit yet</p>
+          <p class="fit-h no">Does not fit yet</p>
           <ul class="fitlist no">
             <li>Failover without a person. There is no clustering. A read-only standby follows the primary and is promoted by restarting it without <code>--standby-from</code>.</li>
             <li>A standby that must trail by seconds. Log segments reach the archive when the primary checkpoints, so the standby lags by that cadence.</li>
@@ -247,20 +247,18 @@
           </ul>
         </div>
       </div>
-      <p style="margin-top:24px"><a class="more" href="docs/limits.html">Limits and capacity, in full</a></p>
     </div>
   </div>
 </section>
 
-<!-- ================================================================ 02 session -->
-<section class="sec" id="session" aria-labelledby="session-title">
+<!-- ================================================================ session -->
+<section class="sec on-tint" id="session" aria-labelledby="session-title">
   <div class="wrap sec-in">
-    <p class="sec-label"><b>02</b>A session</p>
-    <div class="sec-body">
-      <h2 id="session-title">Six things to try in <code>nusadb-cli</code>.</h2>
-      <p class="lede">Each block below was run against a 0.1.0-beta.16 server on an empty data directory, and the output is pasted as the shell printed it, error included.</p>
+    <div class="sec-head split">
+      <h2 id="session-title">Six things to try in <code>nusadb-cli</code></h2>
+      <p class="lede">Each block ran against a 0.1.0-beta.16 server on an empty data directory. The output is pasted as the shell printed it, error included.</p>
     </div>
-    <div class="sec-wide">
+    <div>
       <div class="tour" data-tabs>
         <ul class="tour-list" role="tablist" aria-label="Examples">
           <li><button type="button" role="tab" id="t1" aria-controls="p1" aria-selected="true">A table and a ranking<small>identity, numeric, rank()</small></button></li>
@@ -270,7 +268,7 @@
           <li><button type="button" role="tab" id="t5" aria-controls="p5" aria-selected="false">Vectors and Indonesian text<small>hnsw, to_tsvector</small></button></li>
           <li><button type="button" role="tab" id="t6" aria-controls="p6" aria-selected="false">Reading a plan<small>EXPLAIN</small></button></li>
         </ul>
-        <div class="tour-panels">
+        <div class="tour-panels on-navy">
           <div class="tour-panel" role="tabpanel" id="p1" aria-labelledby="t1">
             <p>A five-row table, grouped and ranked in one query. <code>numeric</code> is exact base-10 fixed point, so the sums carry no binary rounding.</p>
             <div class="code">
@@ -422,20 +420,18 @@ conflicts with existing key (room, during)=(101, ["2026-11-02 02:00:00+00","2026
   </div>
 </section>
 
-<!-- ================================================================ 03 storage -->
+<!-- ================================================================ storage -->
 <section class="sec" id="storage" aria-labelledby="storage-title">
   <div class="wrap sec-in">
-    <p class="sec-label"><b>03</b>How a row is stored</p>
-    <div class="sec-body">
+    <div class="sec-head stacked">
       <h2 id="storage-title">The row is in the leaf. Its history is one pointer away.</h2>
       <p class="lede">
-        Tables are clustered B-link trees keyed by a row id the engine assigns. A lookup ends at
-        the leaf that holds the row, with no second hop into a separate heap. Every node is one
-        8&nbsp;KiB page, and each node carries a right link and a high key, so a reader that
-        arrives during a split follows the link instead of starting over.
+        Tables are clustered B-link trees keyed by a row id the engine assigns, so a lookup ends at
+        the leaf that holds the row, with no second hop into a separate heap. A reader that arrives
+        during a split follows the right link instead of starting over.
       </p>
     </div>
-    <div class="sec-wide">
+    <div>
       <figure class="fig" aria-labelledby="fig2-cap">
         <div class="fig-frame">
           <div class="fig-head"><span><b>Fig. 2</b> &nbsp;Leaf page, little-endian</span><span>byte offsets above the cells; widths not to scale</span></div>
@@ -474,10 +470,10 @@ conflicts with existing key (room, during)=(101, ["2026-11-02 02:00:00+00","2026
         <figcaption id="fig2-cap"><b>Fig. 2</b>A leaf entry is the newest version of one row. Its 24-byte header decides visibility. A row too large for a leaf keeps a stub whose first 24 bytes are that header, with the rest in a chain of overflow pages, so a visibility check never reads the chain. Interior pages hold fixed 16-byte separator and child pairs.</figcaption>
       </figure>
     </div>
-    <div class="sec-body" style="margin-top:44px">
+    <div style="margin-top:56px">
       <div class="cols-2">
         <div>
-          <h3 style="font-size:18px;margin-bottom:10px">Old versions</h3>
+          <h3 style="font-size:22px;margin-bottom:12px;color:var(--heading)">Old versions</h3>
           <p>
             An <code>UPDATE</code> moves the old header and tuple into an undo arena and writes the
             new version into the leaf, pointing back at it. A <code>DELETE</code> stamps
@@ -526,20 +522,18 @@ conflicts with existing key (room, during)=(101, ["2026-11-02 02:00:00+00","2026
   </div>
 </section>
 
-<!-- ================================================================ 04 durability -->
-<section class="sec" id="durability" aria-labelledby="dur-title">
+<!-- ================================================================ durability (navy band) -->
+<section class="sec on-navy" id="durability" aria-labelledby="dur-title">
   <div class="wrap sec-in">
-    <p class="sec-label"><b>04</b>Durability</p>
-    <div class="sec-body">
+    <div class="sec-head split">
       <h2 id="dur-title">Each log record carries its position, its length and a CRC over both.</h2>
       <p class="lede">
-        The log is the durable copy of every change since the last checkpoint. A frame has a
-        16-byte header. The CRC32 covers the header fields as well as the body, so a zeroed
-        sector or a corrupted length is caught, and a torn record at the end of the file ends
-        the durable prefix cleanly.
+        The log is the durable copy of every change since the last checkpoint. Because the CRC32
+        covers the 16-byte header as well as the body, a zeroed sector or a corrupted length is
+        caught, and a torn record at the end of the file ends the durable prefix cleanly.
       </p>
     </div>
-    <div class="sec-wide">
+    <div>
       <figure class="fig" aria-labelledby="fig4-cap">
         <div class="fig-frame">
           <div class="fig-head"><span><b>Fig. 4</b> &nbsp;Log frame</span><span>btree.wal</span></div>
@@ -568,7 +562,7 @@ conflicts with existing key (room, during)=(101, ["2026-11-02 02:00:00+00","2026
         <figcaption id="fig4-cap"><b>Fig. 4</b>Compress, then encrypt, then checksum. With encryption on, a torn tail is still recognised without the key, and a frame whose CRC is intact but whose tag fails cannot come from a crash, so recovery refuses the log at that point instead of truncating it.</figcaption>
       </figure>
 
-      <div class="facts" style="margin-top:36px">
+      <div class="facts" style="margin-top:48px">
         <div><b>64 MiB</b><span>log size at which the background worker checkpoints a database (<code>--checkpoint-threshold-bytes</code>)</span></div>
         <div><b>5 s</b><span>how often the worker checks each log (<code>--checkpoint-interval</code>)</span></div>
         <div><b>2 s</b><span>longest it holds new transactions to find a quiet moment (<code>--checkpoint-max-pause</code>)</span></div>
@@ -576,17 +570,20 @@ conflicts with existing key (room, during)=(101, ["2026-11-02 02:00:00+00","2026
       </div>
     </div>
 
-    <div class="sec-body" style="margin-top:48px">
-      <h3 style="font-size:20px;margin-bottom:10px">What <code>kill -9</code> leaves behind</h3>
+    <div class="side side-code" style="margin-top:64px">
+      <div>
+        <h3 style="font-size:24px;margin-bottom:14px;color:#fff;letter-spacing:-0.02em">What <code>kill -9</code> leaves behind</h3>
       <p>
-        The session below ran on the same server as the examples above. A checkpoint folds a
+        This session ran on the same server as the examples above. A checkpoint folds a
         40&nbsp;MB log into one full segment and truncates the log. An update of 100 rows adds a
         32&nbsp;KiB incremental segment at the next checkpoint. A row committed after the last checkpoint
         exists only in a 224-byte log when the server is killed with <code>SIGKILL</code>, and it is
         there after the restart.
       </p>
-    </div>
-    <div class="sec-wide">
+    
+              <p class="dim" style="font-size:14px">Listings trimmed to size and name, and the shell's <code>--host</code> flag left out. Id 8 went to a transaction that never committed; identity values are not handed back on rollback. Other ways to keep a copy: <a href="docs/configuration.html#backup">scheduled hard-link backups</a>, a <a href="docs/configuration.html#checkpoints-backup-and-restore">log archive with point-in-time restore</a>, and a read-only standby that follows the archive.</p>
+      </div>
+      <div>
       <div class="code">
         <div class="code-bar"><span>shell, data directory of database nusadb</span><button class="copy" type="button"><em>Copy</em></button></div>
 <pre><span class="p">$ </span>cd data &amp;&amp; ls -l base/nusadb
@@ -627,25 +624,23 @@ conflicts with existing key (room, during)=(101, ["2026-11-02 02:00:00+00","2026
 <span class="g">9  | south  | 12.50</span>
 <span class="o">SELECT 3</span></pre>
       </div>
-      <p class="dim" style="font-size:13.5px;max-width:none">Listings trimmed to size and name, and the shell's <code>--host</code> flag left out. Id 8 went to a transaction that never committed; identity values are not handed back on rollback. Other ways to keep a copy: <a href="docs/configuration.html#backup">scheduled hard-link backups</a>, a <a href="docs/configuration.html#checkpoints-backup-and-restore">log archive with point-in-time restore</a>, and a read-only standby that follows the archive.</p>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ================================================================ 05 layers -->
+<!-- ================================================================ layers -->
 <section class="sec" id="layers" aria-labelledby="layers-title">
   <div class="wrap sec-in">
-    <p class="sec-label"><b>05</b>Layers</p>
-    <div class="sec-body">
-      <h2 id="layers-title">Seven layers, one dependency direction.</h2>
+    <div>
+      <div class="stack">
+        <div class="stack-lead">
+      <h2 id="layers-title">Seven layers, one dependency direction</h2>
       <p class="lede">
         The storage side never imports the SQL side. They meet at one Rust trait, so each half can
         be tested on its own. Storage code is also exercised against simulated disks that tear
         writes, fail <code>fsync</code> and lose power, replayable from a single seed.
       </p>
-    </div>
-    <div class="sec-wide">
-      <div class="stack">
         <figure class="fig fig-narrow" aria-labelledby="fig5-cap">
           <div class="fig-frame">
             <div class="fig-head"><span><b>Fig. 5</b> &nbsp;Crates by layer</span></div>
@@ -673,6 +668,7 @@ conflicts with existing key (room, during)=(101, ["2026-11-02 02:00:00+00","2026
           </div>
           <figcaption id="fig5-cap"><b>Fig. 5</b>Crate names as they appear in the source tree. Rows travel as opaque bytes across the trait; the SQL layer owns their encoding.</figcaption>
         </figure>
+        </div>
         <ol class="layers">
           <li><div><h3>Client</h3><p><code>nusadb-cli</code> with aligned, expanded, CSV and JSON output, drivers for Rust, Java, Node.js, Python, Go, Ruby, PHP and .NET, and a C API.</p></div></li>
           <li><div><h3>Protocol</h3><p>Length-prefixed frames on one port. TLS 1.3 through rustls, mutual TLS with <code>--tls-client-ca</code>, SCRAM-SHA-256, extended query with named statements and portals, <code>COPY</code> in text and binary, notices.</p></div></li>
@@ -687,18 +683,19 @@ conflicts with existing key (room, during)=(101, ["2026-11-02 02:00:00+00","2026
   </div>
 </section>
 
-<!-- ================================================================ 06 operating -->
-<section class="sec" id="operating" aria-labelledby="ops-title">
-  <div class="wrap sec-in">
-    <p class="sec-label"><b>06</b>Operating it</p>
-    <div class="sec-body">
-      <h2 id="ops-title">Everything is a flag on <code>nusadb-server</code>.</h2>
+<!-- ================================================================ operating -->
+<section class="sec on-tint" id="operating" aria-labelledby="ops-title">
+  <div class="wrap sec-in side">
+    <header>
+      <h2 id="ops-title">Everything is a flag on <code>nusadb-server</code></h2>
       <p class="lede">
         There is no configuration file and no second daemon. These are the flags most deployments
         touch, with their defaults from <code>--help</code>. The full list of 44 is in
         <a href="docs/configuration.html#server-flags">configuration</a>.
       </p>
-      <div class="table-scroll" style="border:0;background:transparent">
+    </header>
+    <div>
+      <div class="table-scroll" style="margin:0">
       <table class="flagtable">
         <thead><tr><th>Flag</th><th>Default</th><th>What it does</th></tr></thead>
         <tbody>
@@ -725,19 +722,18 @@ conflicts with existing key (room, during)=(101, ["2026-11-02 02:00:00+00","2026
   </div>
 </section>
 
-<!-- ================================================================ 07 numbers -->
-<section class="sec" id="numbers" aria-labelledby="num-title">
+<!-- ================================================================ numbers (navy band) -->
+<section class="sec on-navy" id="numbers" aria-labelledby="num-title">
   <div class="wrap sec-in">
-    <p class="sec-label"><b>07</b>Measured</p>
-    <div class="sec-body">
-      <h2 id="num-title">Numbers, with the machine and the build they came from.</h2>
+    <div class="sec-head split">
+      <h2 id="num-title">Numbers, with the machine and the build they came from</h2>
       <p class="lede">
         Single-machine measurements on a laptop, not a tuned benchmark. Each was taken on an
         earlier 0.1.0 build named next to it, and none has been repeated on beta.16. They show
         orders of magnitude, not a ceiling.
       </p>
     </div>
-    <div class="sec-wide">
+    <div>
       <div class="numbers">
         <table class="mtable">
           <thead><tr><th>Result</th><th>What was measured</th></tr></thead>
@@ -787,19 +783,18 @@ conflicts with existing key (room, during)=(101, ["2026-11-02 02:00:00+00","2026
   </div>
 </section>
 
-<!-- ================================================================ 08 drivers -->
+<!-- ================================================================ drivers -->
 <section class="sec" id="drivers" aria-labelledby="drv-title">
   <div class="wrap sec-in">
-    <p class="sec-label"><b>08</b>Drivers</p>
-    <div class="sec-body">
-      <h2 id="drv-title">Eight languages, no native dependencies.</h2>
+    <div class="sec-head stacked">
+      <h2 id="drv-title">Eight languages, no native dependencies</h2>
       <p class="lede">
         Every driver speaks the protocol directly and binds parameters as <code>$1</code>,
         <code>$2</code>. Typed columns come back as the language's own types: integers, decimals,
         datetimes, parsed JSON.
       </p>
     </div>
-    <div class="sec-wide">
+    <div>
       <div class="drivers" data-tabs>
         <div class="dtabs" role="tablist" aria-label="Driver language">
           <button type="button" role="tab" id="dt-py" aria-controls="dp-py" aria-selected="true">Python</button>
@@ -931,14 +926,13 @@ cmd.Parameters.Add(<span class="k">new</span> NusaParameter(<span class="s">"1"<
   </div>
 </section>
 
-<!-- ================================================================ 09 install -->
-<section class="sec" id="install" aria-labelledby="inst-title">
+<!-- ================================================================ install -->
+<section class="sec on-tint" id="install" aria-labelledby="inst-title">
   <div class="wrap sec-in">
-    <p class="sec-label"><b>09</b>Install</p>
-    <div class="sec-body">
-      <h2 id="inst-title">Three ways to get a server running.</h2>
+    <div class="sec-head">
+      <h2 id="inst-title">Three ways to get a server running</h2>
     </div>
-    <div class="sec-wide">
+    <div>
       <div class="install-grid">
         <section aria-labelledby="i1">
           <h3 id="i1">Container image</h3>
@@ -982,12 +976,14 @@ cd nusadb-v0.1.0-beta.14-$TARGET
   </div>
 </section>
 
-<!-- ================================================================ 10 changes -->
+<!-- ================================================================ changes -->
 <section class="sec" id="changes" aria-labelledby="changes-title">
-  <div class="wrap sec-in">
-    <p class="sec-label"><b>10</b>Recent releases</p>
-    <div class="sec-body">
-      <h2 id="changes-title">What the last two releases changed.</h2>
+  <div class="wrap sec-in side">
+    <header>
+      <h2 id="changes-title">What the last two releases changed</h2>
+      <p style="margin-top:18px"><a class="more" href="https://github.com/nusadb/nusadb/commits/master">Full commit history</a></p>
+    </header>
+    <div>
       <div class="rel">
         <h3>0.1.0-beta.16<small>Constraints, unique keys, partitions</small></h3>
         <ul>
@@ -1009,17 +1005,17 @@ cd nusadb-v0.1.0-beta.14-$TARGET
           <li>Binary <code>COPY</code>, several statements in one simple query, and <code>COPY</code> inside an open transaction. <a class="sha" href="https://github.com/nusadb/nusadb/commit/d52e534">d52e534</a> <a class="sha" href="https://github.com/nusadb/nusadb/commit/f2996e6">f2996e6</a></li>
         </ul>
       </div>
-      <p style="margin-top:18px"><a class="more" href="https://github.com/nusadb/nusadb/commits/master">Full commit history</a></p>
     </div>
   </div>
 </section>
 
-<!-- ================================================================ 11 faq -->
-<section class="sec" id="faq" aria-labelledby="faq-title">
-  <div class="wrap sec-in">
-    <p class="sec-label"><b>11</b>Questions</p>
-    <div class="sec-body faq">
-      <h2 id="faq-title">Questions people ask first.</h2>
+<!-- ================================================================ faq -->
+<section class="sec on-tint" id="faq" aria-labelledby="faq-title">
+  <div class="wrap sec-in side">
+    <header>
+      <h2 id="faq-title">Questions people ask first</h2>
+    </header>
+    <div class="faq">
       <details>
         <summary>Can I connect with a client written for another database?</summary>
         <div><p>No. NusaDB has its own wire protocol, and a client that sends another engine's handshake gets no answer, so it looks like a connection that hangs. Use <code>nusadb-cli</code>, one of the eight drivers, or write a client against the <a href="https://github.com/nusadb/nusadb/blob/master/docs/wire-protocol.md">protocol specification</a>. SQL written for other engines usually runs unchanged.</p></div>
@@ -1052,9 +1048,9 @@ cd nusadb-v0.1.0-beta.14-$TARGET
   </div>
 </section>
 
-<section class="close" aria-labelledby="close-title">
+<section class="close on-close" aria-labelledby="close-title">
   <div class="wrap close-in">
-    <h2 id="close-title">Start a server, open the shell, and read the plan it prints.</h2>
+    <h2 id="close-title">Start a server, open the shell, and read the plan it prints</h2>
     <div class="actions">
       <a class="btn btn-primary" href="docs/getting-started.html">Getting started</a>
       <a class="btn btn-line" href="docs/internals.html">How it works</a>
@@ -1069,11 +1065,7 @@ cd nusadb-v0.1.0-beta.14-$TARGET
     <div class="foot-grid">
       <div>
         <a class="brand" href="./">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
-            <path d="M4 6.5c0-1.4 3.6-2.5 8-2.5s8 1.1 8 2.5-3.6 2.5-8 2.5-8-1.1-8-2.5Z"/>
-            <path d="M4 6.5v11c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5v-11"/>
-            <path d="M4 12c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5"/>
-          </svg>
+          <svg class="mark" width="26" height="26" viewBox="0 0 32 32" aria-hidden="true"><path d="M4 1h18l9 9v18a3 3 0 0 1-3 3H4a3 3 0 0 1-3-3V4a3 3 0 0 1 3-3z" fill="#D0E7E6"/><path d="M22 1l9 9h-9z" fill="#95CCDD"/><rect x="5" y="8" width="13" height="5" rx="2.5" fill="#293681"/><rect x="11" y="16" width="16" height="5" rx="2.5" fill="#4274D9"/><rect x="5" y="24" width="8" height="5" rx="2.5" fill="#293681"/><rect x="16" y="24" width="5" height="5" rx="2.5" fill="#95CCDD"/></svg>
           <span>Nusa<b>DB</b></span>
         </a>
         <p>Relational database for a single machine.<br />Version 0.1.0-beta.16.</p>
@@ -1114,6 +1106,6 @@ cd nusadb-v0.1.0-beta.14-$TARGET
   </div>
 </footer>
 
-<script src="js/main.js?v=20261029r2"></script>
+<script src="js/main.js?v=20261029r3"></script>
 </body>
 </html>
