@@ -36,24 +36,31 @@ npx serve .
 ## Design notes
 
 The brand palette has five colours: navy `#293681`, blue `#4274D9`, light blue `#95CCDD`,
-pale mint `#D0E7E6` and a very light blue `#E3F2FD`. Navy carries the site: the masthead, the
-hero, the durability and measurements bands, code panels and the footer. White and `#E3F2FD`
-sections alternate between them for dense content. Blue is for buttons, links, focus and active
-states; mint is for callouts, table headers, the specification strip and diagram fills; light
-blue marks text and strokes on navy and the closing band. Every other value is a tint or shade of
-those five, except one amber used only for caution notes and error output. Every colour is a token
-on `:root`, redefined for the dark theme (navy-black grounds derived from the navy), and a band
-such as `.on-navy` redefines the tokens again so components and diagrams repaint themselves on it.
-Contrast ratios are listed at the top of `css/style.css`. The page follows the operating system's
-colour scheme, and the toggle overrides it and is remembered in `localStorage`.
+pale mint `#D0E7E6` and a very light blue `#E3F2FD`. The page is white. Navy is for headings,
+key figures and the panels that show the product itself: the terminal in the hero, code blocks
+and the write-path figure. Blue is the accent for buttons, links, focus and chart marks; the
+button uses `#3d6dd3`, the nearest shade of it that carries white text at AA. Mint and light
+blue appear only as small accents (diagram fills, a badge, a chart series), and `#E3F2FD` is used
+for hover and selected states and for the one quiet section, Install. Every other value is a tint
+or shade of those five, except one amber used only for caution notes and error output. Every
+colour is a token on `:root`, redefined for the dark theme (navy-black grounds), and a navy
+panel (`.on-navy`) redefines the tokens again so code and diagrams repaint themselves on it.
+Contrast ratios are listed at the top of `css/style.css`. The page follows the operating
+system's colour scheme, and the toggle overrides it and is remembered in `localStorage`.
 
-Headings are IBM Plex Sans at weight 700 with tight tracking, text is IBM Plex Sans and anything
-that is a name, a size, a flag or a byte offset is IBM Plex Mono, loaded from Google Fonts with
-system fallbacks. The mark in the masthead, footer and favicon is an 8 KiB page tile in mint with
-its corner folded, holding rows laid out like a chain of islands.
+Text is Plus Jakarta Sans, from an Indonesian type foundry, at 700 with tight tracking for
+headings. Code, flags, file names and byte fields are JetBrains Mono with ligatures turned off,
+so `<=` in a transcript stays two characters. Both load from Google Fonts with system
+fallbacks. The hyphen alone is taken from a system face, because the one in Plus Jakarta Sans is
+long enough to read as a dash in `0.1.0-beta.16`.
+
+The logo is a database cylinder: a navy body in three stacked disks, separated by light blue
+bands, under a blue top. The same drawing is inlined in the header and footer of every page
+(its colours are tokens, so it repaints in the dark theme) and is the favicon as an SVG data URI.
 
 Diagrams are inline SVG drawn with classes (`d-box`, `d-txt`, `d-line-sig` and so on), so every
-ground comes from the same tokens. Fig. 1 on the home page is the only animated element: it steps
+ground comes from the same tokens. Field and file names in them are set in the mono face and
+descriptions in the text face. Fig. 1 on the home page is the only animated element: it steps
 through a write, a commit and a checkpoint, has pause and step buttons, starts only when it is on
 screen, and stays still when the reader prefers reduced motion. Every page works without
 JavaScript: tab panels then show one under another and the figure shows its pre-checkpoint state.

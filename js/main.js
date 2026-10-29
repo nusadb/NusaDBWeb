@@ -59,6 +59,15 @@
     });
   }
 
+  // The header is borderless at the top of the page and gains a rule once
+  // the page scrolls under it. Without script the rule is always there.
+  var mast = document.querySelector(".masthead");
+  if (mast) {
+    var edge = function () { mast.classList.toggle("scrolled", window.scrollY > 4); };
+    window.addEventListener("scroll", edge, { passive: true });
+    edge();
+  }
+
   var sideBtn = document.querySelector(".sidebar-toggle");
   var side = document.querySelector(".sidebar");
   if (sideBtn && side) {

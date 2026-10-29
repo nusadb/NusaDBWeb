@@ -5,16 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>NusaDB · relational database for a single machine</title>
 <meta name="description" content="NusaDB is an open-source relational database written in Rust: a clustered B+tree on 8 KiB pages, a checksummed redo log, serializable snapshot isolation and its own wire protocol, in one server binary. Version 0.1.0-beta.16, Apache-2.0." />
-<meta name="theme-color" content="#293681" />
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M4 1h18l9 9v18a3 3 0 0 1-3 3H4a3 3 0 0 1-3-3V4a3 3 0 0 1 3-3z' fill='%23D0E7E6'/%3E%3Cpath d='M22 1l9 9h-9z' fill='%2395CCDD'/%3E%3Crect x='5' y='8' width='13' height='5' rx='2.5' fill='%23293681'/%3E%3Crect x='11' y='16' width='16' height='5' rx='2.5' fill='%234274D9'/%3E%3Crect x='5' y='24' width='8' height='5' rx='2.5' fill='%23293681'/%3E%3Crect x='16' y='24' width='5' height='5' rx='2.5' fill='%2395CCDD'/%3E%3C/svg%3E" />
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#0f1433" media="(prefers-color-scheme: dark)" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M5 7.5v17.4c0 2.5 4.9 4.5 11 4.5s11-2 11-4.5V7.5z' fill='%23293681'/%3E%3Cpath d='M5 13.3c0 2.5 4.9 4.5 11 4.5s11-2 11-4.5M5 19.1c0 2.5 4.9 4.5 11 4.5s11-2 11-4.5' fill='none' stroke='%2395CCDD' stroke-width='1.7'/%3E%3Cellipse cx='16' cy='7.5' rx='11' ry='4.5' fill='%234274D9'/%3E%3C/svg%3E" />
 <meta property="og:type" content="website" />
 <meta property="og:title" content="NusaDB" />
 <meta property="og:description" content="A relational database for a single machine, written in Rust. Version 0.1.0-beta.16, Apache-2.0." />
 <script>document.documentElement.classList.add("js");try{var t=localStorage.getItem("nusadb-theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="css/style.css?v=20261029r3" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css?v=20261029r4" />
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -22,14 +23,13 @@
 <header class="masthead">
   <div class="wrap masthead-in">
     <a class="brand" href="./">
-      <svg class="mark" width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><path d="M4 1h18l9 9v18a3 3 0 0 1-3 3H4a3 3 0 0 1-3-3V4a3 3 0 0 1 3-3z" fill="#D0E7E6"/><path d="M22 1l9 9h-9z" fill="#95CCDD"/><rect x="5" y="8" width="13" height="5" rx="2.5" fill="#293681"/><rect x="11" y="16" width="16" height="5" rx="2.5" fill="#4274D9"/><rect x="5" y="24" width="8" height="5" rx="2.5" fill="#293681"/><rect x="16" y="24" width="5" height="5" rx="2.5" fill="#95CCDD"/></svg>
+      <svg class="mark" width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><path class="mk-body" d="M5 7.5v17.4c0 2.5 4.9 4.5 11 4.5s11-2 11-4.5V7.5z"/><path class="mk-band" d="M5 13.3c0 2.5 4.9 4.5 11 4.5s11-2 11-4.5M5 19.1c0 2.5 4.9 4.5 11 4.5s11-2 11-4.5"/><ellipse class="mk-top" cx="16" cy="7.5" rx="11" ry="4.5"/></svg>
       <span>Nusa<b>DB</b></span>
       <span class="ver">0.1.0-beta.16</span>
     </a>
     <nav class="mast-nav" id="mastNav" aria-label="Main">
       <ul>
         <li><a href="docs/">Docs</a></li>
-        <li><a href="#install">Install</a></li>
         <li><a href="docs/internals.html">Internals</a></li>
         <li><a href="docs/sql.html">SQL</a></li>
         <li><a href="docs/clients.html">Drivers</a></li>
@@ -38,6 +38,7 @@
       </ul>
     </nav>
     <div class="mast-tools">
+      <a class="btn btn-primary mast-cta" href="#install">Install</a>
       <button class="icon-btn" id="themeBtn" type="button" aria-label="Switch theme"></button>
       <button class="icon-btn burger" id="burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mastNav">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
@@ -49,33 +50,265 @@
 <main id="main">
 
 <!-- ================================================================ hero -->
-<section class="hero on-navy" aria-labelledby="hero-title">
+<section class="hero" aria-labelledby="hero-title">
   <div class="wrap hero-in">
-    <h1 id="hero-title">Relational SQL on one machine, written from the wire protocol down to the <em>8&nbsp;KiB page</em>.</h1>
+    <h1 id="hero-title">Relational SQL on one machine<span class="tp">,</span> from the wire protocol down to the <em>8&nbsp;KiB page</em><span class="tp">.</span></h1>
     <div class="hero-row">
       <p class="lede">
-        NusaDB keeps rows in the leaves of a clustered B+tree, writes every change to a
-        checksummed redo log, and returns from <code>COMMIT</code> after that log is on disk.
-        One server binary holds the SQL engine, the storage engine and its own wire protocol.
-        Drivers exist for eight languages.
+        One server binary, written in Rust, that keeps rows in the leaves of a clustered B+tree,
+        returns from <code>COMMIT</code> once a checksummed redo log is on disk, and speaks its own
+        wire protocol to drivers in eight languages.
       </p>
-      <div class="actions">
-        <a class="btn btn-primary" href="#install">Install</a>
-        <a class="btn btn-line" href="docs/getting-started.html">Getting started</a>
-        <a class="btn btn-line" href="https://github.com/nusadb/nusadb">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
-          Source
-        </a>
+      <div class="hero-act">
+        <div class="actions">
+          <a class="btn btn-primary" href="docs/getting-started.html">Get started</a>
+          <a class="btn btn-line" href="https://github.com/nusadb/nusadb">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+            Source on GitHub
+          </a>
+        </div>
+        <div class="code cmd" aria-label="Run the container image">
+<pre><span class="p">$ </span>docker run -d --name nusadb -p 5678:5678 -v nusadb-data:/var/lib/nusadb -e NUSADB_USER=app -e NUSADB_PASSWORD=change-me nusadb/nusadb:0.1.0-beta.16</pre>
+          <div class="code-bar"><button class="copy" type="button"><em>Copy</em></button></div>
+        </div>
+        <p class="beta">A pre-1.0 beta. Read the <a href="docs/limits.html">limits page</a> before deciding.</p>
       </div>
     </div>
 
-    <!-- Fig. 1: the one animated drawing on the site. It shows the write path:
-         records appended to the log, the fsync that makes a commit durable,
-         pages dirtied in the cache, and a checkpoint writing only the changed
-         pages to a new segment before the log is truncated. Without script or
-         with reduced motion, the drawing stays in its pre-checkpoint state. -->
+    <!-- The product itself is the hero visual: six real nusadb-cli sessions,
+         output pasted unedited from a 0.1.0-beta.16 server. -->
+    <div class="term-wrap" id="session">
+      <h2 class="sr">Six things to try in nusadb-cli</h2>
+      <div class="term on-navy" data-tabs>
+        <div class="term-bar">
+          <span class="where"><b>nusadb-cli</b> · 0.1.0-beta.16 server · empty data directory · output as printed, error included</span>
+        </div>
+        <div class="term-tabs" role="tablist" aria-label="Examples">
+          <button type="button" role="tab" id="t1" aria-controls="p1" aria-selected="true">Ranking</button>
+          <button type="button" role="tab" id="t2" aria-controls="p2" aria-selected="false">No double booking</button>
+          <button type="button" role="tab" id="t3" aria-controls="p3" aria-selected="false">Running total</button>
+          <button type="button" role="tab" id="t4" aria-controls="p4" aria-selected="false">Upsert</button>
+          <button type="button" role="tab" id="t5" aria-controls="p5" aria-selected="false">Vectors and Indonesian text</button>
+          <button type="button" role="tab" id="t6" aria-controls="p6" aria-selected="false">Reading a plan</button>
+        </div>
+        <div class="term-panels">
+          <div class="term-panel" role="tabpanel" id="p1" aria-labelledby="t1">
+            <p class="term-note"><span class="tag">identity, numeric, rank()</span>A five-row table, grouped and ranked in one query. <code>numeric</code> is exact base-10 fixed point, so the sums carry no binary rounding.</p>
+            <div class="code">
+              <div class="code-bar"><span>nusadb-cli</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">CREATE TABLE</span> orders (
+  id      <span class="k">bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY</span>,
+  region  <span class="k">text NOT NULL</span>,
+  total   <span class="k">numeric</span>(<span class="s">10</span>,<span class="s">2</span>) <span class="k">NOT NULL</span>,
+  placed  <span class="k">date NOT NULL</span>
+);
+<span class="k">INSERT INTO</span> orders (region, total, placed) <span class="k">VALUES</span>
+  (<span class="s">'east'</span>, <span class="s">120.00</span>, <span class="s">'2026-10-01'</span>), (<span class="s">'east'</span>, <span class="s">75.50</span>, <span class="s">'2026-10-03'</span>),
+  (<span class="s">'west'</span>, <span class="s">210.25</span>, <span class="s">'2026-10-02'</span>), (<span class="s">'west'</span>, <span class="s">19.99</span>, <span class="s">'2026-10-05'</span>),
+  (<span class="s">'north'</span>, <span class="s">64.00</span>, <span class="s">'2026-10-04'</span>);
+<span class="k">SELECT</span> region, count(*) <span class="k">AS</span> orders, sum(total) <span class="k">AS</span> revenue,
+       rank() <span class="k">OVER</span> (<span class="k">ORDER BY</span> sum(total) <span class="k">DESC</span>) <span class="k">AS</span> rank
+<span class="k">FROM</span> orders <span class="k">GROUP BY</span> region <span class="k">ORDER BY</span> rank;
+
+<span class="o">CREATE TABLE</span>
+<span class="o">INSERT 5</span>
+<span class="o">region | orders | revenue | rank</span>
+<span class="o">-------+--------+---------+-----</span>
+<span class="o">west   | 2      | 230.24  | 1</span>
+<span class="o">east   | 2      | 195.50  | 2</span>
+<span class="o">north  | 1      | 64.00   | 3</span>
+<span class="o">SELECT 3</span></pre>
+            </div>
+          </div>
+
+          <div class="term-panel" role="tabpanel" id="p2" aria-labelledby="t2">
+            <p class="term-note"><span class="tag">EXCLUDE on a range</span>An exclusion constraint refuses a second booking of room 101 whose time range overlaps the first. The error reports both keys, with the <code>+07</code> input normalised to UTC.</p>
+            <div class="code">
+              <div class="code-bar"><span>nusadb-cli</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">CREATE TABLE</span> booking (
+  room    <span class="k">int</span>,
+  during  <span class="k">tstzrange</span>,
+  <span class="k">CONSTRAINT</span> no_double_booking
+    <span class="k">EXCLUDE USING</span> gist (room <span class="k">WITH</span> =, during <span class="k">WITH</span> &amp;&amp;)
+);
+<span class="k">INSERT INTO</span> booking <span class="k">VALUES</span> (<span class="s">101</span>, <span class="s">'[2026-11-02 09:00+07, 2026-11-02 11:00+07)'</span>);
+<span class="k">INSERT INTO</span> booking <span class="k">VALUES</span> (<span class="s">101</span>, <span class="s">'[2026-11-02 10:30+07, 2026-11-02 12:00+07)'</span>);
+
+<span class="o">CREATE TABLE</span>
+<span class="o">INSERT 1</span>
+<span class="e">ERROR 23P01: conflicting key value violates exclusion constraint "no_double_booking":
+key (room, during)=(101, ["2026-11-02 03:30:00+00","2026-11-02 05:00:00+00"))
+conflicts with existing key (room, during)=(101, ["2026-11-02 02:00:00+00","2026-11-02 04:00:00+00"))</span></pre>
+            </div>
+          </div>
+
+          <div class="term-panel" role="tabpanel" id="p3" aria-labelledby="t3">
+            <p class="term-note"><span class="tag">WITH RECURSIVE, window</span>A recursive CTE generates the days, a left join keeps the empty ones, and a window over the grouped sum gives the running total. Uses the <code>orders</code> table from the first example.</p>
+            <div class="code">
+              <div class="code-bar"><span>nusadb-cli</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">WITH RECURSIVE</span> days(d) <span class="k">AS</span> (
+  <span class="k">SELECT DATE</span> <span class="s">'2026-10-01'</span>
+  <span class="k">UNION ALL</span>
+  <span class="k">SELECT</span> d + <span class="s">1</span> <span class="k">FROM</span> days <span class="k">WHERE</span> d &lt; <span class="k">DATE</span> <span class="s">'2026-10-05'</span>
+)
+<span class="k">SELECT</span> d <span class="k">AS</span> day,
+       coalesce(sum(o.total), <span class="s">0</span>) <span class="k">AS</span> revenue,
+       sum(coalesce(sum(o.total), <span class="s">0</span>)) <span class="k">OVER</span> (<span class="k">ORDER BY</span> d) <span class="k">AS</span> running
+<span class="k">FROM</span> days <span class="k">LEFT JOIN</span> orders o <span class="k">ON</span> o.placed = d
+<span class="k">GROUP BY</span> d <span class="k">ORDER BY</span> d;
+
+<span class="o">day        | revenue | running</span>
+<span class="o">-----------+---------+--------</span>
+<span class="o">2026-10-01 | 120.00  | 120.00</span>
+<span class="o">2026-10-02 | 210.25  | 330.25</span>
+<span class="o">2026-10-03 | 75.50   | 405.75</span>
+<span class="o">2026-10-04 | 64.00   | 469.75</span>
+<span class="o">2026-10-05 | 19.99   | 489.74</span>
+<span class="o">SELECT 5</span></pre>
+            </div>
+          </div>
+
+          <div class="term-panel" role="tabpanel" id="p4" aria-labelledby="t4">
+            <p class="term-note"><span class="tag">ON CONFLICT … RETURNING</span>The existing SKU is incremented, the new one is inserted, and <code>RETURNING</code> reports what each row ended up as. The tag counts both rows.</p>
+            <div class="code">
+              <div class="code-bar"><span>nusadb-cli</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">CREATE TABLE</span> stock (sku <span class="k">text PRIMARY KEY</span>, qty <span class="k">int NOT NULL</span>);
+<span class="k">INSERT INTO</span> stock <span class="k">VALUES</span> (<span class="s">'KOPI-250'</span>, <span class="s">10</span>);
+<span class="k">INSERT INTO</span> stock <span class="k">VALUES</span> (<span class="s">'KOPI-250'</span>, <span class="s">5</span>), (<span class="s">'TEH-100'</span>, <span class="s">8</span>)
+  <span class="k">ON CONFLICT</span> (sku) <span class="k">DO UPDATE SET</span> qty = stock.qty + excluded.qty
+  <span class="k">RETURNING</span> sku, qty;
+
+<span class="o">CREATE TABLE</span>
+<span class="o">INSERT 1</span>
+<span class="o">sku      | qty</span>
+<span class="o">---------+----</span>
+<span class="o">KOPI-250 | 15</span>
+<span class="o">TEH-100  | 8</span>
+<span class="o">INSERT 2</span></pre>
+            </div>
+          </div>
+
+          <div class="term-panel" role="tabpanel" id="p5" aria-labelledby="t5">
+            <p class="term-note"><span class="tag">hnsw, to_tsvector</span>Nearest neighbours by cosine distance through an HNSW index, then a full-text match where the <code>indonesian</code> configuration stems <em>dikirim</em> to <em>kirim</em>.</p>
+            <div class="code">
+              <div class="code-bar"><span>nusadb-cli</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">CREATE TABLE</span> notes (id <span class="k">int PRIMARY KEY</span>, body <span class="k">text</span>, emb <span class="k">vector</span>(<span class="s">3</span>));
+<span class="k">INSERT INTO</span> notes <span class="k">VALUES</span>
+  (<span class="s">1</span>, <span class="s">'Pengiriman ke Surabaya terlambat dua hari'</span>, <span class="s">'[0.9,0.1,0.0]'</span>),
+  (<span class="s">2</span>, <span class="s">'Pembayaran berhasil diproses'</span>,             <span class="s">'[0.1,0.9,0.1]'</span>),
+  (<span class="s">3</span>, <span class="s">'Paket dikirim ulang ke Surabaya'</span>,          <span class="s">'[0.8,0.2,0.1]'</span>);
+<span class="k">CREATE INDEX</span> notes_emb <span class="k">ON</span> notes <span class="k">USING</span> hnsw (emb vector_cosine_ops);
+
+<span class="k">SELECT</span> id, round((emb &lt;=&gt; <span class="s">'[1,0,0]'</span>)::<span class="k">numeric</span>, <span class="s">4</span>) <span class="k">AS</span> distance
+<span class="k">FROM</span> notes <span class="k">ORDER BY</span> emb &lt;=&gt; <span class="s">'[1,0,0]'</span> <span class="k">LIMIT</span> <span class="s">2</span>;
+
+<span class="k">SELECT</span> id, body <span class="k">FROM</span> notes
+<span class="k">WHERE</span> to_tsvector(<span class="s">'indonesian'</span>, body) @@ to_tsquery(<span class="s">'indonesian'</span>, <span class="s">'kirim &amp; surabaya'</span>);
+
+<span class="o">id | distance</span>
+<span class="o">---+---------</span>
+<span class="o">1  | 0.0061</span>
+<span class="o">3  | 0.0369</span>
+<span class="o">SELECT 2</span>
+<span class="o">id | body</span>
+<span class="o">---+--------------------------------</span>
+<span class="o">3  | Paket dikirim ulang ke Surabaya</span>
+<span class="o">SELECT 1</span></pre>
+            </div>
+          </div>
+
+          <div class="term-panel" role="tabpanel" id="p6" aria-labelledby="t6">
+            <p class="term-note"><span class="tag">EXPLAIN</span>20,000 customers and 200,000 invoices after <code>ANALYZE</code>. The point filter on the customer's key becomes an index scan on the primary key, and the join is hashed.</p>
+            <div class="code">
+              <div class="code-bar"><span>nusadb-cli</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">EXPLAIN SELECT</span> c.name, sum(i.amount)
+<span class="k">FROM</span> customers c <span class="k">JOIN</span> invoices i <span class="k">ON</span> i.customer_id = c.id
+<span class="k">WHERE</span> c.id = <span class="s">42</span>
+<span class="k">GROUP BY</span> c.name;
+
+<span class="o">plan</span>
+<span class="o">-------------------------------------------------</span>
+<span class="o">Project (2 column(s))</span>
+<span class="o">  GroupAggregate (1 key(s), 1 aggregate(s))</span>
+<span class="o">    HashJoin (Inner, 1 key(s))</span>
+<span class="o">      Filter</span>
+<span class="o">        IndexScan: customers using customers_pkey</span>
+<span class="o">      SeqScan: invoices</span>
+<span class="o">SELECT 6</span></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+      <dl class="spec">
+        <div><dt>Release</dt><dd>0.1.0-beta.16</dd></div>
+        <div><dt>Licence</dt><dd>Apache-2.0</dd></div>
+        <div><dt>Port</dt><dd>5678</dd></div>
+        <div><dt>Protocol</dt><dd>Nusa wire 1.3</dd></div>
+        <div><dt>Storage</dt><dd>B-link tree, 8 KiB</dd></div>
+        <div><dt>Isolation</dt><dd>RC default, SSI</dd></div>
+        <div><dt>Executor</dt><dd>1,024-row batches</dd></div>
+        <div><dt>At rest</dt><dd>AES-256-GCM-SIV</dd></div>
+        <div><dt>Auth</dt><dd>SCRAM-SHA-256</dd></div>
+        <div><dt>Image</dt><dd>amd64, arm64</dd></div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ fit -->
+<section class="sec" id="fit" aria-labelledby="fit-title">
+  <div class="wrap sec-in side">
+    <header>
+      <span class="eyebrow">Fit</span>
+      <h2 id="fit-title">One server, one disk, one SQL database you can reason about</h2>
+      <p class="lede">
+        For applications on a single host that want ordinary relational guarantees from it.
+        It is not a cluster, so the second list matters as much as the first.
+      </p>
+      <p style="margin-top:24px"><a class="more" href="docs/limits.html">Limits and capacity, in full</a></p>
+    </header>
+    <div class="fit-cards">
+      <div class="card">
+        <p class="fit-h">Fits today</p>
+        <ul class="fitlist yes">
+            <li>An application database on one host, with <code>SERIALIZABLE</code> available per transaction when a race would be expensive.</li>
+            <li>Data larger than memory. Table and index pages are cached, evicted and spilled under <code>--max-resident-bytes</code>.</li>
+            <li>Reporting next to transactions: window functions, recursive CTEs, grouping sets, and sorts, joins and aggregates that spill to disk instead of failing.</li>
+            <li>Search without another service: full-text in the <code>simple</code>, <code>english</code> and <code>indonesian</code> configurations, and <code>VECTOR(n)</code> with an HNSW index.</li>
+            <li>Operators who want encryption at rest, scheduled backups and point-in-time restore from flags on the server binary.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <p class="fit-h no">Does not fit yet</p>
+        <ul class="fitlist no">
+            <li>Failover without a person. There is no clustering. A read-only standby follows the primary and is promoted by restarting it without <code>--standby-from</code>.</li>
+            <li>A standby that must trail by seconds. Log segments reach the archive when the primary checkpoints, so the standby lags by that cadence.</li>
+            <li>Tools that speak another database's protocol. NusaDB has its own; use one of the eight drivers or <code>nusadb-cli</code>.</li>
+            <li>Vector indexes larger than RAM. HNSW graphs are held in memory whatever the page-cache bound.</li>
+            <li>Named time zones and locale collations. <code>SET TIME ZONE</code> takes UTC or a fixed offset, and text compares by bytes.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ write path -->
+<section class="sec" id="write-path" aria-labelledby="wp-title">
+  <div class="wrap sec-in">
+    <div class="sec-head split">
+      <div>
+        <span class="eyebrow">Write path</span>
+        <h2 id="wp-title">A commit is durable at the fsync. A checkpoint folds the log away.</h2>
+      </div>
+      <p class="lede">
+        Changed pages stay in the page cache and reach disk only through a checkpoint, which
+        writes just those pages to a new immutable segment. Watch two transactions go through.
+      </p>
+    </div>
+    <!-- Fig. 1: the one animated drawing on the site. Without script or with
+         reduced motion, it stays in its pre-checkpoint state. -->
     <figure class="fig logfig" id="logfig" aria-labelledby="fig1-cap">
-      <div class="fig-frame">
+      <div class="fig-frame on-navy">
         <div class="fig-head">
           <span><b>Fig. 1</b> &nbsp;Write path of one database directory</span>
           <span class="state" id="lfState" aria-live="polite">2 transactions committed, checkpoint pending</span>
@@ -194,236 +427,11 @@
   </div>
 </section>
 
-<!-- ================================================================ specification strip -->
-<section class="spec-strip on-strip" aria-labelledby="spec-title">
-  <div class="wrap">
-    <h2 id="spec-title" class="sr">Specification</h2>
-    <dl class="spec">
-      <div><dt>Release</dt><dd>0.1.0-beta.16</dd></div>
-      <div><dt>Licence</dt><dd>Apache-2.0</dd></div>
-      <div><dt>Port</dt><dd>5678</dd></div>
-      <div><dt>Protocol</dt><dd>Nusa wire 1.3</dd></div>
-      <div><dt>Storage</dt><dd>B-link tree, 8 KiB</dd></div>
-      <div><dt>Isolation</dt><dd>RC default, SSI</dd></div>
-      <div><dt>Executor</dt><dd>1,024-row batches</dd></div>
-      <div><dt>At rest</dt><dd>AES-256-GCM-SIV</dd></div>
-      <div><dt>Auth</dt><dd>SCRAM-SHA-256</dd></div>
-      <div><dt>Image</dt><dd>amd64, arm64</dd></div>
-    </dl>
-  </div>
-</section>
-
-<!-- ================================================================ fit -->
-<section class="sec" id="fit" aria-labelledby="fit-title">
-  <div class="wrap sec-in side">
-    <header>
-      <h2 id="fit-title">One server, one disk, one SQL database you can reason about</h2>
-      <p class="lede">
-        For applications on a single host that want ordinary relational guarantees from it.
-        It is not a cluster, so the second column matters as much as the first.
-      </p>
-      <p style="margin-top:22px"><a class="more" href="docs/limits.html">Limits and capacity, in full</a></p>
-    </header>
-    <div>
-      <div class="cols-2">
-        <div>
-          <p class="fit-h">Fits today</p>
-          <ul class="fitlist yes">
-            <li>An application database on one host, with <code>SERIALIZABLE</code> available per transaction when a race would be expensive.</li>
-            <li>Data larger than memory. Table and index pages are cached, evicted and spilled under <code>--max-resident-bytes</code>.</li>
-            <li>Reporting next to transactions: window functions, recursive CTEs, grouping sets, and sorts, joins and aggregates that spill to disk instead of failing.</li>
-            <li>Search without another service: full-text in the <code>simple</code>, <code>english</code> and <code>indonesian</code> configurations, and <code>VECTOR(n)</code> with an HNSW index.</li>
-            <li>Operators who want encryption at rest, scheduled backups and point-in-time restore from flags on the server binary.</li>
-          </ul>
-        </div>
-        <div>
-          <p class="fit-h no">Does not fit yet</p>
-          <ul class="fitlist no">
-            <li>Failover without a person. There is no clustering. A read-only standby follows the primary and is promoted by restarting it without <code>--standby-from</code>.</li>
-            <li>A standby that must trail by seconds. Log segments reach the archive when the primary checkpoints, so the standby lags by that cadence.</li>
-            <li>Tools that speak another database's protocol. NusaDB has its own; use one of the eight drivers or <code>nusadb-cli</code>.</li>
-            <li>Vector indexes larger than RAM. HNSW graphs are held in memory whatever the page-cache bound.</li>
-            <li>Named time zones and locale collations. <code>SET TIME ZONE</code> takes UTC or a fixed offset, and text compares by bytes.</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ================================================================ session -->
-<section class="sec on-tint" id="session" aria-labelledby="session-title">
-  <div class="wrap sec-in">
-    <div class="sec-head split">
-      <h2 id="session-title">Six things to try in <code>nusadb-cli</code></h2>
-      <p class="lede">Each block ran against a 0.1.0-beta.16 server on an empty data directory. The output is pasted as the shell printed it, error included.</p>
-    </div>
-    <div>
-      <div class="tour" data-tabs>
-        <ul class="tour-list" role="tablist" aria-label="Examples">
-          <li><button type="button" role="tab" id="t1" aria-controls="p1" aria-selected="true">A table and a ranking<small>identity, numeric, rank()</small></button></li>
-          <li><button type="button" role="tab" id="t2" aria-controls="p2" aria-selected="false">Bookings that cannot overlap<small>EXCLUDE on a range</small></button></li>
-          <li><button type="button" role="tab" id="t3" aria-controls="p3" aria-selected="false">A calendar with a running total<small>WITH RECURSIVE, window</small></button></li>
-          <li><button type="button" role="tab" id="t4" aria-controls="p4" aria-selected="false">Upsert<small>ON CONFLICT … RETURNING</small></button></li>
-          <li><button type="button" role="tab" id="t5" aria-controls="p5" aria-selected="false">Vectors and Indonesian text<small>hnsw, to_tsvector</small></button></li>
-          <li><button type="button" role="tab" id="t6" aria-controls="p6" aria-selected="false">Reading a plan<small>EXPLAIN</small></button></li>
-        </ul>
-        <div class="tour-panels on-navy">
-          <div class="tour-panel" role="tabpanel" id="p1" aria-labelledby="t1">
-            <p>A five-row table, grouped and ranked in one query. <code>numeric</code> is exact base-10 fixed point, so the sums carry no binary rounding.</p>
-            <div class="code">
-              <div class="code-bar"><span>nusadb-cli</span><button class="copy" type="button"><em>Copy</em></button></div>
-<pre><span class="k">CREATE TABLE</span> orders (
-  id      <span class="k">bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY</span>,
-  region  <span class="k">text NOT NULL</span>,
-  total   <span class="k">numeric</span>(<span class="s">10</span>,<span class="s">2</span>) <span class="k">NOT NULL</span>,
-  placed  <span class="k">date NOT NULL</span>
-);
-<span class="k">INSERT INTO</span> orders (region, total, placed) <span class="k">VALUES</span>
-  (<span class="s">'east'</span>, <span class="s">120.00</span>, <span class="s">'2026-10-01'</span>), (<span class="s">'east'</span>, <span class="s">75.50</span>, <span class="s">'2026-10-03'</span>),
-  (<span class="s">'west'</span>, <span class="s">210.25</span>, <span class="s">'2026-10-02'</span>), (<span class="s">'west'</span>, <span class="s">19.99</span>, <span class="s">'2026-10-05'</span>),
-  (<span class="s">'north'</span>, <span class="s">64.00</span>, <span class="s">'2026-10-04'</span>);
-<span class="k">SELECT</span> region, count(*) <span class="k">AS</span> orders, sum(total) <span class="k">AS</span> revenue,
-       rank() <span class="k">OVER</span> (<span class="k">ORDER BY</span> sum(total) <span class="k">DESC</span>) <span class="k">AS</span> rank
-<span class="k">FROM</span> orders <span class="k">GROUP BY</span> region <span class="k">ORDER BY</span> rank;
-
-<span class="o">CREATE TABLE</span>
-<span class="o">INSERT 5</span>
-<span class="o">region | orders | revenue | rank</span>
-<span class="o">-------+--------+---------+-----</span>
-<span class="o">west   | 2      | 230.24  | 1</span>
-<span class="o">east   | 2      | 195.50  | 2</span>
-<span class="o">north  | 1      | 64.00   | 3</span>
-<span class="o">SELECT 3</span></pre>
-            </div>
-          </div>
-
-          <div class="tour-panel" role="tabpanel" id="p2" aria-labelledby="t2">
-            <p>An exclusion constraint refuses a second booking of room 101 whose time range overlaps the first. The error reports both keys, with the <code>+07</code> input normalised to UTC.</p>
-            <div class="code">
-              <div class="code-bar"><span>nusadb-cli</span><button class="copy" type="button"><em>Copy</em></button></div>
-<pre><span class="k">CREATE TABLE</span> booking (
-  room    <span class="k">int</span>,
-  during  <span class="k">tstzrange</span>,
-  <span class="k">CONSTRAINT</span> no_double_booking
-    <span class="k">EXCLUDE USING</span> gist (room <span class="k">WITH</span> =, during <span class="k">WITH</span> &amp;&amp;)
-);
-<span class="k">INSERT INTO</span> booking <span class="k">VALUES</span> (<span class="s">101</span>, <span class="s">'[2026-11-02 09:00+07, 2026-11-02 11:00+07)'</span>);
-<span class="k">INSERT INTO</span> booking <span class="k">VALUES</span> (<span class="s">101</span>, <span class="s">'[2026-11-02 10:30+07, 2026-11-02 12:00+07)'</span>);
-
-<span class="o">CREATE TABLE</span>
-<span class="o">INSERT 1</span>
-<span class="e">ERROR 23P01: conflicting key value violates exclusion constraint "no_double_booking":
-key (room, during)=(101, ["2026-11-02 03:30:00+00","2026-11-02 05:00:00+00"))
-conflicts with existing key (room, during)=(101, ["2026-11-02 02:00:00+00","2026-11-02 04:00:00+00"))</span></pre>
-            </div>
-          </div>
-
-          <div class="tour-panel" role="tabpanel" id="p3" aria-labelledby="t3">
-            <p>A recursive CTE generates the days, a left join keeps the empty ones, and a window over the grouped sum gives the running total. Uses the <code>orders</code> table from the first example.</p>
-            <div class="code">
-              <div class="code-bar"><span>nusadb-cli</span><button class="copy" type="button"><em>Copy</em></button></div>
-<pre><span class="k">WITH RECURSIVE</span> days(d) <span class="k">AS</span> (
-  <span class="k">SELECT DATE</span> <span class="s">'2026-10-01'</span>
-  <span class="k">UNION ALL</span>
-  <span class="k">SELECT</span> d + <span class="s">1</span> <span class="k">FROM</span> days <span class="k">WHERE</span> d &lt; <span class="k">DATE</span> <span class="s">'2026-10-05'</span>
-)
-<span class="k">SELECT</span> d <span class="k">AS</span> day,
-       coalesce(sum(o.total), <span class="s">0</span>) <span class="k">AS</span> revenue,
-       sum(coalesce(sum(o.total), <span class="s">0</span>)) <span class="k">OVER</span> (<span class="k">ORDER BY</span> d) <span class="k">AS</span> running
-<span class="k">FROM</span> days <span class="k">LEFT JOIN</span> orders o <span class="k">ON</span> o.placed = d
-<span class="k">GROUP BY</span> d <span class="k">ORDER BY</span> d;
-
-<span class="o">day        | revenue | running</span>
-<span class="o">-----------+---------+--------</span>
-<span class="o">2026-10-01 | 120.00  | 120.00</span>
-<span class="o">2026-10-02 | 210.25  | 330.25</span>
-<span class="o">2026-10-03 | 75.50   | 405.75</span>
-<span class="o">2026-10-04 | 64.00   | 469.75</span>
-<span class="o">2026-10-05 | 19.99   | 489.74</span>
-<span class="o">SELECT 5</span></pre>
-            </div>
-          </div>
-
-          <div class="tour-panel" role="tabpanel" id="p4" aria-labelledby="t4">
-            <p>The existing SKU is incremented, the new one is inserted, and <code>RETURNING</code> reports what each row ended up as. The tag counts both rows.</p>
-            <div class="code">
-              <div class="code-bar"><span>nusadb-cli</span><button class="copy" type="button"><em>Copy</em></button></div>
-<pre><span class="k">CREATE TABLE</span> stock (sku <span class="k">text PRIMARY KEY</span>, qty <span class="k">int NOT NULL</span>);
-<span class="k">INSERT INTO</span> stock <span class="k">VALUES</span> (<span class="s">'KOPI-250'</span>, <span class="s">10</span>);
-<span class="k">INSERT INTO</span> stock <span class="k">VALUES</span> (<span class="s">'KOPI-250'</span>, <span class="s">5</span>), (<span class="s">'TEH-100'</span>, <span class="s">8</span>)
-  <span class="k">ON CONFLICT</span> (sku) <span class="k">DO UPDATE SET</span> qty = stock.qty + excluded.qty
-  <span class="k">RETURNING</span> sku, qty;
-
-<span class="o">CREATE TABLE</span>
-<span class="o">INSERT 1</span>
-<span class="o">sku      | qty</span>
-<span class="o">---------+----</span>
-<span class="o">KOPI-250 | 15</span>
-<span class="o">TEH-100  | 8</span>
-<span class="o">INSERT 2</span></pre>
-            </div>
-          </div>
-
-          <div class="tour-panel" role="tabpanel" id="p5" aria-labelledby="t5">
-            <p>Nearest neighbours by cosine distance through an HNSW index, then a full-text match where the <code>indonesian</code> configuration stems <em>dikirim</em> to <em>kirim</em>.</p>
-            <div class="code">
-              <div class="code-bar"><span>nusadb-cli</span><button class="copy" type="button"><em>Copy</em></button></div>
-<pre><span class="k">CREATE TABLE</span> notes (id <span class="k">int PRIMARY KEY</span>, body <span class="k">text</span>, emb <span class="k">vector</span>(<span class="s">3</span>));
-<span class="k">INSERT INTO</span> notes <span class="k">VALUES</span>
-  (<span class="s">1</span>, <span class="s">'Pengiriman ke Surabaya terlambat dua hari'</span>, <span class="s">'[0.9,0.1,0.0]'</span>),
-  (<span class="s">2</span>, <span class="s">'Pembayaran berhasil diproses'</span>,             <span class="s">'[0.1,0.9,0.1]'</span>),
-  (<span class="s">3</span>, <span class="s">'Paket dikirim ulang ke Surabaya'</span>,          <span class="s">'[0.8,0.2,0.1]'</span>);
-<span class="k">CREATE INDEX</span> notes_emb <span class="k">ON</span> notes <span class="k">USING</span> hnsw (emb vector_cosine_ops);
-
-<span class="k">SELECT</span> id, round((emb &lt;=&gt; <span class="s">'[1,0,0]'</span>)::<span class="k">numeric</span>, <span class="s">4</span>) <span class="k">AS</span> distance
-<span class="k">FROM</span> notes <span class="k">ORDER BY</span> emb &lt;=&gt; <span class="s">'[1,0,0]'</span> <span class="k">LIMIT</span> <span class="s">2</span>;
-
-<span class="k">SELECT</span> id, body <span class="k">FROM</span> notes
-<span class="k">WHERE</span> to_tsvector(<span class="s">'indonesian'</span>, body) @@ to_tsquery(<span class="s">'indonesian'</span>, <span class="s">'kirim &amp; surabaya'</span>);
-
-<span class="o">id | distance</span>
-<span class="o">---+---------</span>
-<span class="o">1  | 0.0061</span>
-<span class="o">3  | 0.0369</span>
-<span class="o">SELECT 2</span>
-<span class="o">id | body</span>
-<span class="o">---+--------------------------------</span>
-<span class="o">3  | Paket dikirim ulang ke Surabaya</span>
-<span class="o">SELECT 1</span></pre>
-            </div>
-          </div>
-
-          <div class="tour-panel" role="tabpanel" id="p6" aria-labelledby="t6">
-            <p>20,000 customers and 200,000 invoices after <code>ANALYZE</code>. The point filter on the customer's key becomes an index scan on the primary key, and the join is hashed.</p>
-            <div class="code">
-              <div class="code-bar"><span>nusadb-cli</span><button class="copy" type="button"><em>Copy</em></button></div>
-<pre><span class="k">EXPLAIN SELECT</span> c.name, sum(i.amount)
-<span class="k">FROM</span> customers c <span class="k">JOIN</span> invoices i <span class="k">ON</span> i.customer_id = c.id
-<span class="k">WHERE</span> c.id = <span class="s">42</span>
-<span class="k">GROUP BY</span> c.name;
-
-<span class="o">plan</span>
-<span class="o">-------------------------------------------------</span>
-<span class="o">Project (2 column(s))</span>
-<span class="o">  GroupAggregate (1 key(s), 1 aggregate(s))</span>
-<span class="o">    HashJoin (Inner, 1 key(s))</span>
-<span class="o">      Filter</span>
-<span class="o">        IndexScan: customers using customers_pkey</span>
-<span class="o">      SeqScan: invoices</span>
-<span class="o">SELECT 6</span></pre>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- ================================================================ storage -->
 <section class="sec" id="storage" aria-labelledby="storage-title">
   <div class="wrap sec-in">
-    <div class="sec-head stacked">
+    <div class="sec-head">
+      <span class="eyebrow">Storage</span>
       <h2 id="storage-title">The row is in the leaf. Its history is one pointer away.</h2>
       <p class="lede">
         Tables are clustered B-link trees keyed by a row id the engine assigns, so a lookup ends at
@@ -431,7 +439,6 @@ conflicts with existing key (room, during)=(101, ["2026-11-02 02:00:00+00","2026
         during a split follows the right link instead of starting over.
       </p>
     </div>
-    <div>
       <figure class="fig" aria-labelledby="fig2-cap">
         <div class="fig-frame">
           <div class="fig-head"><span><b>Fig. 2</b> &nbsp;Leaf page, little-endian</span><span>byte offsets above the cells; widths not to scale</span></div>
@@ -469,11 +476,9 @@ conflicts with existing key (room, during)=(101, ["2026-11-02 02:00:00+00","2026
         </div>
         <figcaption id="fig2-cap"><b>Fig. 2</b>A leaf entry is the newest version of one row. Its 24-byte header decides visibility. A row too large for a leaf keeps a stub whose first 24 bytes are that header, with the rest in a chain of overflow pages, so a visibility check never reads the chain. Interior pages hold fixed 16-byte separator and child pairs.</figcaption>
       </figure>
-    </div>
-    <div style="margin-top:56px">
-      <div class="cols-2">
-        <div>
-          <h3 style="font-size:22px;margin-bottom:12px;color:var(--heading)">Old versions</h3>
+    <div class="pair">
+      <div>
+        <h3 class="sub-h">Old versions</h3>
           <p>
             An <code>UPDATE</code> moves the old header and tuple into an undo arena and writes the
             new version into the leaf, pointing back at it. A <code>DELETE</code> stamps
@@ -484,8 +489,7 @@ conflicts with existing key (room, during)=(101, ["2026-11-02 02:00:00+00","2026
             A rolled-back transaction restores the previous leaf bytes and leaves no versions
             behind, so visibility needs only the snapshot's set of active transactions, not a
             commit log. Background purge frees arena slots no snapshot can reach.
-          </p>
-        </div>
+      </div>
         <figure class="fig fig-narrow" aria-labelledby="fig3-cap">
           <div class="fig-frame">
             <div class="fig-head"><span><b>Fig. 3</b> &nbsp;Two readers, one row</span></div>
@@ -517,23 +521,24 @@ conflicts with existing key (room, during)=(101, ["2026-11-02 02:00:00+00","2026
           </div>
           <figcaption id="fig3-cap"><b>Fig. 3</b>A plain <code>SELECT</code> takes no locks and never waits for a writer. Write conflicts do not wait either: a second writer on a locked row gets <code>40001</code> at once, so deadlocks cannot form.</figcaption>
         </figure>
-      </div>
     </div>
   </div>
 </section>
 
-<!-- ================================================================ durability (navy band) -->
-<section class="sec on-navy" id="durability" aria-labelledby="dur-title">
+<!-- ================================================================ durability -->
+<section class="sec" id="durability" aria-labelledby="dur-title">
   <div class="wrap sec-in">
     <div class="sec-head split">
-      <h2 id="dur-title">Each log record carries its position, its length and a CRC over both.</h2>
+      <div>
+        <span class="eyebrow">Durability</span>
+        <h2 id="dur-title">Each log record carries its position, its length and a CRC over both.</h2>
+      </div>
       <p class="lede">
         The log is the durable copy of every change since the last checkpoint. Because the CRC32
         covers the 16-byte header as well as the body, a zeroed sector or a corrupted length is
         caught, and a torn record at the end of the file ends the durable prefix cleanly.
       </p>
     </div>
-    <div>
       <figure class="fig" aria-labelledby="fig4-cap">
         <div class="fig-frame">
           <div class="fig-head"><span><b>Fig. 4</b> &nbsp;Log frame</span><span>btree.wal</span></div>
@@ -561,19 +566,16 @@ conflicts with existing key (room, during)=(101, ["2026-11-02 02:00:00+00","2026
         </div>
         <figcaption id="fig4-cap"><b>Fig. 4</b>Compress, then encrypt, then checksum. With encryption on, a torn tail is still recognised without the key, and a frame whose CRC is intact but whose tag fails cannot come from a crash, so recovery refuses the log at that point instead of truncating it.</figcaption>
       </figure>
-
-      <div class="facts" style="margin-top:48px">
+      <div class="facts">
         <div><b>64 MiB</b><span>log size at which the background worker checkpoints a database (<code>--checkpoint-threshold-bytes</code>)</span></div>
         <div><b>5 s</b><span>how often the worker checks each log (<code>--checkpoint-interval</code>)</span></div>
         <div><b>2 s</b><span>longest it holds new transactions to find a quiet moment (<code>--checkpoint-max-pause</code>)</span></div>
         <div><b>2 passes</b><span>at recovery: collect the committed transactions, then re-apply only their operations, in log order</span></div>
       </div>
-    </div>
 
-    <div class="side side-code" style="margin-top:64px">
+    <div class="side side-code kill">
       <div>
-        <h3 style="font-size:24px;margin-bottom:14px;color:#fff;letter-spacing:-0.02em">What <code>kill -9</code> leaves behind</h3>
-      <p>
+        <h3 class="sub-h">What <code>kill -9</code> leaves behind</h3>
         This session ran on the same server as the examples above. A checkpoint folds a
         40&nbsp;MB log into one full segment and truncates the log. An update of 100 rows adds a
         32&nbsp;KiB incremental segment at the next checkpoint. A row committed after the last checkpoint
@@ -581,7 +583,7 @@ conflicts with existing key (room, during)=(101, ["2026-11-02 02:00:00+00","2026
         there after the restart.
       </p>
     
-              <p class="dim" style="font-size:14px">Listings trimmed to size and name, and the shell's <code>--host</code> flag left out. Id 8 went to a transaction that never committed; identity values are not handed back on rollback. Other ways to keep a copy: <a href="docs/configuration.html#backup">scheduled hard-link backups</a>, a <a href="docs/configuration.html#checkpoints-backup-and-restore">log archive with point-in-time restore</a>, and a read-only standby that follows the archive.</p>
+              <p class="dim" style="font-size:14.5px">Listings trimmed to size and name, and the shell's <code>--host</code> flag left out. Id 8 went to a transaction that never committed; identity values are not handed back on rollback. Other ways to keep a copy: <a href="docs/configuration.html#backup">scheduled hard-link backups</a>, a <a href="docs/configuration.html#checkpoints-backup-and-restore">log archive with point-in-time restore</a>, and a read-only standby that follows the archive.</p>
       </div>
       <div>
       <div class="code">
@@ -632,9 +634,9 @@ conflicts with existing key (room, during)=(101, ["2026-11-02 02:00:00+00","2026
 <!-- ================================================================ layers -->
 <section class="sec" id="layers" aria-labelledby="layers-title">
   <div class="wrap sec-in">
-    <div>
-      <div class="stack">
-        <div class="stack-lead">
+    <div class="stack">
+      <div class="stack-lead">
+        <span class="eyebrow">Architecture</span>
       <h2 id="layers-title">Seven layers, one dependency direction</h2>
       <p class="lede">
         The storage side never imports the SQL side. They meet at one Rust trait, so each half can
@@ -668,7 +670,7 @@ conflicts with existing key (room, during)=(101, ["2026-11-02 02:00:00+00","2026
           </div>
           <figcaption id="fig5-cap"><b>Fig. 5</b>Crate names as they appear in the source tree. Rows travel as opaque bytes across the trait; the SQL layer owns their encoding.</figcaption>
         </figure>
-        </div>
+      </div>
         <ol class="layers">
           <li><div><h3>Client</h3><p><code>nusadb-cli</code> with aligned, expanded, CSV and JSON output, drivers for Rust, Java, Node.js, Python, Go, Ruby, PHP and .NET, and a C API.</p></div></li>
           <li><div><h3>Protocol</h3><p>Length-prefixed frames on one port. TLS 1.3 through rustls, mutual TLS with <code>--tls-client-ca</code>, SCRAM-SHA-256, extended query with named statements and portals, <code>COPY</code> in text and binary, notices.</p></div></li>
@@ -678,15 +680,15 @@ conflicts with existing key (room, during)=(101, ["2026-11-02 02:00:00+00","2026
           <li><div><h3>Log</h3><p>Redo records with CRC32 and lz4, optionally sealed, a commit that returns after fsync, incremental checkpoints over immutable segments, and an optional archive for point-in-time restore.</p></div></li>
           <li><div><h3>Files</h3><p>One directory per database under <code>base/</code>, a cluster catalog under <code>global/</code>, and a lock file that keeps a second server off the same directory.</p></div></li>
         </ol>
-      </div>
     </div>
   </div>
 </section>
 
 <!-- ================================================================ operating -->
-<section class="sec on-tint" id="operating" aria-labelledby="ops-title">
+<section class="sec" id="operating" aria-labelledby="ops-title">
   <div class="wrap sec-in side">
     <header>
+      <span class="eyebrow">Operating</span>
       <h2 id="ops-title">Everything is a flag on <code>nusadb-server</code></h2>
       <p class="lede">
         There is no configuration file and no second daemon. These are the flags most deployments
@@ -694,8 +696,7 @@ conflicts with existing key (room, during)=(101, ["2026-11-02 02:00:00+00","2026
         <a href="docs/configuration.html#server-flags">configuration</a>.
       </p>
     </header>
-    <div>
-      <div class="table-scroll" style="margin:0">
+    <div class="table-plain">
       <table class="flagtable">
         <thead><tr><th>Flag</th><th>Default</th><th>What it does</th></tr></thead>
         <tbody>
@@ -717,24 +718,25 @@ conflicts with existing key (room, during)=(101, ["2026-11-02 02:00:00+00","2026
           <tr><td>--metrics-listen</td><td class="def">none</td><td>Serves metrics in Prometheus text format on a separate address.</td></tr>
         </tbody>
       </table>
-      </div>
     </div>
   </div>
 </section>
 
-<!-- ================================================================ numbers (navy band) -->
-<section class="sec on-navy" id="numbers" aria-labelledby="num-title">
+<!-- ================================================================ numbers -->
+<section class="sec" id="numbers" aria-labelledby="num-title">
   <div class="wrap sec-in">
     <div class="sec-head split">
-      <h2 id="num-title">Numbers, with the machine and the build they came from</h2>
+      <div>
+        <span class="eyebrow">Measurements</span>
+        <h2 id="num-title">Numbers, with the machine and the build they came from</h2>
+      </div>
       <p class="lede">
         Single-machine measurements on a laptop, not a tuned benchmark. Each was taken on an
         earlier 0.1.0 build named next to it, and none has been repeated on beta.16. They show
         orders of magnitude, not a ceiling.
       </p>
     </div>
-    <div>
-      <div class="numbers">
+    <div class="numbers">
         <table class="mtable">
           <thead><tr><th>Result</th><th>What was measured</th></tr></thead>
           <tbody>
@@ -747,37 +749,45 @@ conflicts with existing key (room, during)=(101, ["2026-11-02 02:00:00+00","2026
             <tr><td class="v">33/33, 26/26</td><td>Driver checks passed by the published Python 0.1.2 and Rust 0.1.2 packages against a release server.<small>2026-10-14 · build 0437b3e</small></td></tr>
           </tbody>
         </table>
-        <div>
+      <div>
           <div class="chart" id="encChart">
             <h3>Cost of encryption at rest</h3>
-            <p class="sub">200,000 rows of 200 bytes, transactions of 1,000 rows, median of three runs. Each row has its own scale.</p>
+            <p class="sub">200,000 rows of 200 bytes, transactions of 1,000 rows, median of three runs. Each pair of bars has its own scale.</p>
             <ul class="legend"><li><i class="sw-base"></i>unencrypted</li><li><i class="sw-a"></i>encrypted</li></ul>
-<svg viewBox="0 0 420 260" role="img" aria-label="Bar chart. Bulk insert 1.42 s unencrypted, 1.51 s encrypted. Checkpoint 41 ms and 51 ms. Reopen 3.5 ms and 3.6 ms. Scan from a cold cache 24 ms and 42 ms.">
-  <g font-family="var(--mono)">
-    <text class="d-txt-2" x="0" y="20">bulk insert</text>
-    <rect class="bar bar-base" tabindex="0" data-tip="bulk insert, unencrypted: 1.42 s" x="0" y="28" width="282" height="14" rx="2"/><text class="d-txt-3" x="290" y="40">1.42 s</text>
-    <rect class="bar bar-a" tabindex="0" data-tip="bulk insert, encrypted: 1.51 s" x="0" y="44" width="300" height="14" rx="2"/><text class="d-txt" x="308" y="56">1.51 s</text>
+<svg viewBox="0 0 420 262" role="img" aria-label="Bar chart. Bulk insert 1.42 s unencrypted, 1.51 s encrypted. Checkpoint 41 ms and 51 ms. Reopen 3.5 ms and 3.6 ms. Scan from a cold cache 24 ms and 42 ms.">
+  <path class="d-tick" d="M0.5 24v36M0.5 88v36M0.5 152v36M0.5 216v36"/>
+  <text class="d-txt-2" x="0" y="18">bulk insert</text>
+  <rect class="bar bar-base" tabindex="0" data-tip="bulk insert, unencrypted: 1.42 s" x="1" y="26" width="281" height="15" rx="3"/><text class="d-txt-3 val" x="290" y="38">1.42 s</text>
+  <rect class="bar bar-a" tabindex="0" data-tip="bulk insert, encrypted: 1.51 s" x="1" y="43" width="299" height="15" rx="3"/><text class="d-txt-s val" x="308" y="55">1.51 s</text>
 
-    <text class="d-txt-2" x="0" y="84">checkpoint</text>
-    <rect class="bar bar-base" tabindex="0" data-tip="checkpoint, unencrypted: 41 ms" x="0" y="92" width="241" height="14" rx="2"/><text class="d-txt-3" x="249" y="104">41 ms</text>
-    <rect class="bar bar-a" tabindex="0" data-tip="checkpoint, encrypted: 51 ms" x="0" y="108" width="300" height="14" rx="2"/><text class="d-txt" x="308" y="120">51 ms</text>
+  <text class="d-txt-2" x="0" y="82">checkpoint</text>
+  <rect class="bar bar-base" tabindex="0" data-tip="checkpoint, unencrypted: 41 ms" x="1" y="90" width="240" height="15" rx="3"/><text class="d-txt-3 val" x="249" y="102">41 ms</text>
+  <rect class="bar bar-a" tabindex="0" data-tip="checkpoint, encrypted: 51 ms" x="1" y="107" width="299" height="15" rx="3"/><text class="d-txt-s val" x="308" y="119">51 ms</text>
 
-    <text class="d-txt-2" x="0" y="148">reopen</text>
-    <rect class="bar bar-base" tabindex="0" data-tip="reopen, unencrypted: 3.5 ms" x="0" y="156" width="292" height="14" rx="2"/><text class="d-txt-3" x="300" y="168">3.5 ms</text>
-    <rect class="bar bar-a" tabindex="0" data-tip="reopen, encrypted: 3.6 ms" x="0" y="172" width="300" height="14" rx="2"/><text class="d-txt" x="308" y="184">3.6 ms</text>
+  <text class="d-txt-2" x="0" y="146">reopen</text>
+  <rect class="bar bar-base" tabindex="0" data-tip="reopen, unencrypted: 3.5 ms" x="1" y="154" width="291" height="15" rx="3"/><text class="d-txt-3 val" x="300" y="166">3.5 ms</text>
+  <rect class="bar bar-a" tabindex="0" data-tip="reopen, encrypted: 3.6 ms" x="1" y="171" width="299" height="15" rx="3"/><text class="d-txt-s val" x="308" y="183">3.6 ms</text>
 
-    <text class="d-txt-2" x="0" y="212">scan, cold cache</text>
-    <rect class="bar bar-base" tabindex="0" data-tip="cold scan, unencrypted: 24 ms" x="0" y="220" width="171" height="14" rx="2"/><text class="d-txt-3" x="179" y="232">24 ms</text>
-    <rect class="bar bar-a" tabindex="0" data-tip="cold scan, encrypted: 42 ms" x="0" y="236" width="300" height="14" rx="2"/><text class="d-txt" x="308" y="248">42 ms</text>
-  </g>
+  <text class="d-txt-2" x="0" y="210">scan, cold cache</text>
+  <rect class="bar bar-base" tabindex="0" data-tip="cold scan, unencrypted: 24 ms" x="1" y="218" width="170" height="15" rx="3"/><text class="d-txt-3 val" x="179" y="230">24 ms</text>
+  <rect class="bar bar-a" tabindex="0" data-tip="cold scan, encrypted: 42 ms" x="1" y="235" width="299" height="15" rx="3"/><text class="d-txt-s val" x="308" y="247">42 ms</text>
 </svg>
-            <p class="sub" style="margin:10px 0 0">A sealed page takes 8,220 bytes instead of 8,192, and a log record 28 bytes more. Pages already in the cache cost nothing extra.</p>
+            <div class="sr"><table>
+              <caption>Cost of encryption at rest, median of three runs</caption>
+              <thead><tr><th>Operation</th><th>Unencrypted</th><th>Encrypted</th></tr></thead>
+              <tbody>
+                <tr><td>Bulk insert</td><td>1.42 s</td><td>1.51 s</td></tr>
+                <tr><td>Checkpoint</td><td>41 ms</td><td>51 ms</td></tr>
+                <tr><td>Reopen</td><td>3.5 ms</td><td>3.6 ms</td></tr>
+                <tr><td>Scan, cold cache</td><td>24 ms</td><td>42 ms</td></tr>
+              </tbody>
+            </table></div>
+            <p class="sub" style="margin:12px 0 0">A sealed page takes 8,220 bytes instead of 8,192, and a log record 28 bytes more. Pages already in the cache cost nothing extra.</p>
           </div>
           <div class="conditions">
             <p>Hardware: an Apple Silicon MacBook Pro, macOS (Darwin 25.5), local disk, no container, release builds. The encryption figures are from the engine's own architecture notes (2026-10-14, Apple M-series laptop).</p>
             <p>Measurements over the wire include the round trip through the Python driver on loopback. The engine probe runs in process.</p>
           </div>
-        </div>
       </div>
     </div>
   </div>
@@ -786,15 +796,17 @@ conflicts with existing key (room, during)=(101, ["2026-11-02 02:00:00+00","2026
 <!-- ================================================================ drivers -->
 <section class="sec" id="drivers" aria-labelledby="drv-title">
   <div class="wrap sec-in">
-    <div class="sec-head stacked">
-      <h2 id="drv-title">Eight languages, no native dependencies</h2>
+    <div class="sec-head split">
+      <div>
+        <span class="eyebrow">Drivers</span>
+        <h2 id="drv-title">Eight languages, no native dependencies</h2>
+      </div>
       <p class="lede">
         Every driver speaks the protocol directly and binds parameters as <code>$1</code>,
         <code>$2</code>. Typed columns come back as the language's own types: integers, decimals,
         datetimes, parsed JSON.
       </p>
     </div>
-    <div>
       <div class="drivers" data-tabs>
         <div class="dtabs" role="tablist" aria-label="Driver language">
           <button type="button" role="tab" id="dt-py" aria-controls="dp-py" aria-selected="true">Python</button>
@@ -921,19 +933,18 @@ cmd.CommandText = <span class="s">"SELECT id, region FROM orders WHERE id = $1"<
 cmd.Parameters.Add(<span class="k">new</span> NusaParameter(<span class="s">"1"</span>, <span class="s">1</span>));</pre></div></div>
         </div>
       </div>
-      <p style="margin-top:16px"><a class="more" href="docs/clients.html">Connection settings, TLS, pooling and notifications</a></p>
-    </div>
+    <p style="margin-top:20px"><a class="more" href="docs/clients.html">Connection settings, TLS, pooling and notifications</a></p>
   </div>
 </section>
 
 <!-- ================================================================ install -->
-<section class="sec on-tint" id="install" aria-labelledby="inst-title">
+<section class="sec quiet" id="install" aria-labelledby="inst-title">
   <div class="wrap sec-in">
     <div class="sec-head">
+      <span class="eyebrow">Install</span>
       <h2 id="inst-title">Three ways to get a server running</h2>
     </div>
-    <div>
-      <div class="install-grid">
+    <div class="install-grid">
         <section aria-labelledby="i1">
           <h3 id="i1">Container image</h3>
           <p><code>nusadb/nusadb:0.1.0-beta.16</code> for linux/amd64 and linux/arm64, with the server and the shell. The data directory is <code>/var/lib/nusadb</code>.</p>
@@ -971,7 +982,6 @@ cd nusadb-v0.1.0-beta.14-$TARGET
   --auth-user app:change-me</pre></div>
           <p style="margin:12px 0 0"><a class="more" href="https://github.com/nusadb/nusadb/releases">GitHub releases</a></p>
         </section>
-      </div>
     </div>
   </div>
 </section>
@@ -980,8 +990,9 @@ cd nusadb-v0.1.0-beta.14-$TARGET
 <section class="sec" id="changes" aria-labelledby="changes-title">
   <div class="wrap sec-in side">
     <header>
+      <span class="eyebrow">Releases</span>
       <h2 id="changes-title">What the last two releases changed</h2>
-      <p style="margin-top:18px"><a class="more" href="https://github.com/nusadb/nusadb/commits/master">Full commit history</a></p>
+      <p style="margin-top:20px"><a class="more" href="https://github.com/nusadb/nusadb/commits/master">Full commit history</a></p>
     </header>
     <div>
       <div class="rel">
@@ -1010,9 +1021,10 @@ cd nusadb-v0.1.0-beta.14-$TARGET
 </section>
 
 <!-- ================================================================ faq -->
-<section class="sec on-tint" id="faq" aria-labelledby="faq-title">
+<section class="sec" id="faq" aria-labelledby="faq-title">
   <div class="wrap sec-in side">
     <header>
+      <span class="eyebrow">FAQ</span>
       <h2 id="faq-title">Questions people ask first</h2>
     </header>
     <div class="faq">
@@ -1048,12 +1060,14 @@ cd nusadb-v0.1.0-beta.14-$TARGET
   </div>
 </section>
 
-<section class="close on-close" aria-labelledby="close-title">
-  <div class="wrap close-in">
-    <h2 id="close-title">Start a server, open the shell, and read the plan it prints</h2>
-    <div class="actions">
-      <a class="btn btn-primary" href="docs/getting-started.html">Getting started</a>
-      <a class="btn btn-line" href="docs/internals.html">How it works</a>
+<section class="close" aria-labelledby="close-title">
+  <div class="wrap">
+    <div class="close-in">
+      <h2 id="close-title">Start a server, open the shell, and read the plan it prints.</h2>
+      <div class="actions">
+        <a class="btn btn-primary" href="docs/getting-started.html">Get started</a>
+        <a class="btn btn-line" href="docs/internals.html">How it works</a>
+      </div>
     </div>
   </div>
 </section>
@@ -1065,7 +1079,7 @@ cd nusadb-v0.1.0-beta.14-$TARGET
     <div class="foot-grid">
       <div>
         <a class="brand" href="./">
-          <svg class="mark" width="26" height="26" viewBox="0 0 32 32" aria-hidden="true"><path d="M4 1h18l9 9v18a3 3 0 0 1-3 3H4a3 3 0 0 1-3-3V4a3 3 0 0 1 3-3z" fill="#D0E7E6"/><path d="M22 1l9 9h-9z" fill="#95CCDD"/><rect x="5" y="8" width="13" height="5" rx="2.5" fill="#293681"/><rect x="11" y="16" width="16" height="5" rx="2.5" fill="#4274D9"/><rect x="5" y="24" width="8" height="5" rx="2.5" fill="#293681"/><rect x="16" y="24" width="5" height="5" rx="2.5" fill="#95CCDD"/></svg>
+          <svg class="mark" width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><path class="mk-body" d="M5 7.5v17.4c0 2.5 4.9 4.5 11 4.5s11-2 11-4.5V7.5z"/><path class="mk-band" d="M5 13.3c0 2.5 4.9 4.5 11 4.5s11-2 11-4.5M5 19.1c0 2.5 4.9 4.5 11 4.5s11-2 11-4.5"/><ellipse class="mk-top" cx="16" cy="7.5" rx="11" ry="4.5"/></svg>
           <span>Nusa<b>DB</b></span>
         </a>
         <p>Relational database for a single machine.<br />Version 0.1.0-beta.16.</p>
@@ -1106,6 +1120,6 @@ cd nusadb-v0.1.0-beta.14-$TARGET
   </div>
 </footer>
 
-<script src="js/main.js?v=20261029r3"></script>
+<script src="js/main.js?v=20261029r4"></script>
 </body>
 </html>
