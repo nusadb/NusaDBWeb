@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="css/style.css?v=20261029r4" />
+<link rel="stylesheet" href="css/style.css?v=20261029r5" />
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -23,9 +23,7 @@
 <header class="masthead">
   <div class="wrap masthead-in">
     <a class="brand" href="./">
-      <svg class="mark" width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><path class="mk-body" d="M5 7.5v17.4c0 2.5 4.9 4.5 11 4.5s11-2 11-4.5V7.5z"/><path class="mk-band" d="M5 13.3c0 2.5 4.9 4.5 11 4.5s11-2 11-4.5M5 19.1c0 2.5 4.9 4.5 11 4.5s11-2 11-4.5"/><ellipse class="mk-top" cx="16" cy="7.5" rx="11" ry="4.5"/></svg>
       <span>Nusa<b>DB</b></span>
-      <span class="ver">0.1.0-beta.16</span>
     </a>
     <nav class="mast-nav" id="mastNav" aria-label="Main">
       <ul>
@@ -986,40 +984,6 @@ cd nusadb-v0.1.0-beta.14-$TARGET
   </div>
 </section>
 
-<!-- ================================================================ changes -->
-<section class="sec" id="changes" aria-labelledby="changes-title">
-  <div class="wrap sec-in side">
-    <header>
-      <span class="eyebrow">Releases</span>
-      <h2 id="changes-title">What the last two releases changed</h2>
-      <p style="margin-top:20px"><a class="more" href="https://github.com/nusadb/nusadb/commits/master">Full commit history</a></p>
-    </header>
-    <div>
-      <div class="rel">
-        <h3>0.1.0-beta.16<small>Constraints, unique keys, partitions</small></h3>
-        <ul>
-          <li><code>DROP SCHEMA … CASCADE</code> drops the schema's tables, views and sequences and the foreign keys that point into it. <code>RESTRICT</code> lists what the schema still holds. <a class="sha" href="https://github.com/nusadb/nusadb/commit/db799f1">db799f1</a></li>
-          <li>Partitions created with <code>PARTITION OF</code> take the parent's defaults, identity and generated columns, and <code>UPDATE … SET col = DEFAULT</code> works. <a class="sha" href="https://github.com/nusadb/nusadb/commit/e8e18e3">e8e18e3</a></li>
-          <li><code>ON DELETE SET NULL (columns)</code> clears only the listed referencing columns. <a class="sha" href="https://github.com/nusadb/nusadb/commit/86fe5cc">86fe5cc</a></li>
-          <li>A primary key or unique constraint on a partitioned table no longer has to include the partition key. <code>REINDEX</code> rebuilds older indexes. <a class="sha" href="https://github.com/nusadb/nusadb/commit/0889127">0889127</a></li>
-          <li><code>CREATE UNIQUE INDEX … NULLS [NOT] DISTINCT</code>, and <code>ON CONFLICT (cols) WHERE</code> picks a partial unique index. <a class="sha" href="https://github.com/nusadb/nusadb/commit/aae4997">aae4997</a></li>
-          <li>Deferrable keys, foreign keys and exclusion constraints, with <code>SET CONSTRAINTS</code>. Exclusion constraints over ranges fail with <code>23P01</code>. <a class="sha" href="https://github.com/nusadb/nusadb/commit/e31329a">e31329a</a> <a class="sha" href="https://github.com/nusadb/nusadb/commit/f953a5d">f953a5d</a></li>
-        </ul>
-      </div>
-      <div class="rel">
-        <h3>0.1.0-beta.15<small>Encryption, two-phase commit, transactional DDL</small></h3>
-        <ul>
-          <li>Opt-in encryption at rest: <code>--encryption-key-file</code>, <code>--encrypt-from</code> and <code>--rotate-encryption-key</code>. <a class="sha" href="https://github.com/nusadb/nusadb/commit/ff8ce2b">ff8ce2b</a></li>
-          <li>Schema changes inside a transaction stay invisible to other sessions until it commits. <a class="sha" href="https://github.com/nusadb/nusadb/commit/4bdc1c6">4bdc1c6</a></li>
-          <li><code>PREPARE TRANSACTION</code> and protocol 1.3 notices. <a class="sha" href="https://github.com/nusadb/nusadb/commit/0437b3e">0437b3e</a></li>
-          <li><code>uuidv7()</code>, and <code>now()</code> fixed at the transaction's start. <a class="sha" href="https://github.com/nusadb/nusadb/commit/83bdb55">83bdb55</a> <a class="sha" href="https://github.com/nusadb/nusadb/commit/bb95c21">bb95c21</a></li>
-          <li>Binary <code>COPY</code>, several statements in one simple query, and <code>COPY</code> inside an open transaction. <a class="sha" href="https://github.com/nusadb/nusadb/commit/d52e534">d52e534</a> <a class="sha" href="https://github.com/nusadb/nusadb/commit/f2996e6">f2996e6</a></li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- ================================================================ faq -->
 <section class="sec" id="faq" aria-labelledby="faq-title">
   <div class="wrap sec-in side">
@@ -1120,6 +1084,6 @@ cd nusadb-v0.1.0-beta.14-$TARGET
   </div>
 </footer>
 
-<script src="js/main.js?v=20261029r4"></script>
+<script src="js/main.js?v=20261029r5"></script>
 </body>
 </html>
