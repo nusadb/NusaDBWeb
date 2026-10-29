@@ -252,7 +252,7 @@
   <div class="wrap sec-in">
     <div class="sec-head">
       <span class="eyebrow">Storage</span>
-      <h2 id="storage-title">The row is in the leaf. Its history is one pointer away.</h2>
+      <h2 id="storage-title">The row is in the leaf.</h2>
       <p class="lede">
         Tables are clustered B-link trees keyed by a row id the engine assigns, so a lookup ends at
         the leaf that holds the row, with no second hop into a separate heap. A reader that arrives
@@ -296,52 +296,6 @@
         </div>
         <figcaption id="fig2-cap"><b>Fig. 2</b>A leaf entry is the newest version of one row. Its 24-byte header decides visibility. A row too large for a leaf keeps a stub whose first 24 bytes are that header, with the rest in a chain of overflow pages, so a visibility check never reads the chain. Interior pages hold fixed 16-byte separator and child pairs.</figcaption>
       </figure>
-    <div class="pair">
-      <div>
-        <h3 class="sub-h">Old versions</h3>
-          <p>
-            An <code>UPDATE</code> moves the old header and tuple into an undo arena and writes the
-            new version into the leaf, pointing back at it. A <code>DELETE</code> stamps
-            <code>xmax</code> in place. A reader whose snapshot cannot see the leaf version walks
-            the chain newest first and takes the first version whose creator it can see.
-          </p>
-          <p>
-            A rolled-back transaction restores the previous leaf bytes and leaves no versions
-            behind, so visibility needs only the snapshot's set of active transactions, not a
-            commit log. Background purge frees arena slots no snapshot can reach.
-      </div>
-        <figure class="fig fig-narrow" aria-labelledby="fig3-cap">
-          <div class="fig-frame">
-            <div class="fig-head"><span><b>Fig. 3</b> &nbsp;Two readers, one row</span></div>
-<svg viewBox="0 0 560 330" role="img" aria-label="Diagram: the leaf holds version xmin 42 with qty 15 and an undo pointer to arena slot 19, which holds version xmin 17 with qty 10. A reader whose snapshot predates the commit of transaction 42 follows the pointer and reads qty 10; a later reader reads qty 15 from the leaf.">
-  <defs>
-    <marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="d-arrow"/></marker>
-    <marker id="ah3b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="d-arrow-brand"/></marker>
-  </defs>
-  <text class="d-txt-3" x="24" y="34">leaf, row 7</text>
-  <rect class="d-box-sig" x="24" y="44" width="70" height="44"/><text class="d-txt-3" x="32" y="62">xmin</text><text class="d-txt" x="32" y="80">42</text>
-  <rect class="d-box-sig" x="94" y="44" width="70" height="44"/><text class="d-txt-3" x="102" y="62">xmax</text><text class="d-txt" x="102" y="80">0</text>
-  <rect class="d-box-sig" x="164" y="44" width="70" height="44"/><text class="d-txt-3" x="172" y="62">undo</text><text class="d-txt" x="172" y="80">a19</text>
-  <rect class="d-box" x="234" y="44" width="100" height="44"/><text class="d-txt" x="246" y="71">qty=15</text>
-  <path class="d-line" d="M199 88 L 199 176" marker-end="url(#ah3)"/>
-  <text class="d-txt-3" x="24" y="174">undo arena, slot a19</text>
-  <rect class="d-box-2" x="24" y="184" width="70" height="44"/><text class="d-txt-3" x="32" y="202">xmin</text><text class="d-txt" x="32" y="220">17</text>
-  <rect class="d-box-2" x="94" y="184" width="70" height="44"/><text class="d-txt-3" x="102" y="202">xmax</text><text class="d-txt" x="102" y="220">0</text>
-  <rect class="d-box-2" x="164" y="184" width="70" height="44"/><text class="d-txt-3" x="172" y="202">undo</text><text class="d-txt" x="172" y="220">none</text>
-  <rect class="d-box-2" x="234" y="184" width="100" height="44"/><text class="d-txt" x="246" y="211">qty=10</text>
-  <!-- readers -->
-  <rect class="d-box-brand" x="410" y="44" width="130" height="44"/><text class="d-txt" x="420" y="63">reader B</text><text class="d-txt-3" x="420" y="80">sees 42 committed</text>
-  <path class="d-line-brand" d="M410 66 L 340 66" marker-end="url(#ah3b)"/>
-  <rect class="d-box-brand" x="410" y="184" width="130" height="44"/><text class="d-txt" x="420" y="203">reader A</text><text class="d-txt-3" x="420" y="220">snapshot before 42</text>
-  <path class="d-line-brand" d="M410 206 L 340 206" marker-end="url(#ah3b)"/>
-  <text class="d-txt-3" x="24" y="270">purge frees a19 once no open snapshot</text>
-  <text class="d-txt-3" x="24" y="286">can still need it; a long transaction</text>
-  <text class="d-txt-3" x="24" y="302">holds it back</text>
-</svg>
-          </div>
-          <figcaption id="fig3-cap"><b>Fig. 3</b>A plain <code>SELECT</code> takes no locks and never waits for a writer. Write conflicts do not wait either: a second writer on a locked row gets <code>40001</code> at once, so deadlocks cannot form.</figcaption>
-        </figure>
-    </div>
   </div>
 </section>
 
@@ -359,9 +313,9 @@
         caught, and a torn record at the end of the file ends the durable prefix cleanly.
       </p>
     </div>
-      <figure class="fig" aria-labelledby="fig4-cap">
+      <figure class="fig" aria-labelledby="fig3-cap">
         <div class="fig-frame">
-          <div class="fig-head"><span><b>Fig. 4</b> &nbsp;Log frame</span><span>btree.wal</span></div>
+          <div class="fig-head"><span><b>Fig. 3</b> &nbsp;Log frame</span><span>btree.wal</span></div>
           <div class="fig-scroll">
 <svg viewBox="0 0 1200 300" role="img" aria-label="Diagram of a log frame: lsn u64 at byte 0, len u32 at 8, crc32 at 12, body from 16. The CRC covers lsn, len and body. The body is a kind byte followed by the payload, stored as is up to 64 bytes and lz4-compressed above that. With encryption the body is a 12-byte nonce, AES-256-GCM-SIV ciphertext and a 16-byte tag, and the CRC is taken over the sealed bytes.">
   <text class="d-txt-3" x="40" y="36">0</text><text class="d-txt-3" x="280" y="36">8</text><text class="d-txt-3" x="420" y="36">12</text><text class="d-txt-3" x="560" y="36">16</text>
@@ -384,7 +338,7 @@
 </svg>
           </div>
         </div>
-        <figcaption id="fig4-cap"><b>Fig. 4</b>Compress, then encrypt, then checksum. With encryption on, a torn tail is still recognised without the key, and a frame whose CRC is intact but whose tag fails cannot come from a crash, so recovery refuses the log at that point instead of truncating it.</figcaption>
+        <figcaption id="fig3-cap"><b>Fig. 3</b>Compress, then encrypt, then checksum. With encryption on, a torn tail is still recognised without the key, and a frame whose CRC is intact but whose tag fails cannot come from a crash, so recovery refuses the log at that point instead of truncating it.</figcaption>
       </figure>
       <div class="facts">
         <div><b>64 MiB</b><span>log size at which the background worker checkpoints a database (<code>--checkpoint-threshold-bytes</code>)</span></div>
@@ -463,9 +417,9 @@
         be tested on its own. Storage code is also exercised against simulated disks that tear
         writes, fail <code>fsync</code> and lose power, replayable from a single seed.
       </p>
-        <figure class="fig fig-narrow" aria-labelledby="fig5-cap">
+        <figure class="fig fig-narrow" aria-labelledby="fig4-cap">
           <div class="fig-frame">
-            <div class="fig-head"><span><b>Fig. 5</b> &nbsp;Crates by layer</span></div>
+            <div class="fig-head"><span><b>Fig. 4</b> &nbsp;Crates by layer</span></div>
 <svg viewBox="0 0 520 600" role="img" aria-label="Seven stacked layers from client to files, each with its crate: nusadb-cli and drivers, nusadb-wire, nusadb-sql, transactions and storage in nusadb-btree, the log codec in nusadb-wal, and the data directory files. A query travels down to the storage engine; a commit travels on to the log and returns after fsync.">
   <defs>
     <marker id="ah5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="d-arrow-brand"/></marker>
@@ -488,7 +442,7 @@
   <text class="d-txt-sig" x="486" y="300" transform="rotate(90 486 300)" text-anchor="middle">COMMIT · fsync · ok</text>
 </svg>
           </div>
-          <figcaption id="fig5-cap"><b>Fig. 5</b>Crate names as they appear in the source tree. Rows travel as opaque bytes across the trait; the SQL layer owns their encoding.</figcaption>
+          <figcaption id="fig4-cap"><b>Fig. 4</b>Crate names as they appear in the source tree. Rows travel as opaque bytes across the trait; the SQL layer owns their encoding.</figcaption>
         </figure>
       </div>
         <ol class="layers">
