@@ -3,15 +3,16 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>NusaDB · one engine for transactions and analytics</title>
-<meta name="description" content="NusaDB is a relational database for a single machine: serializable transactions, a cost-based SQL planner over a vectorized executor, and durable commits. One binary, no cluster to operate. Open source, Apache-2.0." />
-<meta name="theme-color" content="#293880" />
+<title>NusaDB · relational database for a single machine</title>
+<meta name="description" content="NusaDB is an open-source relational database for a single machine, written in Rust: serializable transactions, a cost-based SQL planner and a write-ahead log in one server binary. Version 0.1.0-beta.16, Apache-2.0." />
+<meta name="theme-color" content="#0e1014" />
 <meta property="og:type" content="website" />
-<meta property="og:title" content="NusaDB · one engine for transactions and analytics" />
-<meta property="og:description" content="A relational database for a single machine. Serializable transactions, a cost-based planner, durable commits. Open source, Apache-2.0." />
+<meta property="og:title" content="NusaDB" />
+<meta property="og:description" content="An open-source relational database for a single machine, written in Rust. Version 0.1.0-beta.16, Apache-2.0." />
+<script>document.documentElement.classList.add("js");try{var t=localStorage.getItem("nusadb-theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;450;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -20,7 +21,7 @@
 <header class="masthead">
   <div class="wrap masthead-in">
     <a class="brand" href="./">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
         <path d="M4 6.5c0-1.4 3.6-2.5 8-2.5s8 1.1 8 2.5-3.6 2.5-8 2.5-8-1.1-8-2.5Z"/>
         <path d="M4 6.5v11c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5v-11"/>
         <path d="M4 12c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5"/>
@@ -29,307 +30,37 @@
     </a>
     <nav class="mast-nav" id="mastNav" aria-label="Main">
       <ul>
-        <li><a href="docs/">Documentation</a></li>
+        <li><a href="docs/">Docs</a></li>
         <li><a href="docs/getting-started.html">Install</a></li>
+        <li><a href="docs/clients.html">Drivers</a></li>
         <li><a href="docs/sql.html">SQL</a></li>
         <li><a href="docs/limits.html">Limits</a></li>
-        <li><a href="https://github.com/nusadb/nusadb" target="_blank" rel="noopener">Source</a></li>
+        <li><a href="#changes">Changes</a></li>
+        <li><a href="https://github.com/nusadb/nusadb">GitHub</a></li>
       </ul>
     </nav>
     <div class="mast-tools">
       <button class="icon-btn" id="themeBtn" type="button" aria-label="Switch theme"></button>
       <button class="icon-btn burger" id="burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mastNav">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
       </button>
     </div>
   </div>
 </header>
 
 <main id="main">
+<div class="frame">
 
-  <section class="hero">
-    <div class="wrap hero-grid">
-      <div>
-        <p class="eyebrow"><i></i> Open source · Apache-2.0</p>
-        <h1>One engine for transactions and analytics.</h1>
-        <p class="lede">
-          NusaDB is a relational database for a single machine. It gives you
-          <b>serializable transactions</b>, a cost-based planner over a vectorized
-          executor, and commits that are durable before they are acknowledged. All of it
-          runs in one binary. There is no cluster to operate.
-        </p>
-        <div class="hero-cta">
-          <a class="btn btn-primary" href="docs/getting-started.html">Get started</a>
-          <a class="btn btn-onnavy" href="https://github.com/nusadb/nusadb" target="_blank" rel="noopener">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.4 5.4 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
-            View the source
-          </a>
-        </div>
-        <p class="hero-meta">Written from scratch in Rust · runs as a single binary or a container image</p>
-      </div>
-
-      <div>
-        <div class="code">
-          <div class="code-bar">
-            <span>nusadb-cli</span>
-            <button class="copy" type="button"><em>Copy</em></button>
-          </div>
-<pre><span class="c">-- write and read, one engine, one connection</span>
-<span class="k">BEGIN</span>;
-  <span class="k">UPDATE</span> stock
-     <span class="k">SET</span> qty = qty - <span class="s">1</span>
-   <span class="k">WHERE</span> sku = <span class="s">'A-77'</span>;
-
-  <span class="k">INSERT INTO</span> orders (sku, region)
-  <span class="k">VALUES</span> (<span class="s">'A-77'</span>, <span class="s">'east'</span>);
-<span class="k">COMMIT</span>;
-
-<span class="k">SELECT</span> region,
-       count(*)   <span class="k">AS</span> n,
-       sum(total) <span class="k">AS</span> revenue
-<span class="k">FROM</span>   orders
-<span class="k">WHERE</span>  placed &gt;= now() - <span class="k">INTERVAL</span> <span class="s">'30 days'</span>
-<span class="k">GROUP BY</span> region
-<span class="k">ORDER BY</span> revenue <span class="k">DESC</span>;
-
-<span class="o"> region | n    | revenue</span>
-<span class="o">--------+------+-----------</span>
-<span class="o"> east   | 1204 | 184320.55</span>
-<span class="o"> west   |  980 |  97015.20</span>
-</pre>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="wrap">
-      <div class="section-head">
-        <span class="kicker">Capabilities</span>
-        <h2>What the engine does today</h2>
-        <p>
-          Everything here is implemented and covered by tests. Anything planned but not
-          built is on the <a href="docs/limits.html">limits page</a> instead of in this list.
-        </p>
-      </div>
-
-      <div class="cards cards-3">
-        <div class="card">
-          <span class="tag">transactions</span>
-          <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h14l-3-3M21 16H7l3 3"/></svg></span>
-          <h3>MVCC and snapshot isolation</h3>
-          <p>Readers work from a snapshot and never block writers. All four standard isolation levels are available, up to serializable snapshot isolation, with savepoints and partial rollback.</p>
-        </div>
-        <div class="card">
-          <span class="tag">storage</span>
-          <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></span>
-          <h3>Clustered B+tree</h3>
-          <p>Rows live in the leaves of a B-link/B+tree keyed by a row id the engine mints, so reaching a row by primary key does not need a second lookup in a separate heap.</p>
-        </div>
-        <div class="card">
-          <span class="tag">durability</span>
-          <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 5 3.4 8.3 8 9 4.6-.7 8-4 8-9V6l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg></span>
-          <h3>Write-ahead log</h3>
-          <p>Every record carries a CRC32 and is lz4-compressed. A commit is acknowledged only once its record is durable. A background worker checkpoints the log into an image, so recovery replays only the tail written since.</p>
-        </div>
-        <div class="card">
-          <span class="tag">queries</span>
-          <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></span>
-          <h3>Cost-based planner</h3>
-          <p>Histograms and most-common-value statistics drive join order and index choice. Plans run through a vectorized executor in batches rather than one row at a time.</p>
-        </div>
-        <div class="card">
-          <span class="tag">sql</span>
-          <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h13"/></svg></span>
-          <h3>A broad SQL surface</h3>
-          <p>Window functions, recursive CTEs, set operations, lateral joins, grouping sets, <code>MERGE</code>, <code>ON CONFLICT</code>, views, materialized views, sequences, domains, triggers and routines.</p>
-        </div>
-        
-        <div class="card">
-          <span class="tag">security</span>
-          <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
-          <h3>Authentication and access control</h3>
-          <p>SCRAM-SHA-256 over optional TLS, including mutual TLS. Roles, <code>GRANT</code> and <code>REVOKE</code>, and row-level security policies are enforced inside the engine. Data files, the log and backups can be encrypted at rest.</p>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-  <section class="section tint">
-    <div class="wrap split">
-      <div>
-        <div class="section-head" style="margin-bottom:22px">
-          <span class="kicker">Integration</span>
-          <h2>It speaks its own protocol</h2>
-          <p>The first thing to settle before planning an integration.</p>
-        </div>
-        <p>
-          NusaDB does not implement another database's wire format. A client built for a
-          different engine will not connect: the server does not answer a handshake it does
-          not recognise, so from the client's side the socket looks dead. That is a design
-          decision, not an unfinished feature.
-        </p>
-        <p>
-          The SQL dialect is a separate question. Queries written for other engines
-          generally run unchanged once they arrive over a NusaDB connection. So porting an
-          application means changing how it connects, not rewriting its SQL.
-        </p>
-        <p style="margin-top:22px">
-          <a class="btn btn-outline" href="docs/clients.html">Clients and protocol</a>
-        </p>
-      </div>
-      <div>
-        <ul class="factlist">
-          <li><b>Default port</b> <span>5678</span></li>
-          <li><b>Shell</b> <span><code>nusadb-cli</code>, interactive and batch</span></li>
-          <li><b>Drivers</b> <span>Rust, Java, Node, Python, Go, Ruby, PHP, .NET</span></li>
-          <li><b>Authentication</b> <span>SCRAM-SHA-256, optional mutual TLS</span></li>
-          <li><b>Bulk transfer</b> <span><code>COPY … FROM STDIN</code> / <code>TO STDOUT</code></span></li>
-          <li><b>Observability</b> <span>Prometheus endpoint</span></li>
-          <li><b>Databases</b> <span>Many per server, many schemas per database</span></li>
-        </ul>
-      </div>
-    </div>
-  </section>
-
-
-  <section class="section">
-    <div class="wrap split">
-      <div>
-        <div class="section-head" style="margin-bottom:20px">
-          <span class="kicker">Measured</span>
-          <h2>Numbers from our own runs</h2>
-        </div>
-        <p>
-          These come from the project's test machines, not from a formal benchmark suite.
-          They are here because a release note that only says "faster" is not worth reading.
-        </p>
-        <p>
-          The first pair is the one to look at. <code>TRUNCATE</code> used to remove rows one
-          at a time, so its cost grew with the table. It now takes roughly the same time
-          whichever size you point it at.
-        </p>
-        <p style="color:var(--ink-3);font-size:14.5px">
-          Release build, single node, one connection. Your hardware will not produce these
-          exact figures. Nothing here is a comparison against another database.
-        </p>
-        <p style="color:var(--ink-3);font-size:14.5px">
-          The <code>TRUNCATE</code> pair was measured when that work landed; the other three
-          come from an earlier build. The engine has moved a long way since, so treat these
-          as the shape of the result rather than as the current number, and re-read this
-          section when the next release notes appear.
-        </p>
-      </div>
-      <div>
-        <div class="table-scroll" style="margin:0">
-          <table>
-            <thead><tr><th>Operation</th><th>Rows</th><th style="text-align:right">Time</th></tr></thead>
-            <tbody>
-              <tr><td><code>TRUNCATE</code></td><td>100,000</td><td style="text-align:right">28.5 ms</td></tr>
-              <tr><td><code>TRUNCATE</code></td><td>200,000</td><td style="text-align:right">77.8 ms</td></tr>
-              <tr><td><code>COUNT(*)</code></td><td>1,000,000</td><td style="text-align:right">249 ms</td></tr>
-              <tr><td><code>UPDATE</code> a filtered set</td><td>100,000 of 1,000,000</td><td style="text-align:right">6.0 s</td></tr>
-              <tr><td>Primary-key lookup, 1,000 of them</td><td>1,000,000 in table</td><td style="text-align:right">569 ms</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <p style="margin:14px 0 0;font-size:14.5px;color:var(--ink-3)">
-          Vector search reaches the same answers as an exact scan once
-          <code>hnsw_ef_search</code> is raised far enough. Building that index is the slow
-          part, and the <a href="docs/limits.html#vector-index-build-cost">limits page</a> says so.
-        </p>
-      </div>
-    </div>
-  </section>
-
-  <section class="section tint">
-    <div class="wrap">
-      <div class="section-head">
-        <span class="kicker">Storage</span>
-        <h2>The row lives inside the index</h2>
-        <p>
-          Most engines keep rows in a heap and have the index point at them, so reading by
-          key costs a descent and then a second fetch. Here the row is the leaf entry. The
-          descent is the read.
-        </p>
-      </div>
-
-      <div class="diagram">
-        <svg viewBox="0 0 900 244" role="img" aria-label="A key lookup descends the tree to a leaf page. The leaf holds the row itself, each version stamped with the transaction that created it and the transaction that removed it. Every change is also appended to the write-ahead log.">
-          <defs>
-            <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
-              <path d="M0 0 10 5 0 10z" fill="#4297C8"/>
-            </marker>
-          </defs>
-          <g font-family="IBM Plex Sans, sans-serif">
-
-            <g fill="#293880">
-              <rect x="92"  y="16"  width="96" height="30" rx="6" opacity=".07"/>
-              <rect x="24"  y="78"  width="96" height="30" rx="6" opacity=".07"/>
-              <rect x="160" y="78"  width="96" height="30" rx="6" opacity=".07"/>
-              <rect x="24"  y="140" width="96" height="30" rx="6" opacity=".18"/>
-            </g>
-            <g fill="none" stroke="#4297C8" stroke-width="1.5" marker-end="url(#ar)">
-              <path d="M128 46 78 74"/>
-              <path d="M152 46 202 74"/>
-              <path d="M72 108v28"/>
-            </g>
-            <g fill="#293880" font-size="11.5" font-weight="500" text-anchor="middle">
-              <text x="140" y="35">root</text>
-              <text x="72"  y="97">branch</text>
-              <text x="208" y="97">branch</text>
-              <text x="72"  y="159">leaf</text>
-            </g>
-            <text x="140" y="196" fill="#626a7a" font-size="11" text-anchor="middle">two comparisons, then the row</text>
-
-            <path d="M126 155h190" fill="none" stroke="#4297C8" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#ar)"/>
-
-            <text x="330" y="30" fill="#626a7a" font-family="IBM Plex Mono, monospace" font-size="10.5" letter-spacing=".08em">LEAF ENTRY</text>
-            <rect x="330" y="40" width="558" height="104" rx="8" fill="#293880" opacity=".07"/>
-            <g font-size="10" fill="#8b93a3" font-family="IBM Plex Mono, monospace" letter-spacing=".05em">
-              <text x="352" y="64">ROW ID</text>
-              <text x="432" y="64">CREATED BY</text>
-              <text x="546" y="64">REMOVED BY</text>
-              <text x="662" y="64">COLUMNS</text>
-            </g>
-            <line x1="330" y1="74" x2="888" y2="74" stroke="#293880" stroke-opacity=".12"/>
-            <g font-family="IBM Plex Mono, monospace" font-size="11.5" fill="#293880">
-              <text x="352" y="97">4181</text><text x="432" y="97">txn 902</text>
-              <text x="546" y="97">txn 918</text><text x="662" y="97">'A-77', 12, 'east'</text>
-              <text x="352" y="126">4181</text><text x="432" y="126">txn 918</text>
-              <text x="546" y="126" fill="#8b93a3">still live</text>
-              <text x="662" y="126">'A-77', 11, 'east'</text>
-            </g>
-            <text x="330" y="164" fill="#626a7a" font-size="11">Two versions of one row. A reader compares its own snapshot against these stamps, so it never waits for the writer.</text>
-
-            <rect x="330" y="182" width="558" height="44" rx="8" fill="#293880" opacity=".14"/>
-            <text x="352" y="203" fill="#293880" font-size="11.5" font-weight="600">Write-ahead log</text>
-            <text x="352" y="218" fill="#626a7a" font-size="10.5">One record per change, on disk before the commit returns. This is the durable copy.</text>
-          </g>
-        </svg>
-      </div>
-
-      <ul class="diagram-legend">
-        <li><b>No heap fetch.</b> The key lookup ends at the leaf</li>
-        <li><b>No reader locks.</b> Visibility comes from the stamps on the row</li>
-        <li><b>No background flush to wait on.</b> The log is what makes a commit durable</li>
-      </ul>
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="wrap">
-      <div class="section-head">
-        <span class="kicker">Install</span>
-        <h2>Running in about a minute</h2>
-        <p>The container image needs no build step. From source you need a Rust toolchain and nothing else.</p>
-      </div>
-      <div class="cards cards-2">
-        <div class="card">
-          <h3 style="margin-bottom:14px">Container</h3>
-          <div class="code">
-            <div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
+  <section class="block intro" aria-labelledby="intro-title">
+    <div class="block-in">
+      <h1 id="intro-title">NusaDB is a relational database for a single machine, written in Rust.</h1>
+      <p class="lead">
+        Version <code>0.1.0-beta.16</code>. Serializable transactions, a cost-based SQL planner
+        and a write-ahead log in one server binary, with its own wire protocol and drivers for
+        eight languages. Open source under Apache-2.0.
+      </p>
+      <div class="code install">
+        <div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
 <pre>docker run -d --name nusadb \
   -p 5678:5678 \
   -v nusadb-data:/var/lib/nusadb \
@@ -337,173 +68,216 @@
   -e NUSADB_PASSWORD=change-me \
   nusadb/nusadb
 
-docker exec -it nusadb \
-  nusadb-cli --user app --database nusadb</pre>
-          </div>
-        </div>
-        <div class="card">
-          <h3 style="margin-bottom:14px">From source</h3>
-          <div class="code">
-            <div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
-<pre>git clone https://github.com/nusadb/nusadb.git
-cd nusadb
-cargo build --release
-
-./target/release/nusadb-server \
-  --listen 127.0.0.1:5678 \
-  --data-dir ./data \
-  --auth-user app:change-me</pre>
-          </div>
-        </div>
+docker exec -it nusadb nusadb-cli --user app</pre>
       </div>
-      <div class="note caution" style="margin-top:22px">
-        <b>Set a credential before exposing the port</b>
-        <p>
-          With no <code>--auth-user</code> and no environment pair, the server accepts every
-          client without a password and logs a warning at start-up. That is fine on a laptop
-          and wrong for anything others can reach.
-        </p>
+      <div class="actions">
+        <a class="btn btn-primary" href="docs/getting-started.html">Getting started</a>
+        <a class="btn btn-line" href="https://github.com/nusadb/nusadb">Source on GitHub</a>
       </div>
     </div>
   </section>
 
-  <section class="section tint">
-    <div class="wrap">
-      <div class="section-head">
-        <span class="kicker">Documentation</span>
-        <h2>Read the whole thing</h2>
-        <p>Six pages. They are written to be looked things up in, not skimmed once.</p>
+  <section class="block" aria-labelledby="cap-title">
+    <div class="block-head">
+      <h2 id="cap-title">Capabilities</h2>
+      <p><a href="docs/limits.html">Not in this release</a></p>
+    </div>
+    <ul class="rows">
+      <li>
+        <h3>Transactions</h3>
+        <p>MVCC snapshots, so readers never block writers. All four isolation levels up to serializable snapshot isolation, savepoints and two-phase commit.</p>
+        <a class="more" href="docs/transactions.html">Transactions</a>
+      </li>
+      <li>
+        <h3>Storage</h3>
+        <p>Rows live in the leaves of a clustered B+tree. Table and index pages are cached, evicted and spilled under <code>--max-resident-bytes</code>, so data can outgrow memory.</p>
+        <a class="more" href="docs/configuration.html#memory-limits-and-capacity">Memory and capacity</a>
+      </li>
+      <li>
+        <h3>Durability</h3>
+        <p>Every log record has a CRC32 and is lz4-compressed. A commit returns once its record is on disk, and a background worker checkpoints the log.</p>
+        <a class="more" href="docs/configuration.html#checkpoints-backup-and-restore">Checkpoints</a>
+      </li>
+      <li>
+        <h3>Query planning</h3>
+        <p>A cost-based planner uses histograms and most-common-value statistics to order joins and pick indexes. Sorts, joins and aggregates spill to disk under <code>--work-mem</code>.</p>
+        <a class="more" href="docs/sql.html#reading-a-plan-explain">EXPLAIN</a>
+      </li>
+      <li>
+        <h3>SQL</h3>
+        <p>Window functions, recursive CTEs, <code>MERGE</code>, <code>ON CONFLICT</code>, triggers, routines, partitioned tables, and exclusion and deferrable constraints.</p>
+        <a class="more" href="docs/sql.html#statement-index">Statement index</a>
+      </li>
+      <li>
+        <h3>Types</h3>
+        <p>Numeric, text, date and time, UUID, JSON, arrays, ranges, network, bit string, geometric, XML, enum and composite types, and <code>VECTOR(n)</code> with an HNSW index.</p>
+        <a class="more" href="docs/sql.html#data-types">Data types</a>
+      </li>
+      <li>
+        <h3>Full-text search</h3>
+        <p>Text search with the <code>simple</code>, <code>english</code> and <code>indonesian</code> configurations.</p>
+        <a class="more" href="docs/sql.html#full-text-search">Full-text search</a>
+      </li>
+      <li>
+        <h3>Access control</h3>
+        <p>SCRAM-SHA-256 over optional TLS or mutual TLS. Roles, <code>GRANT</code> and <code>REVOKE</code>, and row-level security policies.</p>
+        <a class="more" href="docs/sql.html#access-control">Access control</a>
+      </li>
+      <li>
+        <h3>Encryption at rest</h3>
+        <p>Opt-in with <code>--encryption-key-file</code>: the log, checkpoint images, page segments, spill files and backups are encrypted with AES-256-GCM-SIV.</p>
+        <a class="more" href="docs/configuration.html#encryption-at-rest">Encryption</a>
+      </li>
+      <li>
+        <h3>Backup and recovery</h3>
+        <p>Scheduled hard-link backups, a log archive with point-in-time restore, and a read-only standby that follows the archive.</p>
+        <a class="more" href="docs/configuration.html#backup">Backup</a>
+      </li>
+      <li>
+        <h3>Clients</h3>
+        <p>Its own wire protocol on port 5678. Drivers for Rust, Java, Node, Python, Go, Ruby, PHP and .NET, the <code>nusadb-cli</code> shell, and <code>COPY</code> for bulk transfer.</p>
+        <a class="more" href="docs/clients.html#official-clients">Drivers</a>
+      </li>
+      <li>
+        <h3>Operations</h3>
+        <p>Many databases per server and many schemas per database. Metrics in Prometheus format and a systemd unit for Linux hosts.</p>
+        <a class="more" href="docs/configuration.html#metrics">Metrics</a>
+      </li>
+    </ul>
+  </section>
+
+  <section class="block" aria-labelledby="ex-title">
+    <div class="block-head">
+      <h2 id="ex-title">Example</h2>
+    </div>
+    <div class="example">
+      <div>
+        <p>A session in <code>nusadb-cli</code> against an empty database: create a table, load five rows, then group and rank them with a window function.</p>
+        <p>Output from a 0.1.0-beta.16 build.</p>
+        <a class="more" href="docs/getting-started.html#a-worked-example">The worked example</a>
       </div>
-      <div class="cards cards-3">
-        <a class="card" href="docs/getting-started.html" style="text-decoration:none">
-          <h3>Getting started</h3>
-          <p>Install, connect, create databases and schemas, load and export data in bulk, and run statements from scripts.</p>
-        </a>
-        <a class="card" href="docs/sql.html" style="text-decoration:none">
-          <h3>SQL reference</h3>
-          <p>Types, statements and query features, plus the places where NusaDB deliberately behaves differently and why.</p>
-        </a>
-        <a class="card" href="docs/transactions.html" style="text-decoration:none">
-          <h3>Transactions</h3>
-          <p>Isolation levels, how conflicts surface, the server-side retry for single statements, savepoints and locking.</p>
-        </a>
-        <a class="card" href="docs/clients.html" style="text-decoration:none">
-          <h3>Clients and protocol</h3>
-          <p>The official drivers, connection settings, TLS and SCRAM, and what implementing the protocol involves.</p>
-        </a>
-        <a class="card" href="docs/configuration.html" style="text-decoration:none">
-          <h3>Configuration</h3>
-          <p>Every server flag, the small-by-default resource limits, a systemd unit, and the metrics that are exposed.</p>
-        </a>
-        <a class="card" href="docs/limits.html" style="text-decoration:none">
-          <h3>Limits and capacity</h3>
-          <p>What bounds a deployment today: what still has to fit in memory, log growth, restart time, backup and standby, and what is not built yet.</p>
-        </a>
+      <div>
+        <div class="code">
+          <div class="code-bar"><span>nusadb-cli</span><button class="copy" type="button"><em>Copy</em></button></div>
+<pre><span class="k">CREATE TABLE</span> orders (
+  id      <span class="k">bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY</span>,
+  region  <span class="k">text NOT NULL</span>,
+  total   <span class="k">numeric</span>(<span class="s">10</span>,<span class="s">2</span>) <span class="k">NOT NULL</span>,
+  placed  <span class="k">date NOT NULL</span>
+);
+<span class="k">INSERT INTO</span> orders (region, total, placed) <span class="k">VALUES</span>
+  (<span class="s">'east'</span>, <span class="s">120.00</span>, <span class="s">'2026-10-01'</span>), (<span class="s">'east'</span>, <span class="s">75.50</span>, <span class="s">'2026-10-03'</span>),
+  (<span class="s">'west'</span>, <span class="s">210.25</span>, <span class="s">'2026-10-02'</span>), (<span class="s">'west'</span>, <span class="s">19.99</span>, <span class="s">'2026-10-05'</span>),
+  (<span class="s">'north'</span>, <span class="s">64.00</span>, <span class="s">'2026-10-04'</span>);
+<span class="k">SELECT</span> region,
+       count(*)   <span class="k">AS</span> orders,
+       sum(total) <span class="k">AS</span> revenue,
+       rank() <span class="k">OVER</span> (<span class="k">ORDER BY</span> sum(total) <span class="k">DESC</span>) <span class="k">AS</span> rank
+<span class="k">FROM</span> orders
+<span class="k">GROUP BY</span> region
+<span class="k">ORDER BY</span> rank;
+
+<span class="o">CREATE TABLE</span>
+<span class="o">INSERT 5</span>
+<span class="o">region | orders | revenue | rank</span>
+<span class="o">-------+--------+---------+-----</span>
+<span class="o">west   | 2      | 230.24  | 1</span>
+<span class="o">east   | 2      | 195.50  | 2</span>
+<span class="o">north  | 1      | 64.00   | 3</span>
+<span class="o">SELECT 3</span></pre>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="section">
-    <div class="wrap">
-      <div class="section-head">
-        <span class="kicker">Before you commit data</span>
-        <h2>Where the edges are</h2>
-        <p>
-          NusaDB is before 1.0, and these are the constraints that change how you size a
-          deployment. They are here rather than buried because meeting them during a data
-          load costs far more than reading them now.
-        </p>
-      </div>
-      <div class="cards cards-3">
-        <div class="card">
-          <h3>Some structures stay in memory</h3>
-          <p>Table and index pages are cached, evicted and spilled, so data can outgrow memory. Oversized index entries cannot leave memory, and once they reach the resident ceiling, inserts and updates are refused with an error naming the limit. Vector indexes are held in memory whole.</p>
-        </div>
-        <div class="card">
-          <h3>Checkpoints need a quiet moment</h3>
-          <p>A background worker truncates the log once it passes a threshold, but only when no transaction is active. A transaction held open for a long time keeps the log growing until it ends.</p>
-        </div>
-        <div class="card">
-          <h3>Restart replays the log tail</h3>
-          <p>Recovery replays the writes since the last checkpoint, so start-up time grows with that tail. Size restart windows against it, not against table size.</p>
-        </div>
-        <div class="card">
-          <h3>Standby promotion is manual</h3>
-          <p>Scheduled hard-link snapshots, a log archive with point-in-time restore and age-based pruning, and a read-only standby are built in. The standby trails the primary by its checkpoints, and promoting it is a manual restart without <code>--standby-from</code>.</p>
-        </div>
-        <div class="card">
-          <h3>Single node</h3>
-          <p>One machine, so no automatic failover. The availability of the deployment is the availability of that host and its disk, plus a standby you promote by hand.</p>
-        </div>
-        <div class="card plain" style="display:flex;flex-direction:column;justify-content:center">
-          <p style="margin-bottom:16px">All of these are properties of this release rather than permanent limits.</p>
-          <a class="btn btn-outline" href="docs/limits.html" style="align-self:flex-start">Read the limits page</a>
-        </div>
-      </div>
+  <section class="block" id="changes" aria-labelledby="changes-title">
+    <div class="block-head">
+      <h2 id="changes-title">Recent changes</h2>
+      <p><a href="https://github.com/nusadb/nusadb/commits/master">Full commit history</a></p>
+    </div>
+    <div class="changes">
+      <section aria-labelledby="b16">
+        <h3 id="b16">0.1.0-beta.16</h3>
+        <p class="when">Constraints, unique keys and partitioned tables.</p>
+        <ul>
+          <li><code>DROP SCHEMA ... CASCADE</code> drops the schema's tables, views and sequences and removes foreign keys that reference them. <code>RESTRICT</code> lists what the schema still holds (<code>2BP01</code>). <a href="https://github.com/nusadb/nusadb/commit/db799f1">db799f1</a></li>
+          <li>Partitions created with <code>PARTITION OF</code> take the parent's defaults, identity and generated columns and type checks. <code>UPDATE ... SET col = DEFAULT</code> works. <a href="https://github.com/nusadb/nusadb/commit/e8e18e3">e8e18e3</a></li>
+          <li>Foreign keys accept <code>ON DELETE SET NULL (columns)</code> to clear only some referencing columns. <a href="https://github.com/nusadb/nusadb/commit/86fe5cc">86fe5cc</a></li>
+          <li>A <code>PRIMARY KEY</code> or <code>UNIQUE</code> key on a partitioned table no longer has to include the partition key. <code>CHAR(n)</code> keys are stored without trailing blanks, and <code>REINDEX</code> rebuilds older indexes. <a href="https://github.com/nusadb/nusadb/commit/0889127">0889127</a></li>
+          <li><code>CREATE UNIQUE INDEX</code> takes <code>NULLS [NOT] DISTINCT</code>, and <code>ON CONFLICT (cols) WHERE</code> selects a partial unique index. <a href="https://github.com/nusadb/nusadb/commit/aae4997">aae4997</a></li>
+          <li>A <code>NULL</code> in <code>NEW</code> or <code>OLD</code> inside a trigger keeps its column's type. <a href="https://github.com/nusadb/nusadb/commit/d0c606e">d0c606e</a></li>
+          <li><code>DEFERRABLE</code> keys, foreign keys and exclusion constraints, and <code>SET CONSTRAINTS</code>. <a href="https://github.com/nusadb/nusadb/commit/e31329a">e31329a</a></li>
+          <li><code>EXCLUDE</code> constraints over ranges are enforced and fail with <code>23P01</code>. <a href="https://github.com/nusadb/nusadb/commit/f953a5d">f953a5d</a></li>
+          <li><code>COMMENT ON</code> covers constraints, indexes, triggers, routines, views, schemas, sequences and types, and comments are stored. <a href="https://github.com/nusadb/nusadb/commit/68e69e1">68e69e1</a></li>
+        </ul>
+      </section>
+      <section aria-labelledby="b15">
+        <h3 id="b15">0.1.0-beta.15</h3>
+        <p class="when">Encryption at rest, two-phase commit and transactional DDL.</p>
+        <ul>
+          <li>Schema changes made inside a transaction are invisible to other sessions until it commits. <a href="https://github.com/nusadb/nusadb/commit/4bdc1c6">4bdc1c6</a></li>
+          <li>Opt-in encryption at rest: <code>--encryption-key-file</code>, <code>--encrypt-from</code> and <code>--rotate-encryption-key</code>. <a href="https://github.com/nusadb/nusadb/commit/ff8ce2b">ff8ce2b</a></li>
+          <li><code>now()</code> and the other current-time functions return the transaction's start time. Functions are classed immutable, stable or volatile. <a href="https://github.com/nusadb/nusadb/commit/bb95c21">bb95c21</a></li>
+          <li><code>uuidv7()</code>, <code>clock_timestamp()</code>, <code>uuid_extract_timestamp()</code> and <code>uuid_extract_version()</code>. <a href="https://github.com/nusadb/nusadb/commit/83bdb55">83bdb55</a></li>
+          <li>Two-phase commit with <code>PREPARE TRANSACTION</code>, and protocol 1.3 notices. <a href="https://github.com/nusadb/nusadb/commit/0437b3e">0437b3e</a></li>
+          <li>A simple query may hold several statements, and <code>COPY</code> runs inside the open transaction block. <a href="https://github.com/nusadb/nusadb/commit/f2996e6">f2996e6</a></li>
+          <li>Binary <code>COPY</code>, and <code>NOT NULL</code> checked on every write path. <a href="https://github.com/nusadb/nusadb/commit/d52e534">d52e534</a></li>
+          <li><code>DROP COLUMN</code> removes the column's indexes and constraints, and dropping a sequence is transactional. <a href="https://github.com/nusadb/nusadb/commit/cc7f280">cc7f280</a></li>
+          <li>Cursors and prepared statements on every extended-protocol path, and <code>MOVE</code>. <a href="https://github.com/nusadb/nusadb/commit/d37aba7">d37aba7</a> <a href="https://github.com/nusadb/nusadb/commit/8120b28">8120b28</a></li>
+          <li>Bitwise operators on <code>bigint</code>, interval scaling and sums, and date and timestamp promotion. <a href="https://github.com/nusadb/nusadb/commit/6fdd1de">6fdd1de</a></li>
+        </ul>
+      </section>
     </div>
   </section>
 
+</div>
 </main>
-
-<section class="band">
-  <div class="wrap band-in">
-    <div>
-      <h2>Try it against your own schema</h2>
-      <p>The container image starts in one command, and the getting-started page takes you from an empty database to loaded data.</p>
-    </div>
-    <div class="band-cta">
-      <a class="btn btn-primary" href="docs/getting-started.html">Get started</a>
-      <a class="btn btn-onnavy" href="docs/">Read the documentation</a>
-    </div>
-  </div>
-</section>
 
 <footer class="foot">
   <div class="wrap">
     <div class="foot-grid">
       <div>
-        <a class="brand" href="./" style="margin-bottom:12px">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+        <a class="brand" href="./">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
             <path d="M4 6.5c0-1.4 3.6-2.5 8-2.5s8 1.1 8 2.5-3.6 2.5-8 2.5-8-1.1-8-2.5Z"/>
             <path d="M4 6.5v11c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5v-11"/>
             <path d="M4 12c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5"/>
           </svg>
           <span>Nusa<b>DB</b></span>
         </a>
-        <p style="font-size:14px;margin:0;max-width:36ch;color:#93a6bd">
-          A relational database for a single machine, written from scratch in Rust.
-        </p>
+        <p>Relational database for a single machine.<br />Version 0.1.0-beta.16.</p>
       </div>
       <div>
-        <h5>Documentation</h5>
+        <h2>Get started</h2>
         <ul>
-          <li><a href="docs/">Overview</a></li>
-          <li><a href="docs/getting-started.html">Getting started</a></li>
-          <li><a href="docs/sql.html">SQL reference</a></li>
-          <li><a href="docs/transactions.html">Transactions</a></li>
-        </ul>
-      </div>
-      <div>
-        <h5>Operating</h5>
-        <ul>
-          <li><a href="docs/configuration.html">Configuration</a></li>
+          <li><a href="docs/getting-started.html#install">Install</a></li>
+          <li><a href="docs/clients.html">Connect a driver</a></li>
+          <li><a href="docs/configuration.html#upgrades">Upgrade</a></li>
           <li><a href="docs/limits.html">Limits and capacity</a></li>
-          <li><a href="docs/clients.html">Clients and protocol</a></li>
         </ul>
       </div>
       <div>
-        <h5>Project</h5>
+        <h2>Reference</h2>
         <ul>
-          <li><a href="https://github.com/nusadb/nusadb" target="_blank" rel="noopener">Source</a></li>
-          <li><a href="https://github.com/nusadb/nusadb/blob/master/CONTRIBUTING.md" target="_blank" rel="noopener">Contributing</a></li>
-          <li><a href="https://hub.docker.com/r/nusadb/nusadb" target="_blank" rel="noopener">Container image</a></li>
-          <li><a href="https://github.com/nusadb/nusadb/issues" target="_blank" rel="noopener">Issues</a></li>
+          <li><a href="docs/sql.html">SQL</a></li>
+          <li><a href="docs/transactions.html">Transactions</a></li>
+          <li><a href="docs/configuration.html">Configuration</a></li>
+          <li><a href="docs/sql.html#error-codes">Error codes</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Project</h2>
+        <ul>
+          <li><a href="https://github.com/nusadb/nusadb">Source</a></li>
+          <li><a href="https://github.com/nusadb/nusadb/issues">Issues</a></li>
+          <li><a href="https://github.com/nusadb/nusadb/blob/master/CONTRIBUTING.md">Contributing</a></li>
+          <li><a href="https://hub.docker.com/r/nusadb/nusadb">Container image</a></li>
         </ul>
       </div>
     </div>
     <div class="foot-note">
-      <p>&copy; <span id="year">2026</span> The NusaDB authors. Licensed under Apache-2.0.</p>
-      <p>Before 1.0. Interfaces may change between releases.</p>
+      <p>&copy; <span id="year">2026</span> The NusaDB authors. Apache-2.0.</p>
+      <p>Pre-1.0: interfaces may change between releases.</p>
     </div>
   </div>
 </footer>

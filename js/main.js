@@ -1,6 +1,6 @@
-/* Shared behaviour for the NusaDB site.
-   No framework, no build step: every page loads this one file and only the
-   pieces whose markup is present do anything. */
+/* Shared behaviour for the NusaDB site: theme toggle, menus, copy buttons and
+   the on-page contents list. No framework and no build step. Every page works
+   without this file; it only adds the controls that need a script. */
 
 (function () {
   "use strict";
@@ -74,9 +74,11 @@
     if (!btn || !pre) return;
 
     btn.addEventListener("click", function () {
-      // textContent drops the syntax spans, so what lands on the clipboard is
-      // what a shell or a session would accept.
-      var text = pre.textContent.replace(/\s+$/, "");
+      // textContent drops the highlighting spans. Prompt markers (.p) are
+      // removed so the clipboard holds only what a shell accepts.
+      var clone = pre.cloneNode(true);
+      clone.querySelectorAll(".p").forEach(function (n) { n.remove(); });
+      var text = clone.textContent.replace(/\s+$/, "");
       var done = function () {
         var label = btn.querySelector("em");
         btn.dataset.done = "1";
@@ -104,26 +106,6 @@
       }
     });
   });
-
-  /* ---- overflow hint on code blocks ----------------------------------- */
-
-  // Mark a sample that is wider than its box so the stylesheet can fade its
-  // right edge. Re-measured on resize because the font size scales with the
-  // viewport, so a block that overflowed at one width may not at another.
-  var codes = document.querySelectorAll(".code");
-  if (codes.length) {
-    var measure = function () {
-      codes.forEach(function (block) {
-        var pre = block.querySelector("pre");
-        if (!pre) return;
-        block.classList.toggle("overflowing", pre.scrollWidth > pre.clientWidth + 2);
-      });
-    };
-    measure();
-    window.addEventListener("resize", measure);
-    // Fonts land after first paint and change the measurement.
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
-  }
 
   /* ---- heading anchors + table of contents ---------------------------- */
 
@@ -154,9 +136,7 @@
       });
       tocBox.appendChild(ul);
 
-      // Highlight the heading nearest the top of the viewport rather than
-      // whichever one an observer fired for last, so fast scrolling settles on
-      // the section actually being read.
+      // Mark the last heading that has scrolled past the top of the window.
       var links = tocBox.querySelectorAll("a");
       var spy = function () {
         var best = 0;
@@ -180,53 +160,5 @@
 
   var y = document.getElementById("year");
   if (y) y.textContent = String(new Date().getFullYear());
-
-  /* ---- motion --------------------------------------------------------- */
-
-  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
-
-  // A slight shadow once the page has moved, so the sticky masthead reads as
-  // sitting above the content instead of being welded to it.
-  var mast = document.querySelector(".masthead");
-  if (mast) {
-    var shade = function () { mast.classList.toggle("scrolled", window.scrollY > 4); };
-    window.addEventListener("scroll", shade, { passive: true });
-    shade();
-  }
-
-  // Reveal on first approach only. Groups stagger by a few tens of milliseconds,
-  // which reads as the group settling rather than as items animating one by one.
-  var targets = document.querySelectorAll(
-    ".hero-grid > *, .section-head, .cards > *, .split > *, .factlist, .prose > *"
-  );
-  if (!targets.length) return;
-
-  if (reduced.matches || !("IntersectionObserver" in window)) {
-    targets.forEach(function (el) { el.classList.add("reveal", "in"); });
-    return;
-  }
-
-  targets.forEach(function (el) { el.classList.add("reveal"); });
-
-  var io = new IntersectionObserver(function (entries) {
-    // Stagger within one batch, capped so a long list never waits noticeably.
-    var shown = 0;
-    entries.forEach(function (e) {
-      if (!e.isIntersecting) return;
-      e.target.style.setProperty("--d", Math.min(shown, 5) * 55 + "ms");
-      e.target.classList.add("in");
-      io.unobserve(e.target);
-      shown++;
-    });
-  }, { rootMargin: "0px 0px -8% 0px", threshold: 0.06 });
-
-  targets.forEach(function (el) { io.observe(el); });
-
-  // Anything already on screen at load should not wait for a scroll event.
-  requestAnimationFrame(function () {
-    targets.forEach(function (el) {
-      if (el.getBoundingClientRect().top < window.innerHeight) el.classList.add("in");
-    });
-  });
 
 })();

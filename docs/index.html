@@ -5,10 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Documentation · NusaDB</title>
 <meta name="description" content="Documentation for NusaDB: installation, SQL reference, transactions, server configuration, capacity limits, and the client protocol." />
-<meta name="theme-color" content="#293880" />
+<meta name="theme-color" content="#0e1014" />
+<script>document.documentElement.classList.add("js");try{var t=localStorage.getItem("nusadb-theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;450;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="../css/style.css" />
 </head>
 <body>
@@ -24,15 +25,7 @@
       </svg>
       <span>Nusa<b>DB</b></span>
     </a>
-    <nav class="mast-nav" id="mastNav" aria-label="Main">
-      <ul>
-        <li><a href="./" aria-current="page">Documentation</a></li>
-        <li><a href="getting-started.html">Install</a></li>
-        <li><a href="sql.html">SQL</a></li>
-        <li><a href="limits.html">Limits</a></li>
-        <li><a href="https://github.com/nusadb/nusadb" target="_blank" rel="noopener">Source</a></li>
-      </ul>
-    </nav>
+    <nav class="mast-nav" id="mastNav" aria-label="Main"><ul><li><a href="./" aria-current="page">Docs</a></li><li><a href="getting-started.html">Install</a></li><li><a href="clients.html">Drivers</a></li><li><a href="sql.html">SQL</a></li><li><a href="limits.html">Limits</a></li><li><a href="../#changes">Changes</a></li><li><a href="https://github.com/nusadb/nusadb">GitHub</a></li></ul></nav>
     <div class="mast-tools">
       <button class="icon-btn" id="themeBtn" type="button" aria-label="Switch theme"></button>
       <button class="icon-btn burger" id="burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mastNav">
@@ -50,93 +43,94 @@
         <span>Documentation menu</span>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
       </button>
-      <div class="sidebar-body">
-        <h4>Start here</h4>
-        <ul>
-          <li><a href="./" aria-current="page">Overview</a></li>
-          <li><a href="getting-started.html">Getting started</a></li>
-        </ul>
-        <h4>Using NusaDB</h4>
-        <ul>
-          <li><a href="sql.html">SQL reference</a></li>
-          <li><a href="transactions.html">Transactions</a></li>
-          <li><a href="clients.html">Clients and protocol</a></li>
-        </ul>
-        <h4>Operating</h4>
-        <ul>
-          <li><a href="configuration.html">Configuration</a></li>
-          <li><a href="limits.html">Limits and capacity</a></li>
-        </ul>
-        <h4>Elsewhere</h4>
-        <ul>
-          <li><a href="https://github.com/nusadb/nusadb" target="_blank" rel="noopener">Source repository</a></li>
-          <li><a href="https://hub.docker.com/r/nusadb/nusadb" target="_blank" rel="noopener">Container image</a></li>
-        </ul>
-      </div>
+      <div class="sidebar-body" id="sidebarBody">
+<h4>Start</h4>
+<ul>
+<li><a href="./" aria-current="page">Overview</a></li>
+<li><a href="getting-started.html">Getting started</a></li>
+</ul>
+<h4>Reference</h4>
+<ul>
+<li><a href="sql.html">SQL reference</a></li>
+<li><a href="transactions.html">Transactions</a></li>
+<li><a href="clients.html">Clients and protocol</a></li>
+</ul>
+<h4>Operating</h4>
+<ul>
+<li><a href="configuration.html">Configuration</a></li>
+<li><a href="limits.html">Limits and capacity</a></li>
+</ul>
+<h4>Project</h4>
+<ul>
+<li><a href="https://github.com/nusadb/nusadb">Source repository</a></li>
+<li><a href="https://github.com/nusadb/nusadb/issues">Issues</a></li>
+<li><a href="https://hub.docker.com/r/nusadb/nusadb">Container image</a></li>
+</ul>
+</div>
     </aside>
 
     <main class="prose" id="main">
       <p class="crumb">Documentation</p>
       <h1>NusaDB documentation</h1>
       <p class="summary">
-        NusaDB is a single-node relational database engine written from scratch in Rust.
-        These pages describe what the current release does, how to run it, and where its
-        edges are.
+        Reference for NusaDB 0.1.0-beta.16, a single-node relational database written in Rust:
+        installing and running it, the SQL it accepts, transactions, clients and limits.
       </p>
-
-      <div class="note">
-        <b>This release is before 1.0</b>
-        <p>
-          The engine is usable and tested, but interfaces can still change between releases and
-          some parts of a production story are missing. The
-          <a href="limits.html">limits page</a> lists what is absent, including the ones that
-          affect how much data you can load.
-        </p>
-      </div>
 
       <h2 id="where-to-start">Where to start</h2>
-      <p>
-        If you have never run NusaDB, follow <a href="getting-started.html">getting started</a>:
-        it covers the container image, building from source, connecting, and loading data in bulk.
-        If you are deciding whether NusaDB fits a project, read
-        <a href="#protocol">the protocol note</a> below and then the
-        <a href="limits.html">limits page</a>. Between them they answer most evaluation
-        questions faster than the feature list does.
-      </p>
-
       <div class="table-scroll">
         <table>
           <thead>
-            <tr><th>Page</th><th>What it covers</th></tr>
+            <tr><th>To</th><th>Read</th></tr>
           </thead>
           <tbody>
-            <tr><td><a href="getting-started.html">Getting started</a></td><td>Install, connect, a worked example, the shell, the drivers, adding a user, and the first errors you will meet.</td></tr>
-            <tr><td><a href="sql.html">SQL reference</a></td><td>Every type, statement and function the engine accepts, each with an example run against this release; error codes; where NusaDB chooses differently.</td></tr>
-            <tr><td><a href="transactions.html">Transactions</a></td><td>Isolation levels, conflicts and the retry loop, aborted transactions, savepoints, locks, cursors.</td></tr>
-            <tr><td><a href="clients.html">Clients and protocol</a></td><td>Official drivers with install commands and snippets, connection settings, TLS and SCRAM, notifications.</td></tr>
-            <tr><td><a href="configuration.html">Configuration</a></td><td>Every server flag, authentication and roles, memory limits and the page cache, the container image, systemd, TLS, metrics, encryption at rest, checkpoints, backup, point-in-time recovery and standby.</td></tr>
-            <tr><td><a href="limits.html">Limits and capacity</a></td><td>What still has to fit in memory, log growth and checkpoints, restart time, backup and standby, one server per data directory, storage errors, and what is not built yet.</td></tr>
+            <tr><td>Decide whether NusaDB fits a project</td><td><a href="limits.html">Limits and capacity</a>, then <a href="#protocol">the wire protocol</a> below</td></tr>
+            <tr><td>Install and run a first query</td><td><a href="getting-started.html">Getting started</a></td></tr>
+            <tr><td>Connect an application</td><td><a href="clients.html#official-clients">Official clients</a> and <a href="clients.html#connection-settings">connection settings</a></td></tr>
+            <tr><td>Look up a statement, type or function</td><td><a href="sql.html#statement-index">SQL statement index</a></td></tr>
+            <tr><td>Handle conflicts and retries</td><td><a href="transactions.html">Transactions</a></td></tr>
+            <tr><td>Configure and deploy a server</td><td><a href="configuration.html#server-flags">Server flags</a>, <a href="configuration.html#running-on-a-linux-vm-with-systemd">systemd</a>, <a href="configuration.html#backup">backup</a></td></tr>
+            <tr><td>Upgrade an existing data directory</td><td><a href="configuration.html#upgrades">Upgrades</a></td></tr>
+            <tr><td>Interpret an error code</td><td><a href="sql.html#error-codes">Error codes</a></td></tr>
           </tbody>
         </table>
       </div>
 
-      <h2 id="architecture">How the engine is put together</h2>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th>Page</th><th>Contents</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><a href="getting-started.html">Getting started</a></td><td>Install, connect, a worked example, the shell, the drivers, adding a user, the first errors.</td></tr>
+            <tr><td><a href="sql.html">SQL reference</a></td><td>Types, statements and functions, each with an example run against this release; error codes; behaviour specific to NusaDB.</td></tr>
+            <tr><td><a href="transactions.html">Transactions</a></td><td>Isolation levels, conflicts and the retry loop, aborted transactions, savepoints, locks, cursors, two-phase commit.</td></tr>
+            <tr><td><a href="clients.html">Clients and protocol</a></td><td>Official drivers with install commands and snippets, connection settings, TLS and SCRAM, notifications.</td></tr>
+            <tr><td><a href="configuration.html">Configuration</a></td><td>Server flags, authentication and roles, memory limits and the page cache, the container image, systemd, TLS, metrics, encryption at rest, checkpoints, backup, point-in-time recovery, standby, upgrades.</td></tr>
+            <tr><td><a href="limits.html">Limits and capacity</a></td><td>What has to fit in memory, log growth and checkpoints, restart time, backup and standby, one server per data directory, storage errors, and features not in this release.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="architecture">Architecture</h2>
       <p>
         Requests arrive over the Nusa wire protocol and pass through a parser, an analyzer that
-        resolves names and checks types, a planner that chooses an execution strategy from
-        collected statistics, and a vectorized executor that works on batches of rows.
+        resolves names and checks types, a planner that picks an execution strategy from
+        collected statistics, and a vectorized executor that processes rows in batches.
       </p>
       <p>
-        Underneath, the storage engine is a clustered B-link/B+tree: rows live in the leaves,
-        keyed by a row id the engine mints, so reaching a row by primary key does not need a
-        second lookup in a separate heap. Row versions carry the transaction that created them
-        and the transaction that removed them, which is what lets readers work from a snapshot
-        without blocking writers. A background worker removes versions no snapshot can still see.
+        The storage engine is a clustered B-link/B+tree. Rows live in the leaves, keyed by a row
+        id the engine assigns, so a primary-key lookup ends at the leaf with no second lookup in a
+        separate heap. Each row version records the transaction that created it and the one that
+        removed it. Readers use these stamps to work from a snapshot without blocking writers, and
+        a background worker removes versions that no snapshot can still see.
       </p>
       <p>
-        Durability comes from the write-ahead log. A record is written and made durable before a
-        commit is acknowledged, each record carries a CRC32, and records are lz4-compressed.
-        A checkpoint writes the pages changed since the last one into a new page segment and publishes an image naming every page, then truncates the log. On start-up the engine opens that image, loads pages from it as they are used, and replays only the log written after it.
+        The write-ahead log provides durability. A commit is acknowledged after its record is
+        durable; each record carries a CRC32 and is lz4-compressed. A checkpoint writes the pages
+        changed since the previous one into a new page segment, publishes an image naming every
+        page, and truncates the log. At start-up the engine opens that image, loads pages from it
+        as they are used, and replays only the log written after it.
       </p>
 
       <div class="table-scroll">
@@ -153,37 +147,35 @@
         </table>
       </div>
 
-      <h2 id="protocol">A note on the protocol</h2>
+      <h2 id="protocol">Wire protocol</h2>
       <p>
-        NusaDB implements its own wire protocol rather than another database's. Clients written
-        for a different engine cannot connect: the server does not reply to a handshake it does
-        not recognise, so from the client's side the socket simply appears dead. This is a design
-        decision, not an unfinished feature.
+        NusaDB has its own wire protocol. Clients written for other database engines cannot
+        connect: the server does not answer a handshake it does not recognise, so the client sees
+        a connection that never responds.
       </p>
       <p>
-        The SQL dialect is separate from the wire format. Queries written against other engines
-        usually run unchanged once they reach NusaDB. What changes is how you connect. Use
-        <code>nusadb-cli</code>, one of the drivers listed under
-        <a href="clients.html">clients</a>, or implement the protocol yourself from its
-        specification.
+        The SQL dialect is independent of the wire format, and queries written for other engines
+        usually run unchanged. To connect, use <code>nusadb-cli</code>, one of the
+        <a href="clients.html">official clients</a>, or a client written against the
+        <a href="https://github.com/nusadb/nusadb/blob/master/docs/wire-protocol.md">protocol specification</a>.
       </p>
 
-      <h2 id="conventions">Conventions in these pages</h2>
+      <h2 id="conventions">Conventions</h2>
       <ul>
-        <li>Shell commands assume the release binaries are on your path or run from <code>./target/release/</code>.</li>
+        <li>Shell commands assume the release binaries are on your path, or are run from <code>./target/release/</code>.</li>
         <li>SQL examples are written for <code>nusadb-cli</code> and end with a semicolon.</li>
-        <li>Measured numbers state the conditions they were measured under; where a figure depends on the host, that is said instead of quoting one.</li>
-        <li>Anything described as planned is not in this release. Features are only listed as present when they are implemented and tested.</li>
+        <li>Output shown under an example was produced by this release.</li>
+        <li>Features are listed only when they are implemented and tested. Missing features are listed on the <a href="limits.html">limits page</a>.</li>
       </ul>
 
-      <h2 id="help">Getting help and reporting problems</h2>
+      <h2 id="help">Reporting problems</h2>
       <p>
-        Bugs and questions belong in the
-        <a href="https://github.com/nusadb/nusadb/issues" target="_blank" rel="noopener">issue tracker</a>.
-        A report is most useful with the release or image digest, the statements that reproduce the
-        behaviour, and what you expected instead. If the problem involves data size or restart
-        time, include the size of the data directory. The <a href="limits.html">limits page</a>
-        explains why that number matters more than the row count.
+        Report bugs and ask questions in the
+        <a href="https://github.com/nusadb/nusadb/issues">issue tracker</a>. Include the release or
+        image digest, the statements that reproduce the behaviour, and the result you expected.
+        For problems with data size or restart time, include the size of the data directory,
+        since restart time depends on it more than on the row count
+        (<a href="limits.html#restart-time-tracks-the-log-tail">restart time</a>).
       </p>
 
       <div class="nextprev">
@@ -201,9 +193,9 @@
 
 <footer class="foot">
   <div class="wrap">
-    <div class="foot-note" style="margin-top:0;border-top:0;padding-top:0">
-      <p>&copy; <span id="year">2026</span> The NusaDB authors. Licensed under Apache-2.0.</p>
-      <p><a href="../">Home</a> · <a href="https://github.com/nusadb/nusadb" target="_blank" rel="noopener">Source</a> · <a href="https://github.com/nusadb/nusadb/issues" target="_blank" rel="noopener">Issues</a></p>
+    <div class="foot-note">
+      <p>&copy; <span id="year">2026</span> The NusaDB authors. Apache-2.0. Version 0.1.0-beta.16.</p>
+      <p><a href="../">Home</a> · <a href="https://github.com/nusadb/nusadb">Source</a> · <a href="https://github.com/nusadb/nusadb/issues">Issues</a></p>
     </div>
   </div>
 </footer>

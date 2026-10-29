@@ -5,18 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Limits and capacity · NusaDB</title>
 <meta name="description" content="What bounds a NusaDB deployment today: what still has to fit in memory, log growth and restart time, backup, point-in-time recovery and a read-only standby, one server per data directory, and what is not built yet." />
-<meta name="theme-color" content="#293880" />
+<meta name="theme-color" content="#0e1014" />
+<script>document.documentElement.classList.add("js");try{var t=localStorage.getItem("nusadb-theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;450;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="../css/style.css" />
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
 <header class="masthead">
   <div class="wrap masthead-in">
-    <a class="brand" href="../"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6.5c0-1.4 3.6-2.5 8-2.5s8 1.1 8 2.5-3.6 2.5-8 2.5-8-1.1-8-2.5Z"/><path d="M4 6.5v11c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5v-11"/><path d="M4 12c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5"/></svg><span>Nusa<b>DB</b></span></a>
-    <nav class="mast-nav" id="mastNav" aria-label="Main"><ul><li><a href="./">Documentation</a></li><li><a href="getting-started.html">Install</a></li><li><a href="sql.html">SQL</a></li><li><a href="limits.html" aria-current="page">Limits</a></li><li><a href="https://github.com/nusadb/nusadb" target="_blank" rel="noopener">Source</a></li></ul></nav>
+    <a class="brand" href="../"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6.5c0-1.4 3.6-2.5 8-2.5s8 1.1 8 2.5-3.6 2.5-8 2.5-8-1.1-8-2.5Z"/><path d="M4 6.5v11c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5v-11"/><path d="M4 12c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5"/></svg><span>Nusa<b>DB</b></span></a>
+    <nav class="mast-nav" id="mastNav" aria-label="Main"><ul><li><a href="./">Docs</a></li><li><a href="getting-started.html">Install</a></li><li><a href="clients.html">Drivers</a></li><li><a href="sql.html">SQL</a></li><li><a href="limits.html" aria-current="page">Limits</a></li><li><a href="../#changes">Changes</a></li><li><a href="https://github.com/nusadb/nusadb">GitHub</a></li></ul></nav>
     <div class="mast-tools">
       <button class="icon-btn" id="themeBtn" type="button" aria-label="Switch theme"></button>
       <button class="icon-btn burger" id="burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mastNav">
@@ -28,17 +29,17 @@
 <div class="wrap">
   <div class="docs">
     <aside class="sidebar">
-<button class="sidebar-toggle" type="button" aria-expanded="false">
+<button class="sidebar-toggle" type="button" aria-expanded="false" aria-controls="sidebarBody">
 <span>Documentation menu</span>
 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
 </button>
-<div class="sidebar-body">
-<h4>Start here</h4>
+<div class="sidebar-body" id="sidebarBody">
+<h4>Start</h4>
 <ul>
 <li><a href="./">Overview</a></li>
 <li><a href="getting-started.html">Getting started</a></li>
 </ul>
-<h4>Using NusaDB</h4>
+<h4>Reference</h4>
 <ul>
 <li><a href="sql.html">SQL reference</a></li>
 <li><a href="transactions.html">Transactions</a></li>
@@ -49,23 +50,26 @@
 <li><a href="configuration.html">Configuration</a></li>
 <li><a href="limits.html" aria-current="page">Limits and capacity</a></li>
 </ul>
-<h4>Elsewhere</h4><ul><li><a href="https://github.com/nusadb/nusadb" target="_blank" rel="noopener">Source repository</a></li><li><a href="https://hub.docker.com/r/nusadb/nusadb" target="_blank" rel="noopener">Container image</a></li></ul>
+<h4>Project</h4>
+<ul>
+<li><a href="https://github.com/nusadb/nusadb">Source repository</a></li>
+<li><a href="https://github.com/nusadb/nusadb/issues">Issues</a></li>
+<li><a href="https://hub.docker.com/r/nusadb/nusadb">Container image</a></li>
+</ul>
 </div>
     </aside>
     <main class="prose" id="main">
       <p class="crumb"><a href="./">Documentation</a> / Limits and capacity</p>
       <h1>Limits and capacity</h1>
-      <p class="summary">The constraints that change how you size and operate a deployment, stated plainly because finding them during a data load is far more expensive than reading them first.</p>
-
-<div class="note caution"><b>Read this before loading a large dataset.</b><p>Table pages are cached and evicted, so a database can be larger than memory, but a few structures still cannot leave memory and one limit refuses writes once they reach it. The first section says which ones.</p></div>
+      <p class="summary">Constraints of this release that affect how a deployment is sized and operated, and features that are not built yet.</p>
 <h2 id="what-still-has-to-fit-in-memory">What still has to fit in memory</h2>
 <p>Table pages live in a page cache backed by the last checkpoint image. A page is loaded from the image's page segments on first use, a page unchanged since the last checkpoint can be evicted when memory is needed, and a changed page spills to a scratch file beside the log when there is nothing clean left to evict. The cache is bounded by <code>--max-resident-bytes</code>, or by a value derived from the detected memory budget when the flag is unset. A table scan reads a batch of rows at a time, and B-tree indexes, the primary key's included, live in pages too, so neither has to fit in memory.</p>
-<p>What cannot leave memory is small but real: index entries too large for an index page (a key of roughly 2 KB or more), and a note per index entry an <code>UPDATE</code> moved to a new key, kept until the background purge removes the old entry. Once these reach the bound, the next insert or update is refused before it starts:</p>
+<p>Two kinds of data cannot leave memory: index entries too large for an index page (a key of roughly 2 KB or more), and a note per index entry an <code>UPDATE</code> moved to a new key, kept until the background purge removes the old entry. Once these reach the bound, the next insert or update is refused before it starts:</p>
 <div class="code"><div class="code-bar"><span>output</span><button class="copy" type="button"><em>Copy</em></button></div>
 <pre><span class="o">ERROR XX000: out of memory: the engine reached its resident-memory limit of 858993440 bytes</span>
 <span class="o">(859001088 bytes held by index entries); free rows (DELETE/TRUNCATE), drop indexes that are not</span>
 <span class="o">needed, raise the limit, or use a larger host</span></pre></div>
-<p>Three details are worth knowing:</p>
+<p>Related behaviour:</p>
 <ul><li>A long-running transaction delays the purge, so heavy key-changing updates under one can grow the notes that count against the bound.</li><li>If the scratch file cannot be written (a full disk), changed pages stay in memory and the cache grows past the bound until the next checkpoint instead of failing the write.</li><li>Vector indexes (<code>USING hnsw</code>) are held in memory whatever the bound. A large vector index needs the memory for its whole graph.</li></ul>
 <p><code>DELETE</code>, <code>TRUNCATE</code>, <code>CREATE INDEX</code> and the background purge are not refused at the bound, so space can always be freed. See <a href="configuration.html#memory-limits-and-capacity">configuration</a> for the full picture.</p>
 <h2 id="the-log-grows-until-a-checkpoint">The log grows until a checkpoint</h2>
@@ -82,17 +86,17 @@
 <p>A running server holds an exclusive lock on <code>global/cluster.lock</code> in its data directory, and each open database one on its own lock file. A second server started on the same directory exits at once with a message naming the lock. The operating system releases the locks when the holder ends, even when it is killed, so there is no stale lock to remove by hand. Keep the data directory on a local file system: on some network file systems these locks are not enforced across machines.</p>
 <h2 id="a-storage-error-stops-that-database">A storage error stops that database</h2>
 <p>If reading or writing a page fails while a change is being made (a damaged page on disk, an unreadable page of the scratch file, a full disk under a <code>ROLLBACK TO SAVEPOINT</code>), that database stops rather than persist a half-made change. Every later statement against it fails with <code>XX000</code> and a message saying the database stopped after a storage error, and the metrics endpoint reports <code>nusadb_database_stopped{database="..."} 1</code>; the stopped database never checkpoints, so its image stays as the last good checkpoint left it. Other databases on the same server keep serving. After fixing the cause, restart the server: the database is rebuilt from its last image and its log, with every committed transaction and nothing of the interrupted one. An error while a statement only reads a page fails that statement alone.</p>
-<h2 id="query-memory-spill-or-fail-never-swap">Query memory: spill or fail, never swap</h2>
+<h2 id="query-memory-spill-or-fail-never-swap">Query memory and spilling</h2>
 <p>With <code>--work-mem</code> set and a <code>--spill-dir</code> configured (a Linux host with a detected memory budget gets both by default), a query whose working set exceeds the budget streams the overflow to disk instead of failing. That covers sorts, <code>DISTINCT</code>, <code>DISTINCT ON</code>, <code>GROUP BY</code> including <code>ROLLUP</code> / <code>CUBE</code> / <code>GROUPING SETS</code>, set operations, hash joins and window functions; <code>CREATE TABLE AS</code>, materialized views and <code>INSERT ... SELECT</code> stream their rows; a cursor keeps a large result on disk; and <code>UPDATE ... FROM</code>, <code>DELETE ... USING</code> and <code>MERGE</code> read their target as a stream and split a large source into partitions joined one at a time. Without a spill directory a stage over the budget fails with an error naming the limit and the flag, and the server stays responsive.</p>
-<p>What still has to fit the budget: a window frame of an aggregate that holds its rows (one with <code>EXCLUDE</code>, a floating-point <code>sum</code> or <code>avg</code>, <code>array_agg</code>, or a <code>min</code> / <code>max</code> over values that keep rising across a very wide frame), a <code>RANGE</code> / <code>GROUPS</code> frame with an offset wider than the budget, and a cursor over <code>UNION</code>, <code>INTERSECT</code> or <code>EXCEPT</code>. An <code>UPDATE</code> or <code>MERGE</code> that sets a <code>UNIQUE</code> or primary-key column holds the table's new image to check it, and every write is held until its transaction commits. Without any budget, a large enough query can exhaust host memory, so setting one is the safer configuration.</p>
-<p>Two more per-client bounds exist: <code>--max-txn-write-bytes</code> caps one transaction's uncommitted writes and <code>--copy-max-bytes</code> caps one bulk load. Both derive from the memory budget and both fail the offending client with a clear error rather than the whole server.</p>
+<p>What still has to fit the budget: a window frame of an aggregate that holds its rows (one with <code>EXCLUDE</code>, a floating-point <code>sum</code> or <code>avg</code>, <code>array_agg</code>, or a <code>min</code> / <code>max</code> over values that keep rising across a very wide frame), a <code>RANGE</code> / <code>GROUPS</code> frame with an offset wider than the budget, and a cursor over <code>UNION</code>, <code>INTERSECT</code> or <code>EXCEPT</code>. An <code>UPDATE</code> or <code>MERGE</code> that sets a <code>UNIQUE</code> or primary-key column holds the table's new image to check it, and every write is held until its transaction commits. Without a budget, a large enough query can exhaust host memory.</p>
+<p>Two more per-client bounds exist: <code>--max-txn-write-bytes</code> caps one transaction's uncommitted writes and <code>--copy-max-bytes</code> caps one bulk load. Both default to values derived from the memory budget, and exceeding either fails that client's statement with an error while the server keeps running.</p>
 <h2 id="vector-index-build-cost">Vector index build cost</h2>
-<p>Vector search is available with a <code>VECTOR(n)</code> type, four distance operators, and an HNSW index whose recall reaches exact-search results at a high enough <code>hnsw_ef_search</code>. Building the index is expensive, substantially more so than a specialised vector extension, so plan index builds as scheduled work rather than something to do during a load. The graph is saved as it changes and reloaded at open rather than rebuilt, and it is held in memory whatever the resident bound.</p>
+<p>Vector search is available with a <code>VECTOR(n)</code> type, four distance operators, and an HNSW index whose recall reaches exact-search results at a high enough <code>hnsw_ef_search</code>. Building the index is slow, so schedule index builds instead of running them during a load. The graph is saved as it changes and reloaded at open rather than rebuilt, and it is held in memory whatever the resident bound.</p>
 <h2 id="not-in-this-release">Not in this release</h2>
-<div class="table-scroll"><table><thead><tr><th>Area</th><th>Status</th></tr></thead><tbody><tr><td>Scheduled backup</td><td>Built in: <code>--backup-dir</code>, <code>--backup-interval</code>, <code>--backup-keep</code>, and archive retention with <code>--wal-archive-retain</code>. Copying backups off the machine is yours to arrange.</td></tr><tr><td>Encryption at rest</td><td>Built in, opt-in: <code>--encryption-key-file</code> encrypts each database's log, checkpoint image, page segments, scratch and spill files, archive and backups with AES-256-GCM-SIV. An existing data directory is encrypted by copying it with <code>--encrypt-from</code>. See <a href="configuration.html#encryption-at-rest">configuration</a>.</td></tr><tr><td>Clustering and automatic failover</td><td>Not built. A read-only standby follows through the checkpoint archive; promotion is a manual restart.</td></tr><tr><td>Synchronous replication</td><td>Not built. A commit is acknowledged without waiting for a standby, which receives the change only when the primary checkpoints.</td></tr><tr><td>Vector indexes larger than memory</td><td>Not built. <code>USING hnsw</code> graphs are held in memory whatever the resident bound.</td></tr><tr><td>DDL in a prepared transaction</td><td>Refused (<code>0A000</code>): a transaction that changed the schema, a sequence or statistics, wrote a temporary table, ran <code>LISTEN</code> / <code>UNLISTEN</code> / <code>NOTIFY</code> or declared a cursor <code>WITH HOLD</code> cannot be prepared. See <a href="transactions.html#two-phase-commit">two-phase commit</a>.</td></tr><tr><td>Arrays of a composite type</td><td>Not supported yet. Composite types nest inside each other and may hold arrays of built-in types.</td></tr><tr><td><code>INSERT ... ON CONFLICT</code> into a partitioned table</td><td>Refused; upsert into the partitions directly.</td></tr><tr><td>Row movement on <code>UPDATE</code> of a partition key</td><td>Refused loudly (<code>23514</code>); change the key by delete-and-insert.</td></tr><tr><td><code>INSTEAD OF</code> triggers</td><td>Refused.</td></tr><tr><td>Named time zones</td><td><code>SET TIME ZONE</code> takes UTC or a fixed offset; an IANA region name is refused (no time-zone database, so no daylight-saving rules).</td></tr><tr><td>Locale collations</td><td>Refused; byte ordering only.</td></tr><tr><td>Index methods</td><td>Every scalar index is served by the B-tree (<code>hash</code> / <code>brin</code> are recorded, <code>gin</code> / <code>gist</code> / <code>spgist</code> fall back); <code>hnsw</code> is the vector index.</td></tr><tr><td>Full-text configurations beyond <code>simple</code>, <code>english</code> and <code>indonesian</code>; prefix matching</td><td>Refused.</td></tr><tr><td>Password changes without a restart</td><td>Passwords live in <code>--auth-user</code>; change one by restarting.</td></tr><tr><td>Latency and storage metrics</td><td>Four server counters and a per-database stopped gauge only.</td></tr><tr><td>The .NET driver on NuGet</td><td>In the source tree, not yet published (Java is on Maven Central as <code>com.nusadb:nusadb-jdbc</code>).</td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>Area</th><th>Status</th></tr></thead><tbody><tr><td>Scheduled backup</td><td>Built in: <code>--backup-dir</code>, <code>--backup-interval</code>, <code>--backup-keep</code>, and archive retention with <code>--wal-archive-retain</code>. Copying backups off the machine is yours to arrange.</td></tr><tr><td>Encryption at rest</td><td>Built in, opt-in: <code>--encryption-key-file</code> encrypts each database's log, checkpoint image, page segments, scratch and spill files, archive and backups with AES-256-GCM-SIV. An existing data directory is encrypted by copying it with <code>--encrypt-from</code>. See <a href="configuration.html#encryption-at-rest">configuration</a>.</td></tr><tr><td>Clustering and automatic failover</td><td>Not built. A read-only standby follows through the checkpoint archive; promotion is a manual restart.</td></tr><tr><td>Synchronous replication</td><td>Not built. A commit is acknowledged without waiting for a standby, which receives the change only when the primary checkpoints.</td></tr><tr><td>Vector indexes larger than memory</td><td>Not built. <code>USING hnsw</code> graphs are held in memory whatever the resident bound.</td></tr><tr><td>DDL in a prepared transaction</td><td>Refused (<code>0A000</code>): a transaction that changed the schema, a sequence or statistics, wrote a temporary table, ran <code>LISTEN</code> / <code>UNLISTEN</code> / <code>NOTIFY</code> or declared a cursor <code>WITH HOLD</code> cannot be prepared. See <a href="transactions.html#two-phase-commit">two-phase commit</a>.</td></tr><tr><td>Arrays of a composite type</td><td>Not supported yet. Composite types nest inside each other and may hold arrays of built-in types.</td></tr><tr><td><code>MERGE</code> into a partitioned table</td><td>Refused (<code>0A000</code>); merge into its partitions. <code>INSERT ... ON CONFLICT</code>, an <code>UPDATE</code> that moves a row to another partition, and <code>PRIMARY KEY</code> / <code>UNIQUE</code> keys that leave out the partition key are supported.</td></tr><tr><td>Unique indexes and <code>EXCLUDE</code> constraints on a partitioned table</td><td>Refused (<code>0A000</code>); declare a <code>UNIQUE</code> constraint on the table, or create the index or constraint on each partition.</td></tr><tr><td>Deferrable <code>CHECK</code> constraints</td><td>Refused (<code>0A000</code>). <code>PRIMARY KEY</code>, <code>UNIQUE</code>, foreign key and exclusion constraints can be <code>DEFERRABLE</code>.</td></tr><tr><td>Named time zones</td><td><code>SET TIME ZONE</code> takes UTC or a fixed offset; an IANA region name is refused (no time-zone database, so no daylight-saving rules).</td></tr><tr><td>Locale collations</td><td>Refused; byte ordering only.</td></tr><tr><td>Index methods</td><td>Every scalar index is served by the B-tree (<code>hash</code> / <code>brin</code> are recorded, <code>gin</code> / <code>gist</code> / <code>spgist</code> fall back); <code>hnsw</code> is the vector index.</td></tr><tr><td>Full-text configurations beyond <code>simple</code>, <code>english</code> and <code>indonesian</code>; prefix matching</td><td>Refused.</td></tr><tr><td>Password changes without a restart</td><td>Passwords live in <code>--auth-user</code>; change one by restarting.</td></tr><tr><td>Latency and storage metrics</td><td>Four server counters and a per-database stopped gauge only.</td></tr><tr><td>The .NET driver on NuGet</td><td>In the source tree, not yet published (Java is on Maven Central as <code>com.nusadb:nusadb-jdbc</code>).</td></tr></tbody></table></div>
 <h2 id="where-nusadb-fits-today">Where NusaDB fits today</h2>
-<p>It is a reasonable choice when a single node with a read-only standby you promote by hand is acceptable, and when you copy backups off the machine yourself. Data can outgrow memory, since table and B-tree index pages are evicted and spilled, while vector indexes still need memory for their whole graph. It is not the right choice yet where failover must happen without an operator, where a standby must lag the primary by less than its checkpoint cadence, or where a backup must run without any scheduling on your side.</p>
-<p>Everything on this page is a property of the current release rather than a permanent limitation. Check the release notes when a new version appears.</p>
+<p>This release suits deployments where one node with a read-only standby promoted by hand is acceptable, and where the operator copies backups off the machine. Table and B-tree index data can outgrow memory; vector indexes need memory for their whole graph.</p>
+<p>It does not yet suit deployments that need failover without an operator, a standby that lags the primary by less than its checkpoint cadence, or backups that need no scheduling by the operator. <a href="../#changes">Recent changes</a> lists what each release adds.</p>
 
 <div class="nextprev">
 <a href="configuration.html"><small>Previous</small>Configuration</a>
@@ -103,9 +107,9 @@
 </div>
 <footer class="foot">
   <div class="wrap">
-    <div class="foot-note" style="margin-top:0;border-top:0;padding-top:0">
-      <p>&copy; <span id="year">2026</span> The NusaDB authors. Licensed under Apache-2.0.</p>
-      <p><a href="../">Home</a> · <a href="https://github.com/nusadb/nusadb" target="_blank" rel="noopener">Source</a> · <a href="https://github.com/nusadb/nusadb/issues" target="_blank" rel="noopener">Issues</a></p>
+    <div class="foot-note">
+      <p>&copy; <span id="year">2026</span> The NusaDB authors. Apache-2.0. Version 0.1.0-beta.16.</p>
+      <p><a href="../">Home</a> · <a href="https://github.com/nusadb/nusadb">Source</a> · <a href="https://github.com/nusadb/nusadb/issues">Issues</a></p>
     </div>
   </div>
 </footer>

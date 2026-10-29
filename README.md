@@ -33,20 +33,17 @@ npx serve .
 
 ## Design notes
 
-Two brand colours: `#293880` for structure and `#4297C8` for interaction. The blue is
-too light to carry body text on white: around 3.2:1 against it, below the 4.5:1 needed
-for normal text. Links and inline text therefore use a darkened step of the same hue
-(`--blue-ink`), and the lighter blue is kept for fills, rules and focus rings. Both a
-light and a dark scheme are defined; the page follows the operating system by default and
-a toggle overrides it, remembered in `localStorage`.
+Structure comes from 1px lines rather than shadows or tinted bands, with corner radii of 2 to
+6px. The two brand colours are `#293880` (navy) and `#4297C8` (blue). Blue is about 3.0:1
+on the light ground, too low for text, so light-theme links use `#1d6e99` (5.2:1); on the
+dark ground blue reaches 5.9:1 and is used for links directly. Body text is 16.9:1 (light)
+and 15.8:1 (dark). The page follows the operating system's colour scheme, and the toggle
+overrides it and is remembered in `localStorage`.
 
-Type is one family at a small number of sizes: IBM Plex Sans for text and IBM Plex Mono
-for code and labels. It was chosen over the more common pairings because it was designed
-for technical documentation, its mono companion is genuinely readable in SQL, and using a
-single family keeps the pages looking deliberate rather than assembled.
-
-Structure leans on 1px rules rather than shadows, tables are used where a table is the
-honest shape for the content, and there are no decorative gradients.
+Type is IBM Plex Sans for text and headings and IBM Plex Mono for code, commands and
+versions, loaded from Google Fonts with system fallbacks. The scale steps by about 1.2 from
+16px. Every page works without JavaScript: the script only adds the theme toggle, the
+mobile menus, copy buttons and the on-page contents list.
 
 ## Editing
 

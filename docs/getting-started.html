@@ -5,18 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Getting started · NusaDB</title>
 <meta name="description" content="Install NusaDB from the container image or from source, connect with nusadb-cli, create databases and schemas, and move data in bulk with COPY." />
-<meta name="theme-color" content="#293880" />
+<meta name="theme-color" content="#0e1014" />
+<script>document.documentElement.classList.add("js");try{var t=localStorage.getItem("nusadb-theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;450;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="../css/style.css" />
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
 <header class="masthead">
   <div class="wrap masthead-in">
-    <a class="brand" href="../"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6.5c0-1.4 3.6-2.5 8-2.5s8 1.1 8 2.5-3.6 2.5-8 2.5-8-1.1-8-2.5Z"/><path d="M4 6.5v11c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5v-11"/><path d="M4 12c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5"/></svg><span>Nusa<b>DB</b></span></a>
-    <nav class="mast-nav" id="mastNav" aria-label="Main"><ul><li><a href="./">Documentation</a></li><li><a href="getting-started.html" aria-current="page">Install</a></li><li><a href="sql.html">SQL</a></li><li><a href="limits.html">Limits</a></li><li><a href="https://github.com/nusadb/nusadb" target="_blank" rel="noopener">Source</a></li></ul></nav>
+    <a class="brand" href="../"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6.5c0-1.4 3.6-2.5 8-2.5s8 1.1 8 2.5-3.6 2.5-8 2.5-8-1.1-8-2.5Z"/><path d="M4 6.5v11c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5v-11"/><path d="M4 12c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5"/></svg><span>Nusa<b>DB</b></span></a>
+    <nav class="mast-nav" id="mastNav" aria-label="Main"><ul><li><a href="./">Docs</a></li><li><a href="getting-started.html" aria-current="page">Install</a></li><li><a href="clients.html">Drivers</a></li><li><a href="sql.html">SQL</a></li><li><a href="limits.html">Limits</a></li><li><a href="../#changes">Changes</a></li><li><a href="https://github.com/nusadb/nusadb">GitHub</a></li></ul></nav>
     <div class="mast-tools">
       <button class="icon-btn" id="themeBtn" type="button" aria-label="Switch theme"></button>
       <button class="icon-btn burger" id="burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mastNav">
@@ -28,17 +29,17 @@
 <div class="wrap">
   <div class="docs">
     <aside class="sidebar">
-<button class="sidebar-toggle" type="button" aria-expanded="false">
+<button class="sidebar-toggle" type="button" aria-expanded="false" aria-controls="sidebarBody">
 <span>Documentation menu</span>
 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
 </button>
-<div class="sidebar-body">
-<h4>Start here</h4>
+<div class="sidebar-body" id="sidebarBody">
+<h4>Start</h4>
 <ul>
 <li><a href="./">Overview</a></li>
 <li><a href="getting-started.html" aria-current="page">Getting started</a></li>
 </ul>
-<h4>Using NusaDB</h4>
+<h4>Reference</h4>
 <ul>
 <li><a href="sql.html">SQL reference</a></li>
 <li><a href="transactions.html">Transactions</a></li>
@@ -49,7 +50,12 @@
 <li><a href="configuration.html">Configuration</a></li>
 <li><a href="limits.html">Limits and capacity</a></li>
 </ul>
-<h4>Elsewhere</h4><ul><li><a href="https://github.com/nusadb/nusadb" target="_blank" rel="noopener">Source repository</a></li><li><a href="https://hub.docker.com/r/nusadb/nusadb" target="_blank" rel="noopener">Container image</a></li></ul>
+<h4>Project</h4>
+<ul>
+<li><a href="https://github.com/nusadb/nusadb">Source repository</a></li>
+<li><a href="https://github.com/nusadb/nusadb/issues">Issues</a></li>
+<li><a href="https://hub.docker.com/r/nusadb/nusadb">Container image</a></li>
+</ul>
 </div>
     </aside>
     <main class="prose" id="main">
@@ -57,10 +63,10 @@
       <h1>Getting started</h1>
       <p class="summary">Install, connect, run a worked example, learn the shell and the drivers, add a user, and recognise the first errors.</p>
 
-<p>From nothing to a queried table. Two installation routes are covered: the published container image, and a build from source. Everything after that is the same either way.</p>
+<p>NusaDB installs from the container image or from source. The steps after installation are the same for both.</p>
 <h2 id="install">Install</h2>
 <h3 id="container">Container</h3>
-<p>The image carries both the server and the shell, and is published for <code>linux/amd64</code> and <code>linux/arm64</code> under the same tag. Give it a volume: the data directory holds the write-ahead log, which is the durable copy of your data.</p>
+<p>The image carries both the server and the shell, and is published for <code>linux/amd64</code> and <code>linux/arm64</code> under the same tag. Mount a volume for the data directory, which holds the write-ahead log.</p>
 <div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
 <pre>docker run -d --name nusadb \
   -p 5678:5678 \
@@ -68,8 +74,8 @@
   -e NUSADB_USER=app \
   -e NUSADB_PASSWORD=change-me \
   nusadb/nusadb</pre></div>
-<p>Setting <code>NUSADB_USER</code> together with <code>NUSADB_PASSWORD</code> turns on SCRAM-SHA-256 for that user. Setting only one of the pair is an error, so a half-configured container fails at start-up instead of quietly accepting everyone.</p>
-<div class="note caution"><b>Without credentials the server trusts every client.</b><p>A server started with no <code>--auth-user</code> and no environment pair accepts any client without a password and says so in its startup log. That is fine on a laptop and wrong for anything reachable by others.</p></div>
+<p>Setting <code>NUSADB_USER</code> together with <code>NUSADB_PASSWORD</code> turns on SCRAM-SHA-256 for that user. Setting only one of the two is an error, and the container exits at start-up.</p>
+<div class="note caution"><b>Without credentials the server accepts every client</b><p>A server started with no <code>--auth-user</code> and neither environment variable accepts any client without a password, and logs a warning at start-up. Set credentials before other hosts can reach the port.</p></div>
 <h3 id="from-source">From source</h3>
 <p>A Rust toolchain is the only prerequisite; the pinned version lives in <code>rust-toolchain.toml</code> and <code>rustup</code> installs it automatically. The first build takes several minutes.</p>
 <div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
@@ -98,9 +104,9 @@ docker exec -it nusadb nusadb-cli --user app</pre></div>
 <span class="o">------------</span>
 <span class="o">NusaDB 0.1.0</span>
 <span class="o">SELECT 1</span></pre></div>
-<div class="note caution"><b>Clients for other databases cannot connect.</b><p>NusaDB implements its own wire protocol. A tool built for a different engine gets no answer to its handshake, which from its side looks like a dead socket. That is deliberate. Use <code>nusadb-cli</code>, one of the <a href="#connecting-from-a-program">drivers</a>, or write a client against the <a href="https://github.com/nusadb/nusadb/blob/master/docs/wire-protocol.md" target="_blank" rel="noopener">protocol specification</a>. The SQL <em>dialect</em> is a separate matter: queries written for other engines largely run as-is once they arrive over a NusaDB connection.</p></div>
+<p>NusaDB has its own wire protocol, so a client built for another database engine gets no answer to its handshake and appears to hang. Use <code>nusadb-cli</code>, one of the <a href="#connecting-from-a-program">drivers</a>, or a client written against the <a href="https://github.com/nusadb/nusadb/blob/master/docs/wire-protocol.md">protocol specification</a>. SQL written for other engines usually runs unchanged over a NusaDB connection.</p>
 <h2 id="a-worked-example">A worked example</h2>
-<p>Paste this in order. It creates two tables, loads a few rows, and answers a question with them.</p>
+<p>The statements below create two tables, load rows and query them. Run them in order.</p>
 <div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
 <pre><span class="k">CREATE</span> <span class="k">TABLE</span> customers (
   id      <span class="k">BIGINT</span> <span class="k">GENERATED</span> <span class="k">ALWAYS</span> <span class="k">AS</span> <span class="k">IDENTITY</span> <span class="k">PRIMARY</span> <span class="k">KEY</span>,
@@ -117,7 +123,7 @@ docker exec -it nusadb nusadb-cli --user app</pre></div>
 );
 
 <span class="k">CREATE</span> <span class="k">INDEX</span> orders_customer <span class="k">ON</span> orders (customer);</pre></div>
-<p>Insert, and let the server hand back what it generated:</p>
+<p>Insert rows and return the generated ids with <code>RETURNING</code>:</p>
 <div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
 <pre><span class="k">INSERT</span> <span class="k">INTO</span> customers (email, country) <span class="k">VALUES</span>
   (<span class="s">'ana@example.com'</span>,   <span class="s">'ID'</span>),
@@ -132,7 +138,7 @@ docker exec -it nusadb nusadb-cli --user app</pre></div>
 
 <span class="k">INSERT</span> <span class="k">INTO</span> orders (customer, total) <span class="k">VALUES</span>
   (<span class="s">1</span>, <span class="s">120.00</span>), (<span class="s">1</span>, <span class="s">80.50</span>), (<span class="s">2</span>, <span class="s">45.00</span>), (<span class="s">3</span>, <span class="s">900.00</span>);</pre></div>
-<p>Ask a question:</p>
+<p>Aggregate and rank the orders by country:</p>
 <div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
 <pre><span class="k">SELECT</span> c.country,
        count(*)                                   <span class="k">AS</span> orders,
@@ -148,7 +154,7 @@ docker exec -it nusadb nusadb-cli --user app</pre></div>
 <span class="c">-- ---------+--------+---------+---------+------------</span>
 <span class="c">--  SG      |      1 |  900.00 |  900.00 |          1</span>
 <span class="c">--  ID      |      3 |  245.50 |   81.83 |          2</span></pre></div>
-<p>Change rows safely, and keep part of the work:</p>
+<p>Update inside a transaction, and undo part of it with a savepoint:</p>
 <div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
 <pre><span class="k">BEGIN</span>;
   <span class="k">UPDATE</span> orders <span class="k">SET</span> total = total * <span class="s">1.1</span> <span class="k">WHERE</span> customer = <span class="s">1</span> <span class="k">RETURNING</span> id, total;
@@ -156,7 +162,7 @@ docker exec -it nusadb nusadb-cli --user app</pre></div>
   <span class="k">DELETE</span> <span class="k">FROM</span> orders <span class="k">WHERE</span> total &lt; <span class="s">50</span>;
   <span class="k">ROLLBACK</span> <span class="k">TO</span> <span class="k">SAVEPOINT</span> before_delete;    <span class="c">-- keep the update, undo the delete</span>
 <span class="k">COMMIT</span>;</pre></div>
-<p>Constraints are enforced, and the error says which one:</p>
+<p>A constraint violation names the constraint:</p>
 <div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
 <pre><span class="k">INSERT</span> <span class="k">INTO</span> orders (customer, total) <span class="k">VALUES</span> (<span class="s">999</span>, <span class="s">10</span>);
 <span class="c">-- ERROR 23503: constraint violation: insert or update on "orders" violates foreign key</span>
@@ -168,7 +174,7 @@ docker exec -it nusadb nusadb-cli --user app</pre></div>
 
 <span class="k">INSERT</span> <span class="k">INTO</span> orders (customer, total) <span class="k">VALUES</span> (<span class="s">1</span>, -<span class="s">5</span>);
 <span class="c">-- ERROR 23514: constraint violation: new row for "orders" violates check constraint "orders_check1"</span></pre></div>
-<p>See how the planner will run a query:</p>
+<p>Show the plan for a query:</p>
 <div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
 <pre><span class="k">EXPLAIN</span> <span class="k">SELECT</span> email <span class="k">FROM</span> customers <span class="k">WHERE</span> id = <span class="s">2</span>;
 <span class="c">--  Project (1 column(s))</span>
@@ -218,7 +224,7 @@ nusadb-cli -F expanded -c "SELECT id, email FROM customers ORDER BY id LIMIT 1"
 <div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
 <pre>nusadb-cli --database app</pre></div>
 <h2 id="loading-and-exporting-data">Loading and exporting data</h2>
-<p><code>COPY</code> moves rows in one streaming exchange rather than a round trip per row. In the shell forms the data travels on the command's own standard input and output, so it composes with ordinary pipelines.</p>
+<p><code>COPY</code> transfers rows in one streaming exchange instead of a round trip per row. In the shell, the data travels on the command's standard input and output, so it works in pipelines.</p>
 <div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
 <pre><span class="c"># Load: tab-delimited, \N for NULL (the server's text format)</span>
 nusadb-cli -c "COPY customers FROM STDIN" &lt; rows.tsv
@@ -229,14 +235,14 @@ nusadb-cli -c "COPY customers (email, country) FROM STDIN WITH (FORMAT csv, HEAD
 <span class="c"># Export the same way</span>
 nusadb-cli -c "COPY customers TO STDOUT" &gt; rows.tsv
 nusadb-cli -c "COPY customers TO STDOUT WITH (FORMAT csv, HEADER)" &gt; rows.csv</pre></div>
-<p>The row count goes to standard error during an export, so it never lands in the exported file. One redirect feeds one load: a batch holding two <code>COPY ... FROM STDIN</code> statements refuses the second rather than reporting that it loaded nothing. Typing <code>COPY ... FROM STDIN</code> at the interactive prompt is refused too, because there the keyboard is already the session's input.</p>
+<p>The row count goes to standard error during an export, so it never lands in the exported file. Each redirect feeds one load, and a batch with two <code>COPY ... FROM STDIN</code> statements refuses the second. <code>COPY ... FROM STDIN</code> typed at the interactive prompt is refused, because the keyboard is already the session's input.</p>
 <p>After a large load, refresh the planner's statistics (a background worker also does this, on a timer):</p>
 <div class="code"><div class="code-bar"><span>sql</span><button class="copy" type="button"><em>Copy</em></button></div>
 <pre><span class="k">ANALYZE</span> customers;
 <span class="k">ANALYZE</span>;              <span class="c">-- every table</span></pre></div>
-<p>Before loading a large dataset, read the capacity section of <a href="configuration.html#memory-limits-and-capacity">deployment</a>: table and index pages are cached and evicted, so data can outgrow memory, but index entries too large for an index page stay in memory and count against the resident bound, and vector indexes are held in memory whole.</p>
+<p>Table and index pages are cached and evicted, so data can outgrow memory. Index entries too large for an index page stay in memory and count against the resident bound, and vector indexes are held in memory whole. See <a href="configuration.html#memory-limits-and-capacity">memory limits and capacity</a>.</p>
 <h2 id="running-sql-from-scripts">Running SQL from scripts</h2>
-<p>Both batch forms behave the same way: <code>-c</code> takes a statement list and <code>-f</code> takes a file. A server error is printed to standard error and the remaining statements still run, but the process then exits non-zero, so a script that loads data in stages stops at the failed stage instead of continuing as though it had worked.</p>
+<p>Both batch forms behave the same way: <code>-c</code> takes a statement list and <code>-f</code> takes a file. A server error is printed to standard error and the remaining statements still run, then the process exits non-zero. With <code>set -e</code>, a script that loads data in stages stops at the failed stage. <code>--on-error-stop</code> stops at the first failed statement instead.</p>
 <div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
 <pre>set -eu
 nusadb-cli -f schema.sql
@@ -279,7 +285,7 @@ await conn.close();</pre></div>
 db, err := sql.Open("nusadb", "nusadb://app:change-me@127.0.0.1:5678/nusadb")
 var email string
 err = db.QueryRow("SELECT email FROM customers WHERE id = $1", 1).Scan(&amp;email)</pre></div>
-<p>Every driver reports a failed statement with its SQLSTATE; see <a href="transactions.html">transactions</a> for the retry loop that every write path needs.</p>
+<p>Every driver reports a failed statement with its SQLSTATE; see <a href="transactions.html#the-retry-loop-required-discipline">the retry loop</a> for handling conflicts on writes.</p>
 <h2 id="adding-a-user">Adding a user</h2>
 <p>Two lists are involved. The server's <code>--auth-user</code> list (or <code>NUSADB_USER</code> / <code>NUSADB_PASSWORD</code>) decides who may connect and with which password; SQL roles inside the database decide what a connected user may do. Add the user to both.</p>
 <div class="code"><div class="code-bar"><span>shell</span><button class="copy" type="button"><em>Copy</em></button></div>
@@ -295,11 +301,11 @@ err = db.QueryRow("SELECT email FROM customers WHERE id = $1", 1).Scan(&amp;emai
 <pre>NUSADB_PASSWORD=analyst-secret nusadb-cli --user analyst -c "SELECT count(*) FROM orders"</pre></div>
 <p>A user that authenticates but has no role can create its own tables and nothing else. <code>PASSWORD</code> inside <code>CREATE ROLE</code> is refused, because a password set there would never be checked at login. Once any <code>--auth-user</code> is set, <code>nusadb-root</code> must be listed too or it cannot connect.</p>
 <h2 id="first-errors-and-what-they-mean">First errors and what they mean</h2>
-<div class="table-scroll"><table><thead><tr><th>What you see</th><th>Why</th><th>What to do</th></tr></thead><tbody><tr><td>the client hangs, then times out</td><td>a client for another database is talking to NusaDB's port</td><td>use <code>nusadb-cli</code> or a NusaDB driver</td></tr><tr><td><code>authentication failed</code></td><td>wrong password, or a user not in <code>--auth-user</code></td><td>check both; the message is the same on purpose</td></tr><tr><td><code>ERROR 42501: permission denied: SELECT on table ...</code></td><td>the role has no grant on the table</td><td><code>GRANT ... TO role</code> as the owner or <code>nusadb-root</code></td></tr><tr><td><code>ERROR 40001: ...</code></td><td>two transactions wrote the same row; locks never wait</td><td>run the whole transaction again (<a href="transactions.html">transactions</a>)</td></tr><tr><td><code>ERROR 25P02: current transaction is aborted</code></td><td>an earlier statement in the transaction failed</td><td><code>ROLLBACK</code> (or <code>ROLLBACK TO SAVEPOINT</code>) and start over</td></tr><tr><td><code>ERROR 42804: type mismatch ...</code></td><td>NusaDB does not coerce between unrelated types</td><td>cast explicitly: <code>value::BIGINT</code></td></tr><tr><td><code>ERROR 0A000: unsupported SQL construct: ...</code></td><td>recognised but not built</td><td>the message names the construct; see the reference's "Not accepted" list</td></tr><tr><td><code>ERROR XX000: ... the database stopped after a storage error interrupted a change ...</code></td><td>reading or writing a page failed while a change was being made (a damaged or unreadable file); the database refuses all work so it never persists a half-made change</td><td>check the disk and the server log, restore damaged files from a backup, then restart the server: the database is rebuilt from its last image and log</td></tr><tr><td><code>ERROR XX000: out of memory: the engine reached its resident-memory limit ...</code></td><td>what the engine cannot move out of memory (index entries too large for an index page, and notes of index entries awaiting purge) reached the memory ceiling</td><td>raise <code>--max-resident-bytes</code>, use a larger host, free rows, or drop indexes that are not needed</td></tr><tr><td><code>nusadb-server: the data directory ... is already in use by another nusadb-server</code></td><td>another server already holds the data directory's lock</td><td>stop that server, or start this one with a different <code>--data-dir</code></td></tr><tr><td><code>COPY ... FROM STDIN</code> refused at the prompt</td><td>the keyboard is already the session's input</td><td>use <code>nusadb-cli -c "COPY ..." &lt; file</code></td></tr></tbody></table></div>
+<div class="table-scroll"><table><thead><tr><th>What you see</th><th>Why</th><th>What to do</th></tr></thead><tbody><tr><td>the client hangs, then times out</td><td>a client for another database is talking to NusaDB's port</td><td>use <code>nusadb-cli</code> or a NusaDB driver</td></tr><tr><td><code>authentication failed</code></td><td>wrong password, or a user not in <code>--auth-user</code></td><td>check both; the two cases give the same message</td></tr><tr><td><code>ERROR 42501: permission denied: SELECT on table ...</code></td><td>the role has no grant on the table</td><td><code>GRANT ... TO role</code> as the owner or <code>nusadb-root</code></td></tr><tr><td><code>ERROR 40001: ...</code></td><td>two transactions wrote the same row; locks never wait</td><td>run the whole transaction again (<a href="transactions.html">transactions</a>)</td></tr><tr><td><code>ERROR 25P02: current transaction is aborted</code></td><td>an earlier statement in the transaction failed</td><td><code>ROLLBACK</code> (or <code>ROLLBACK TO SAVEPOINT</code>) and start over</td></tr><tr><td><code>ERROR 42804: type mismatch ...</code></td><td>NusaDB does not coerce between unrelated types</td><td>cast explicitly: <code>value::BIGINT</code></td></tr><tr><td><code>ERROR 0A000: unsupported SQL construct: ...</code></td><td>the statement is parsed but not supported</td><td>the message names the construct; see <a href="sql.html#not-accepted">Not accepted</a></td></tr><tr><td><code>ERROR XX000: ... the database stopped after a storage error interrupted a change ...</code></td><td>reading or writing a page failed while a change was being made (a damaged or unreadable file); the database refuses all work so it never persists a half-made change</td><td>check the disk and the server log, restore damaged files from a backup, then restart the server: the database is rebuilt from its last image and log</td></tr><tr><td><code>ERROR XX000: out of memory: the engine reached its resident-memory limit ...</code></td><td>what the engine cannot move out of memory (index entries too large for an index page, and notes of index entries awaiting purge) reached the memory ceiling</td><td>raise <code>--max-resident-bytes</code>, use a larger host, free rows, or drop indexes that are not needed</td></tr><tr><td><code>nusadb-server: the data directory ... is already in use by another nusadb-server</code></td><td>another server already holds the data directory's lock</td><td>stop that server, or start this one with a different <code>--data-dir</code></td></tr><tr><td><code>COPY ... FROM STDIN</code> refused at the prompt</td><td>the keyboard is already the session's input</td><td>use <code>nusadb-cli -c "COPY ..." &lt; file</code></td></tr></tbody></table></div>
 <h2 id="where-to-go-next">Where to go next</h2>
-<ul><li><a href="sql.html">SQL reference</a>: every type, statement and function, with examples, and the behaviours where NusaDB chooses differently.</li><li><a href="transactions.html">Transactions</a>: isolation levels, conflicts and retries, savepoints, locks.</li><li><a href="configuration.html">Deployment</a>: every server flag, memory limits, authentication, TLS, systemd, metrics, backup. <b>Read the capacity section before loading a large dataset.</b></li><li><a href="https://github.com/nusadb/nusadb/blob/master/docs/wire-protocol.md" target="_blank" rel="noopener">Wire protocol</a>: for writing a client.</li></ul>
+<ul><li>Types, statements and functions are in the <a href="sql.html">SQL reference</a>.</li><li>Isolation levels, conflicts, savepoints and locks are in <a href="transactions.html">Transactions</a>.</li><li>Server flags, memory limits, TLS, systemd, metrics and backup are in <a href="configuration.html">Configuration</a>.</li><li>The <a href="https://github.com/nusadb/nusadb/blob/master/docs/wire-protocol.md">wire protocol specification</a> describes what a new client has to implement.</li></ul>
 <h2 id="upgrading-from-an-older-data-directory">Upgrading from an older data directory</h2>
-<p>Each database directory records which storage engine wrote it. A directory written by the removed <code>lsm</code> engine is refused at start-up rather than misread. To migrate: start the last release that still shipped that engine, export your data (<code>COPY</code> per table), start this release with a fresh <code>--data-dir</code>, and restore.</p>
+<p>Each database directory records which storage engine wrote it. A directory written by the removed <code>lsm</code> engine is refused at start-up. To migrate: start the last release that still shipped that engine, export your data (<code>COPY</code> per table), start this release with a fresh <code>--data-dir</code>, and restore.</p>
 
 <div class="nextprev">
 <a href="./"><small>Previous</small>Overview</a>
@@ -311,9 +317,9 @@ err = db.QueryRow("SELECT email FROM customers WHERE id = $1", 1).Scan(&amp;emai
 </div>
 <footer class="foot">
   <div class="wrap">
-    <div class="foot-note" style="margin-top:0;border-top:0;padding-top:0">
-      <p>&copy; <span id="year">2026</span> The NusaDB authors. Licensed under Apache-2.0.</p>
-      <p><a href="../">Home</a> · <a href="https://github.com/nusadb/nusadb" target="_blank" rel="noopener">Source</a> · <a href="https://github.com/nusadb/nusadb/issues" target="_blank" rel="noopener">Issues</a></p>
+    <div class="foot-note">
+      <p>&copy; <span id="year">2026</span> The NusaDB authors. Apache-2.0. Version 0.1.0-beta.16.</p>
+      <p><a href="../">Home</a> · <a href="https://github.com/nusadb/nusadb">Source</a> · <a href="https://github.com/nusadb/nusadb/issues">Issues</a></p>
     </div>
   </div>
 </footer>
